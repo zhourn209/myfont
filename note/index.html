@@ -3,67 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的多页便签</title>
+<title>云端便签</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Roboto}
 body{background:#f7f8fa;padding:20px;display:flex;flex-direction:column;align-items:center;min-height:100vh}
 .header{margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .page-btn{padding:10px 16px;border:none;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:16px}
 .page-btn.active{background:#5191ff;color:#fff}
-.add-btn{background:#51c851;color:#fff}
+.sync-btn{background:#51c351;color:#fff}
+.token-box{margin-bottom:10px;width:100%;max-width:600px}
+#token{width:100%;padding:10px;border:1px solid #ddd;border-radius:12px;font-size:14px}
 .editor{width:100%;max-width:600px;background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:20px}
 textarea{width:100%;height:400px;border:none;outline:none;resize:none;font-size:16px;line-height:1.6}
-.save-tip{margin-top:10px;font-size:12px;color:#999;text-align:center}
+.status{margin-top:10px;font-size:14px;color:#666;text-align:center}
 </style>
 </head>
 <body>
+
 <div class="header">
-  <button class="page-btn active" data-page="1">第1页</button>
+  <button class="page-btn" data-page="1">第1页</button>
   <button class="page-btn" data-page="2">第2页</button>
   <button class="page-btn" data-page="3">第3页</button>
-  <button class="page-btn add-btn">+ 新增页</button>
+  <button class="page-btn sync-btn">☁️ 同步到GitHub</button>
 </div>
+
+<div class="token-box">
+  <input id="token" placeholder="在此输入你的GitHub Token">
+</div>
+
 <div class="editor">
-  <textarea id="note" placeholder="写便签..."></textarea>
+  <textarea id="note" placeholder="输入Token后，可多设备云端同步…"></textarea>
 </div>
-<div class="save-tip">本地自动保存</div>
+
+<div class="status" id="status">准备就绪</div>
 
 <script>
-const textarea = document.getElementById('note')
-let currentPage = 1
+var owner = "zhourn";
+var repo = "zhourn.github.io";
+var path = "note/data.json";
 
-function loadPage(page) {
-  currentPage = page
-  textarea.value = localStorage.getItem('note_'+page) || ''
-  document.querySelectorAll('.page-btn').forEach(b=>b.classList.remove('active'))
-  document.querySelector(`.page-btn[data-page="${page}"]`).classList.add('active')
+var currentPage = 1;
+var pages = { 1: "", 2: "", 3: "" };
+
+var textarea = document.getElementById("note");
+var status = document.getElementById("status");
+var tokenInput = document.getElementById("token");
+
+loadLocal();
+render();
+
+var pageBtns = document.querySelectorAll(".page-btn:not(.sync-btn)");
+for (var i = 0; i < pageBtns.length; i++) {
+  (function (btn) {
+    btn.addEventListener("click", function () {
+      pages[currentPage] = textarea.value;
+      currentPage = btn.getAttribute("data-page");
+      render();
+    });
+  })(pageBtns[i]);
 }
 
-textarea.addEventListener('input', ()=>{
-  localStorage.setItem('note_'+currentPage, textarea.value)
-})
+document.querySelector(".sync-btn").addEventListener("click", function () {
+  pages[currentPage] = textarea.value;
+  saveLocal();
+  saveToGitHub();
+});
 
-document.querySelectorAll('.page-btn:not(.add-btn)').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    loadPage(btn.dataset.page)
-  })
-})
+textarea.addEventListener("input", function () {
+  pages[currentPage] = textarea.value;
+  saveLocal();
+});
 
-document.querySelector('.add-btn').addEventListener('click', ()=>{
-  const pages = Array.from(document.querySelectorAll('.page-btn:not(.add-btn)'))
-  const max = Math.max(...pages.map(b=>+b.dataset.page))
-  const newPage = max+1
-  const el = document.createElement('button')
-  el.className = 'page-btn'
-  el.dataset.page = newPage
-  el.textContent = `第${newPage}页`
-  document.querySelector('.header').insertBefore(el, document.querySelector('.add-btn'))
-  el.addEventListener('click', ()=>loadPage(newPage))
-  loadPage(newPage)
-})
+function render() {
+  textarea.value = pages[currentPage] || "";
+  var list = document.querySelectorAll(".page-btn");
+  for (var i = 0; i < list.length; i++) {
+    list[i].classList.remove("active");
+  }
+  var activeBtn = document.querySelector('[data-page="' + currentPage + '"]');
+  if (activeBtn) activeBtn.classList.add("active");
+}
 
-loadPage(1)
+function saveLocal() {
+  try {
+    localStorage.setItem("mynotes_zhourn", JSON.stringify(pages));
+  } catch (e) {}
+}
+
+function loadLocal() {
+  try {
+    var str = localStorage.getItem("mynotes_zhourn");
+    if (str) pages = JSON.parse(str);
+  } catch (e) {}
+}
+
+function saveToGitHub() {
+  var token = tokenInput.value.trim();
+  if (!token) {
+    status.textContent = "请输入GitHub Token";
+    return;
+  }
+  status.textContent = "同步中…";
+
+  var jsonStr = JSON.stringify(pages, null, 2);
+  var content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+  getSHA(token, function (sha) {
+    upload(token, content, sha);
+  });
+}
+
+function getSHA(token, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path, true);
+  xhr.setRequestHeader("Authorization", "token " + token);
+  xhr.onload = function () {
+    var sha = "";
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        sha = data.sha;
+      } catch (e) {}
+    }
+    cb(sha);
+  };
+  xhr.onerror = function () { cb(""); };
+  xhr.send();
+}
+
+function upload(token, content, sha) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("PUT", "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path, true);
+  xhr.setRequestHeader("Authorization", "token " + token);
+  xhr.setRequestHeader("Content-Type", "application/json");
+
+  var body = {
+    message: "便签同步",
+    content: content
+  };
+  if (sha) body.sha = sha;
+
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      status.textContent = "✅ 已同步到 GitHub 云端";
+    } else {
+      status.textContent = "❌ 同步失败：Token 或权限错误";
+    }
+  };
+  xhr.onerror = function () {
+    status.textContent = "❌ 网络异常";
+  };
+  xhr.send(JSON.stringify(body));
+}
+
+window.onload = function () {
+  loadFromGitHub();
+};
+
+function loadFromGitHub() {
+  var token = tokenInput.value.trim();
+  if (!token) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path, true);
+  xhr.setRequestHeader("Authorization", "token " + token);
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var decodeStr = decodeURIComponent(escape(atob(data.content)));
+        pages = JSON.parse(decodeStr);
+        render();
+        status.textContent = "✅ 已从云端加载";
+      } catch (e) {}
+    }
+  };
+  xhr.send();
+}
 </script>
 </body>
 </html>
-
