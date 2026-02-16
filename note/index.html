@@ -220,6 +220,29 @@
         .danger {
             color: #b91c1c;
         }
+        /* 添加token输入框样式 */
+        .token-input-container {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 40px;
+            border: 1px solid #dde3e9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .token-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            color: #1f2937;
+        }
+        .token-input::placeholder {
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +262,13 @@
         </div>
     </div>
 
+    <!-- Token 输入区 (可选，用于简化推送) -->
+    <div class="token-input-container" id="tokenContainer" style="margin: 0 20px 8px 20px;">
+        <span style="color: #64748b;">🔑</span>
+        <input type="password" class="token-input" id="tokenInput" placeholder="GitHub Personal Access Token (可选, 用于推送)" value="">
+        <button class="icon-btn" id="saveTokenBtn" style="font-size: 0.9rem;" title="保存Token到本地">💾</button>
+    </div>
+
     <!-- 编辑器区 (当前页签) -->
     <div class="editor">
         <input type="text" class="note-title-input" id="noteTitle" placeholder="便签标题">
@@ -251,7 +281,10 @@
             <span>📄 <span id="tabCount">0</span> 个页签</span>
             <span class="warning" id="unsavedBadge" style="display: none;">⚠️ 未保存</span>
         </div>
-        <div>✨ 多设备 · GitHub Gist 同步</div>
+        <div>
+            <span id="deployInfo" style="color: #64748b; margin-right: 8px;"></span>
+            ✨ 多设备 · GitHub Gist 同步
+        </div>
     </div>
 </div>
 
@@ -262,6 +295,7 @@
         let activeNoteId = null;            // 当前显示的便签id
         let unsaved = false;                // 当前显示内容是否有未保存更改 (用于提醒)
         let gistId = localStorage.getItem('sync_gist_id') || '';   // 上次使用的gist id
+        let githubToken = localStorage.getItem('github_token') || ''; // 保存的token
         let syncInProgress = false;          // 防止并发
 
         // DOM 元素
@@ -270,14 +304,23 @@
         const noteTitle = document.getElementById('noteTitle');
         const noteContent = document.getElementById('noteContent');
         const gistIdInput = document.getElementById('gistIdInput');
+        const tokenInput = document.getElementById('tokenInput');
+        const saveTokenBtn = document.getElementById('saveTokenBtn');
         const fetchBtn = document.getElementById('fetchGistBtn');
         const pushBtn = document.getElementById('pushGistBtn');
         const syncStatus = document.getElementById('syncStatus');
         const tabCountSpan = document.getElementById('tabCount');
         const unsavedBadge = document.getElementById('unsavedBadge');
+        const deployInfo = document.getElementById('deployInfo');
 
-        // 初始化 gist输入框
+        // 显示当前部署地址
+        deployInfo.innerText = `📍 ${window.location.origin}`;
+
+        // 初始化输入框
         gistIdInput.value = gistId;
+        if (githubToken) {
+            tokenInput.value = githubToken;
+        }
 
         // ---------- 辅助函数 ----------
         function generateId() {
@@ -296,8 +339,6 @@
                 </div>`;
             });
             tabContainer.innerHTML = html;
-
-            // 重新挂载关闭事件 (委托也可, 但直接用事件委托处理更好, 我们在外层监听)
             tabCountSpan.innerText = notes.length;
         }
 
@@ -320,7 +361,7 @@
             if (note.title !== newTitle || note.content !== newContent) {
                 note.title = newTitle;
                 note.content = newContent;
-                unsaved = true;   // 标记有未同步到云端的更改 (但本地已保存)
+                unsaved = true;
                 updateUnsavedBadge();
                 return true;
             }
@@ -334,21 +375,17 @@
             activeNoteId = noteId;
             noteTitle.value = note.title || '';
             noteContent.value = note.content || '';
-            unsaved = false;            // 切换后当前显示和模型一致
+            unsaved = false;
             updateUnsavedBadge();
-            renderTabs();               // 更新active样式
+            renderTabs();
         }
 
         // 更新未保存标志
         function updateUnsavedBadge() {
-            if (unsaved) {
-                unsavedBadge.style.display = 'inline';
-            } else {
-                unsavedBadge.style.display = 'none';
-            }
+            unsavedBadge.style.display = unsaved ? 'inline' : 'none';
         }
 
-        // 标记未保存 (由输入事件触发)
+        // 标记未保存
         function markUnsaved() {
             unsaved = true;
             updateUnsavedBadge();
@@ -356,7 +393,6 @@
 
         // 创建新便签
         function createNewNote() {
-            // 先保存当前便签的修改到模型 (防止丢失)
             if (activeNoteId) {
                 saveCurrentNoteToModel();
             }
@@ -367,7 +403,6 @@
             };
             notes.push(newNote);
             renderTabs();
-            // 激活新便签
             loadNoteToEditor(newNote.id);
         }
 
@@ -380,9 +415,7 @@
             const index = notes.findIndex(n => n.id === noteId);
             if (index === -1) return;
 
-            // 如果要关闭的是当前激活的
             if (noteId === activeNoteId) {
-                // 切换到前一个或后一个
                 const newIndex = index > 0 ? index - 1 : 0;
                 const newActiveId = notes[newIndex].id;
                 notes.splice(index, 1);
@@ -394,8 +427,35 @@
             }
         }
 
-        // ---------- GitHub Gist 同步 (需要用户提供Gist ID, 使用公共gist api) ----------
-        // 从gist获取内容 (合并到本地, 策略: 云端完全覆盖本地? 这里采用 云端合并到本地 (如果本地空则全取, 否则冲突提示简单处理)
+        // 保存Token
+        function saveToken() {
+            const token = tokenInput.value.trim();
+            if (token) {
+                localStorage.setItem('github_token', token);
+                githubToken = token;
+                setStatus('✅ Token已保存');
+            } else {
+                localStorage.removeItem('github_token');
+                githubToken = '';
+                setStatus('⏹️ Token已清除');
+            }
+        }
+
+        // ---------- GitHub Gist 同步 ----------
+        function extractGistId(input) {
+            input = input.trim();
+            const patterns = [
+                /gist\.github\.com\/[^\/]+\/([a-f0-9]+)/i,
+                /gist\.github\.com\/([a-f0-9]+)/,
+                /^([a-f0-9]+)$/
+            ];
+            for (let pat of patterns) {
+                const match = input.match(pat);
+                if (match) return match[1];
+            }
+            return input;
+        }
+
         async function fetchFromGist(gistIdentifier) {
             let gistId = extractGistId(gistIdentifier);
             if (!gistId) {
@@ -407,7 +467,7 @@
                 const response = await fetch(`https://api.github.com/gists/${gistId}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const gist = await response.json();
-                // 期望gist包含一个 "stickies.json" 文件 (或便签数据)
+                
                 let rawData = null;
                 for (let filename in gist.files) {
                     const file = gist.files[filename];
@@ -417,7 +477,6 @@
                     }
                 }
                 if (!rawData) {
-                    // 尝试获取第一个文件
                     const firstFile = Object.values(gist.files)[0];
                     if (firstFile) rawData = firstFile.content;
                 }
@@ -426,20 +485,17 @@
                 const remoteNotes = JSON.parse(rawData);
                 if (!Array.isArray(remoteNotes)) throw new Error('数据格式错误');
 
-                // 合并策略: 如果本地没有便签，直接覆盖；否则 追加不重复 (基于id)，并保留本地已存在的版本(简单起见，这里直接替换为远程数据，但弹出提示)
                 if (notes.length === 0) {
                     notes = remoteNotes;
                 } else {
                     if (confirm('合并云端便签？确定将用云端列表替换当前所有便签？(取消则保留本地)')) {
                         notes = remoteNotes;
                     } else {
-                        // 忽略
                         setStatus('⏹️ 取消合并');
                         return;
                     }
                 }
 
-                // 去重确保id有效 (若有重复id 保留第一个)
                 const seen = new Map();
                 notes = notes.filter(n => {
                     if (!n.id) n.id = generateId();
@@ -449,15 +505,12 @@
                 });
 
                 if (notes.length === 0) {
-                    // 如果空则创建一个默认
                     createNewNote();
                 } else {
-                    // 激活第一个便签
                     renderTabs();
                     loadNoteToEditor(notes[0].id);
                 }
 
-                // 保存gistId
                 localStorage.setItem('sync_gist_id', gistId);
                 gistIdInput.value = gistId;
                 setStatus('✅ 同步成功');
@@ -466,12 +519,6 @@
             }
         }
 
-        // 推送本地便签到Gist (需要token? 公共gist需要用户认证。这里简单用个人access token通过 ? 使用PAT)
-        // 为简化demo，采用 用户提供token的方式 (不安全但演示原理)。或者使用文档: 实际上可以创建gist不带token只能读取。
-        // 为了让推送可用，这里使用 用户提供 token (放在input里) 。但为了友好，我们再加一个token输入? 加在同步组内? 
-        // 但UI已经紧凑。采用简单方法：弹窗询问token，或者用户手动在github生成。但更好的体验：如果gist属于用户，需要token。
-        // 为了演示简便，我们使用「仅当gist是public且不更新时」可以读取，但写入必须token。
-        // 所以 push 函数需要token。增加一个个人访问令牌的输入框? 但UI已满，使用 prompt 获取 (便于演示)
         async function pushToGist(gistIdentifier) {
             let gistId = extractGistId(gistIdentifier);
             if (!gistId) {
@@ -479,27 +526,29 @@
                 return;
             }
 
-            // 先保存当前正在编辑的内容
             if (activeNoteId) saveCurrentNoteToModel();
 
-            // 询问 token (生产环境建议存储加密, 这里只做演示)
-            const token = prompt('请输入GitHub Personal Access Token (需要gist权限)', '');
+            // 优先使用保存的token，如果没有则提示输入
+            let token = githubToken;
             if (!token) {
-                setStatus('⏹️ 已取消');
-                return;
+                token = prompt('请输入GitHub Personal Access Token (需要gist权限)\n可以在 https://github.com/settings/tokens 生成', '');
+                if (!token) {
+                    setStatus('⏹️ 已取消');
+                    return;
+                }
+                // 可选：临时保存到内存，但不保存到localStorage
             }
 
             setStatus('⏫ 上传中...');
             try {
-                // 准备数据
                 const fileContent = JSON.stringify(notes, null, 2);
-                // 构建gist payload
                 const files = {};
                 files['stickies.json'] = { content: fileContent };
 
                 const payload = {
                     description: 'Multi‑tab stickies sync',
-                    files: files
+                    files: files,
+                    public: false  // 保持原有的公开/私密设置
                 };
 
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -516,52 +565,34 @@
                     throw new Error(err.message || `HTTP ${response.status}`);
                 }
 
-                // 更新同步标记
                 unsaved = false;
                 updateUnsavedBadge();
                 localStorage.setItem('sync_gist_id', gistId);
                 setStatus('✅ 上传成功');
             } catch (e) {
                 setStatus(`❌ 上传失败: ${e.message}`, true);
+                if (e.message.includes('401') || e.message.includes('403')) {
+                    setStatus('❌ Token无效或没有gist权限', true);
+                }
             }
-        }
-
-        // 从字符串提取Gist ID (支持url 或 纯ID)
-        function extractGistId(input) {
-            input = input.trim();
-            // 匹配 https://gist.github.com/user/123456 或 123456
-            const patterns = [
-                /gist\.github\.com\/[^\/]+\/([a-f0-9]+)/i,
-                /gist\.github\.com\/([a-f0-9]+)/,
-                /^([a-f0-9]+)$/
-            ];
-            for (let pat of patterns) {
-                const match = input.match(pat);
-                if (match) return match[1];
-            }
-            return input; // 如果都不匹配，直接返回原串尝试
         }
 
         function setStatus(msg, isError = false) {
             syncStatus.innerText = msg;
-            if (isError) {
-                syncStatus.style.color = '#b91c1c';
-            } else {
-                syncStatus.style.color = '#1e293b';
-            }
+            syncStatus.style.color = isError ? '#b91c1c' : '#1e293b';
         }
 
         // ---------- 初始化 ----------
         function init() {
-            // 默认创建一张便签
             createNewNote();
 
             // 事件监听
-            addTabBtn.addEventListener('click', () => {
-                createNewNote();
-            });
+            addTabBtn.addEventListener('click', createNewNote);
 
-            // 使用事件委托处理tab点击（激活/关闭）
+            // 保存Token
+            saveTokenBtn.addEventListener('click', saveToken);
+
+            // 标签页事件委托
             tabContainer.addEventListener('click', (e) => {
                 const tabDiv = e.target.closest('.tab');
                 const closeBtn = e.target.closest('.close-tab');
@@ -576,18 +607,15 @@
                 if (tabDiv) {
                     const id = tabDiv.dataset.id;
                     if (id && id !== activeNoteId) {
-                        // 保存当前再切换
                         if (activeNoteId) saveCurrentNoteToModel();
                         loadNoteToEditor(id);
                     }
                 }
             });
 
-            // 输入事件 → 标记未保存
             noteTitle.addEventListener('input', markUnsaved);
             noteContent.addEventListener('input', markUnsaved);
 
-            // 同步按钮
             fetchBtn.addEventListener('click', () => {
                 if (syncInProgress) return;
                 syncInProgress = true;
@@ -600,13 +628,12 @@
                 pushToGist(gistIdInput.value).finally(() => { syncInProgress = false; });
             });
 
-            // 键盘快捷: Ctrl+N 新建
+            // 键盘快捷
             window.addEventListener('keydown', (e) => {
                 if (e.ctrlKey && e.key === 'n') {
                     e.preventDefault();
                     createNewNote();
                 }
-                // Ctrl+S 保存到模型(其实就是标记保存, 但模型已实时)
                 if (e.ctrlKey && e.key === 's') {
                     e.preventDefault();
                     if (activeNoteId) {
@@ -616,7 +643,6 @@
                 }
             });
 
-            // 离开页面提醒未保存 (如果unsaved为true)
             window.addEventListener('beforeunload', (e) => {
                 if (unsaved) {
                     e.preventDefault();
@@ -625,7 +651,6 @@
             });
         }
 
-        // 启动
         init();
     })();
 </script>
