@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Noto Sans SC', sans-serif;
             background: #0a0a0a;
@@ -15,12 +19,26 @@
                 radial-gradient(circle at 80% 80%, #16213e 0%, transparent 50%);
             min-height: 100vh;
             color: #e0e0e0;
+            margin: 0;
+            padding: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 32px;
+            }
         }
         
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
+            gap: 4px;
+        }
+        
+        @media (min-width: 640px) {
+            .calendar-grid {
+                gap: 6px;
+            }
         }
         
         .day-cell {
@@ -32,8 +50,19 @@
             background: #141414;
             border: 1px solid #2a2a2a;
             font-weight: 800;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (min-width: 640px) {
+            .day-cell {
+                font-size: 0.95rem;
+                border-radius: 8px;
+            }
         }
         
         .day-cell:hover {
@@ -55,23 +84,32 @@
         }
         
         .color-dot {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s;
-            border: 3px solid transparent;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            border: 2px solid transparent;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .color-dot {
+                width: 32px;
+                height: 32px;
+                border: 3px solid transparent;
+            }
         }
         
         .color-dot:hover {
             transform: scale(1.15);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
         
         .color-dot.selected {
             border-color: #ffffff;
-            box-shadow: 0 0 0 3px #6366f1, 0 4px 12px rgba(0,0,0,0.6);
+            box-shadow: 0 0 0 2px #6366f1, 0 4px 12px rgba(0,0,0,0.5);
         }
         
         .glass-panel {
@@ -79,29 +117,58 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
         }
         
         .month-card {
             background: #141414;
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid #252525;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
             overflow: hidden;
+            padding: 12px;
         }
         
-        .gist-btn {
-            background: #2d2d30;
+        @media (min-width: 640px) {
+            .month-card {
+                border-radius: 16px;
+                padding: 16px;
+            }
+        }
+        
+        .settings-btn {
+            background: #1f1f1f;
             color: #e0e0e0;
-            border: 1px solid #404040;
-            transition: all 0.3s;
+            border: 1px solid #333;
+            transition: all 0.2s;
             font-weight: 700;
         }
         
-        .gist-btn:hover {
+        .settings-btn:hover {
+            background: #2a2a2a;
+            border-color: #444;
+            transform: translateY(-1px);
+        }
+        
+        .settings-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+        
+        .action-btn {
+            background: #2d2d30;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            transition: all 0.2s;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .action-btn:hover {
             background: #3d3d42;
             border-color: #505050;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         
         @keyframes fadeIn {
@@ -113,40 +180,47 @@
             animation: fadeIn 0.5s ease-out forwards;
         }
         
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        
         .weekday-header {
             font-weight: 900;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #555;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.05em;
+            text-align: center;
+            padding: 4px 0;
+        }
+        
+        @media (min-width: 640px) {
+            .weekday-header {
+                font-size: 0.75rem;
+                letter-spacing: 0.08em;
+            }
         }
         
         .month-title {
             font-weight: 900;
+            font-size: 1.25rem;
             letter-spacing: -0.02em;
             background: linear-gradient(135deg, #fff 0%, #888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
+        @media (min-width: 640px) {
+            .month-title {
+                font-size: 1.5rem;
+            }
+        }
+        
         input[type="text"], input[type="password"] {
             background: #0a0a0a;
             border: 1px solid #333;
             color: #e0e0e0;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 100%;
         }
         
         input[type="text"]:focus, input[type="password"]:focus {
@@ -161,7 +235,9 @@
             font-weight: 800;
             border: none;
             transition: all 0.2s;
-            letter-spacing: 0.02em;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
         }
         
         .btn-primary:hover {
@@ -175,6 +251,10 @@
             color: #e0e0e0;
             border: 1px solid #333;
             font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
         }
         
         .btn-secondary:hover {
@@ -183,14 +263,18 @@
         }
         
         .btn-danger {
-            background: rgba(220, 38, 38, 0.08);
+            background: rgba(220, 38, 38, 0.1);
             color: #ef4444;
             border: 1px solid rgba(220, 38, 38, 0.2);
             font-weight: 800;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
         }
         
         .btn-danger:hover {
-            background: rgba(220, 38, 38, 0.15);
+            background: rgba(220, 38, 38, 0.2);
             border-color: rgba(220, 38, 38, 0.3);
         }
         
@@ -198,68 +282,117 @@
             background: #141414;
             border: 1px solid #252525;
             font-weight: 800;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
         .marked-indicator {
             position: absolute;
-            top: 3px;
-            right: 3px;
-            width: 6px;
-            height: 6px;
+            top: 2px;
+            right: 2px;
+            width: 5px;
+            height: 5px;
             background: rgba(255,255,255,0.95);
             border-radius: 50%;
-            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
         }
         
         .gist-id-display {
             font-family: 'Courier New', monospace;
             background: #0a0a0a;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
             border: 1px solid #333;
             color: #6366f1;
             font-weight: 700;
+            font-size: 0.875rem;
         }
         
-        .mode-active {
-            background: #6366f1 !important;
-            color: white !important;
-            border-color: #6366f1 !important;
+        .mode-btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            background: #1f1f1f;
+            color: #888;
+            border: 1px solid #333;
+        }
+        
+        .mode-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .settings-panel.open {
+            max-height: 800px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .color-palette-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        @media (min-width: 640px) {
+            .color-palette-container {
+                gap: 12px;
+            }
+        }
+        
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .current-gist-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            font-size: 0.875rem;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="glass-panel rounded-2xl p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 animate-in">
-            <div>
-                <h1 class="text-4xl font-black text-white mb-2 tracking-tight">📅 Color Calendar</h1>
-                <p class="text-gray-500 font-bold text-lg">暗黑年历 · 点击日期标注 · Gist 云端同步</p>
-            </div>
-            
-            <div class="flex gap-3 flex-wrap justify-center">
-                <button onclick="calendar.exportData()" class="btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    导出 JSON
-                </button>
-                <label class="btn-secondary px-5 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer text-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    导入 JSON
-                    <input type="file" id="importFile" class="hidden" accept=".json" onchange="calendar.importData(this)">
-                </label>
-                <button onclick="calendar.clearAll()" class="btn-danger px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    清空
-                </button>
-            </div>
-        </div>
-
-        <!-- Color Palette -->
-        <div class="glass-panel rounded-2xl p-5 mb-6 animate-in" style="animation-delay: 0.1s">
-            <div class="flex flex-col md:flex-row items-center gap-6 justify-between">
-                <div class="flex items-center gap-4 flex-wrap justify-center">
-                    <span class="text-gray-400 font-bold text-lg">选择颜色：</span>
-                    <div class="flex gap-3" id="colorPalette">
+        <div class="glass-panel p-4 md:p-6 mb-4 md:mb-6 animate-in">
+            <div class="flex flex-col gap-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-2xl md:text-4xl font-black text-white mb-1 tracking-tight">📅 Color Calendar</h1>
+                        <p class="text-gray-500 font-bold text-sm md:text-base">暗黑年历 · 点击日期标注颜色</p>
+                    </div>
+                    <button onclick="calendar.toggleSettings()" id="settingsToggleBtn" class="settings-btn px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span id="settingsBtnText">设置</span>
+                    </button>
+                </div>
+                
+                <!-- Color Palette - Compact -->
+                <div class="flex items-center gap-3 flex-wrap justify-center md:justify-start pt-2 border-t border-gray-800">
+                    <span class="text-gray-400 font-bold text-xs uppercase tracking-wider hidden md:block">颜色:</span>
+                    <div class="color-palette-container" id="colorPalette">
                         <div class="color-dot selected" style="background: #ef4444" data-color="#ef4444" title="红色"></div>
                         <div class="color-dot" style="background: #f97316" data-color="#f97316" title="橙色"></div>
                         <div class="color-dot" style="background: #eab308" data-color="#eab308" title="黄色"></div>
@@ -267,114 +400,113 @@
                         <div class="color-dot" style="background: #06b6d4" data-color="#06b6d4" title="青色"></div>
                         <div class="color-dot" style="background: #3b82f6" data-color="#3b82f6" title="蓝色"></div>
                         <div class="color-dot" style="background: #8b5cf6" data-color="#8b5cf6" title="紫色"></div>
-                        <div class="color-dot" style="background: #ec4899" data-color="#ec4899" title="粉色"></div>
-                        <div class="color-dot" style="background: #6b7280" data-color="#6b7280" title="灰色"></div>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="legend-item">
-                        <div class="w-3 h-3 rounded-full bg-gray-800 border border-gray-700"></div>
-                        <span class="text-gray-500">未标注</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="w-3 h-3 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/30"></div>
-                        <span class="text-gray-300">已标注</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Gist Sync Section -->
-        <div class="glass-panel rounded-2xl p-6 mb-6 animate-in" style="animation-delay: 0.2s">
-            <div class="flex flex-col gap-5">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-xl font-black text-white flex items-center gap-2">
-                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        GitHub Gist 同步
-                    </h3>
-                    
-                    <!-- Mode Switch -->
-                    <div class="flex bg-gray-800 rounded-lg p-1 gap-1">
-                        <button onclick="calendar.setGistMode('anonymous')" id="modeAnonymous" class="px-4 py-1.5 rounded-md text-sm font-bold transition text-gray-400 hover:text-white">
-                            匿名 Gist
+        <!-- Settings Panel (Collapsible) -->
+        <div id="settingsPanel" class="settings-panel mb-4 md:mb-6">
+            <div class="glass-panel p-4 md:p-6 space-y-6">
+                <!-- Data Management -->
+                <div>
+                    <div class="section-title">数据管理</div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="calendar.exportData()" class="action-btn px-4 py-2 rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            导出 JSON
                         </button>
-                        <button onclick="calendar.setGistMode('authenticated')" id="modeAuth" class="px-4 py-1.5 rounded-md text-sm font-bold transition text-gray-400 hover:text-white">
-                            Token 模式
+                        <label class="action-btn px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            导入 JSON
+                            <input type="file" id="importFile" class="hidden" accept=".json" onchange="calendar.importData(this)">
+                        </label>
+                        <button onclick="calendar.clearAll()" class="btn-danger px-4 py-2 rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            清空数据
                         </button>
                     </div>
                 </div>
-                
-                <div id="gistSettings" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Anonymous Mode -->
-                    <div id="anonymousPanel" class="hidden md:col-span-2 space-y-3">
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <label class="text-sm text-gray-400 font-bold min-w-[80px]">Gist ID</label>
-                            <input type="text" id="gistId" placeholder="输入已有的 Gist ID 或留空创建新的" class="flex-1 px-4 py-2.5 rounded-lg min-w-[200px]">
+
+                <!-- Gist Sync -->
+                <div class="border-t border-gray-800 pt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="section-title mb-0">GitHub Gist 同步</div>
+                        <div class="flex gap-1">
+                            <button onclick="calendar.setGistMode('anonymous')" id="modeAnonymous" class="mode-btn">匿名</button>
+                            <button onclick="calendar.setGistMode('authenticated')" id="modeAuth" class="mode-btn">Token</button>
                         </div>
-                        <p class="text-xs text-gray-500 font-semibold ml-[96px]">
-                            匿名 Gist 无需登录，但无法编辑删除。建议保存好 Gist ID 链接。
-                        </p>
+                    </div>
+                    
+                    <!-- Anonymous Mode -->
+                    <div id="anonymousPanel" class="hidden space-y-3">
+                        <div class="flex flex-col md:flex-row gap-2 md:items-center">
+                            <label class="text-sm text-gray-400 font-bold min-w-[80px]">Gist ID</label>
+                            <input type="text" id="gistId" placeholder="输入已有 Gist ID 或留空创建新的" class="flex-1">
+                        </div>
                     </div>
                     
                     <!-- Authenticated Mode -->
-                    <div id="authPanel" class="hidden md:col-span-2 space-y-3">
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <label class="text-sm text-gray-400 font-bold min-w-[80px]">GitHub Token</label>
-                            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx (需要 gist 权限)" class="flex-1 px-4 py-2.5 rounded-lg">
+                    <div id="authPanel" class="hidden space-y-3">
+                        <div class="flex flex-col md:flex-row gap-2 md:items-center">
+                            <label class="text-sm text-gray-400 font-bold min-w-[80px]">Token</label>
+                            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx (需要 gist 权限)" class="flex-1">
                         </div>
-                        <div class="flex items-center gap-4 flex-wrap">
+                        <div class="flex flex-col md:flex-row gap-2 md:items-center">
                             <label class="text-sm text-gray-400 font-bold min-w-[80px]">Gist ID</label>
-                            <input type="text" id="gistIdAuth" placeholder="留空自动创建新 Gist" class="flex-1 px-4 py-2.5 rounded-lg">
-                            <span class="text-xs text-gray-500 font-semibold">可选：指定已有 Gist ID</span>
+                            <input type="text" id="gistIdAuth" placeholder="留空自动创建新 Gist" class="flex-1">
+                            <span class="text-xs text-gray-500 font-semibold">可选</span>
                         </div>
                     </div>
                     
-                    <!-- Filename Setting -->
-                    <div class="md:col-span-2 flex items-center gap-4 flex-wrap">
+                    <!-- Filename -->
+                    <div class="flex flex-col md:flex-row gap-2 md:items-center mt-3">
                         <label class="text-sm text-gray-400 font-bold min-w-[80px]">文件名</label>
-                        <input type="text" id="gistFilename" value="calendar-data.json" class="px-4 py-2.5 rounded-lg w-48">
-                        <span class="text-xs text-gray-500 font-semibold">Gist 中显示的 JSON 文件名</span>
+                        <input type="text" id="gistFilename" value="calendar-data.json" class="w-full md:w-48">
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div class="md:col-span-2 flex gap-3 flex-wrap">
-                        <button onclick="calendar.saveToGist()" class="gist-btn px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold">
+                    <!-- Actions -->
+                    <div class="flex gap-2 mt-4 flex-wrap">
+                        <button onclick="calendar.saveToGist()" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                             保存到 Gist
                         </button>
-                        <button onclick="calendar.loadFromGist()" class="btn-secondary px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold">
+                        <button onclick="calendar.loadFromGist()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            从 Gist 读取
+                            读取
                         </button>
-                        <button onclick="calendar.openGistLink()" class="btn-secondary px-6 py-2.5 rounded-lg flex items-center gap-2 font-bold text-sm">
+                        <button onclick="calendar.openGistLink()" class="btn-secondary px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            打开 Gist 链接
+                            打开链接
                         </button>
                     </div>
-                </div>
-                
-                <!-- Status & Gist Info -->
-                <div id="gistStatus" class="hidden text-sm font-bold"></div>
-                <div id="currentGistInfo" class="hidden flex items-center gap-3 flex-wrap">
-                    <span class="text-gray-500 font-bold text-sm">当前 Gist:</span>
-                    <span id="currentGistId" class="gist-id-display text-sm"></span>
-                    <button onclick="calendar.copyGistUrl()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold underline">
-                        复制链接
-                    </button>
+                    
+                    <!-- Status -->
+                    <div id="gistStatus" class="hidden text-sm font-bold mt-3"></div>
+                    
+                    <!-- Current Gist Info -->
+                    <div id="currentGistInfo" class="hidden mt-3">
+                        <div class="current-gist-bar flex-wrap">
+                            <span class="text-gray-400 font-bold text-xs uppercase">当前 Gist</span>
+                            <span id="currentGistId" class="gist-id-display"></span>
+                            <button onclick="calendar.copyGistUrl()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold underline ml-auto">
+                                复制链接
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Calendar Grid -->
-        <div id="calendarContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div id="calendarContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             <!-- Months will be generated here -->
         </div>
 
         <!-- Stats -->
-        <div class="glass-panel rounded-2xl p-6 mt-6 animate-in" style="animation-delay: 0.3s">
-            <h3 class="text-xl font-black text-white mb-5 tracking-tight">年度统计</h3>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="statsContainer">
+        <div class="glass-panel p-4 md:p-6 mt-4 md:mt-6 animate-in" style="animation-delay: 0.2s">
+            <h3 class="text-lg font-black text-white mb-4 tracking-tight">年度统计</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="statsContainer">
                 <!-- Stats will be generated here -->
             </div>
         </div>
@@ -393,12 +525,11 @@
                     '#22c55e': '绿色',
                     '#06b6d4': '青色',
                     '#3b82f6': '蓝色',
-                    '#8b5cf6': '紫色',
-                    '#ec4899': '粉色',
-                    '#6b7280': '灰色'
+                    '#8b5cf6': '紫色'
                 };
-                this.gistMode = 'anonymous'; // 'anonymous' or 'authenticated'
+                this.gistMode = 'anonymous';
                 this.currentGistId = localStorage.getItem('currentGistId') || '';
+                this.settingsOpen = false;
                 
                 this.init();
             }
@@ -419,15 +550,31 @@
                 });
             }
 
+            toggleSettings() {
+                this.settingsOpen = !this.settingsOpen;
+                const panel = document.getElementById('settingsPanel');
+                const btn = document.getElementById('settingsToggleBtn');
+                const btnText = document.getElementById('settingsBtnText');
+                
+                if (this.settingsOpen) {
+                    panel.classList.add('open');
+                    btn.classList.add('active');
+                    btnText.textContent = '收起设置';
+                } else {
+                    panel.classList.remove('open');
+                    btn.classList.remove('active');
+                    btnText.textContent = '设置';
+                }
+            }
+
             setGistMode(mode) {
                 this.gistMode = mode;
-                document.getElementById('modeAnonymous').classList.toggle('mode-active', mode === 'anonymous');
-                document.getElementById('modeAuth').classList.toggle('mode-active', mode === 'authenticated');
+                document.getElementById('modeAnonymous').classList.toggle('active', mode === 'anonymous');
+                document.getElementById('modeAuth').classList.toggle('active', mode === 'authenticated');
                 
                 document.getElementById('anonymousPanel').classList.toggle('hidden', mode !== 'anonymous');
                 document.getElementById('authPanel').classList.toggle('hidden', mode !== 'authenticated');
                 
-                // Sync gistId between modes
                 if (mode === 'anonymous') {
                     document.getElementById('gistId').value = document.getElementById('gistIdAuth').value;
                 } else {
@@ -455,8 +602,8 @@
                 
                 months.forEach((month, index) => {
                     const monthDiv = document.createElement('div');
-                    monthDiv.className = 'month-card p-4 animate-in';
-                    monthDiv.style.animationDelay = `${index * 0.05}s`;
+                    monthDiv.className = 'month-card animate-in';
+                    monthDiv.style.animationDelay = `${index * 0.03}s`;
                     
                     const firstDay = new Date(this.currentYear, index, 1);
                     const lastDay = new Date(this.currentYear, index + 1, 0);
@@ -464,12 +611,12 @@
                     const startingDay = firstDay.getDay();
                     
                     let html = `
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="month-title text-2xl">${month}</h2>
-                            <span class="text-sm text-gray-600 font-bold">${this.currentYear}</span>
+                        <div class="flex justify-between items-center mb-3">
+                            <h2 class="month-title">${month}</h2>
+                            <span class="text-xs text-gray-600 font-bold">${this.currentYear}</span>
                         </div>
-                        <div class="calendar-grid mb-2">
-                            ${weekDays.map(day => `<div class="weekday-header text-center py-1">${day}</div>`).join('')}
+                        <div class="calendar-grid mb-1">
+                            ${weekDays.map(day => `<div class="weekday-header">${day}</div>`).join('')}
                         </div>
                         <div class="calendar-grid">
                     `;
@@ -483,7 +630,7 @@
                         const marked = this.markedDates[dateKey];
                         
                         let style = '';
-                        let textColor = 'color: #d0d0d0;';
+                        let textColor = 'color: #a0a0a0;';
                         let indicator = '';
                         
                         if (marked) {
@@ -493,10 +640,7 @@
                         }
                         
                         html += `
-                            <div class="day-cell rounded-lg flex items-center justify-center shadow-sm"
-                                 style="${style} ${textColor}"
-                                 onclick="calendar.toggleDate('${dateKey}')"
-                                 data-date="${dateKey}">
+                            <div class="day-cell" style="${style} ${textColor}" onclick="calendar.toggleDate('${dateKey}')" data-date="${dateKey}">
                                 ${day}
                                 ${indicator}
                             </div>
@@ -545,12 +689,12 @@
                     const colorCode = Object.keys(this.colors).find(key => this.colors[key] === color) || '#374151';
                     const isUnmarked = color === '未标注';
                     return `
-                        <div class="stat-card flex items-center gap-3 p-4 rounded-xl">
-                            <div class="w-5 h-5 rounded-full shadow-lg ${isUnmarked ? 'bg-gray-800 border-2 border-gray-700' : ''}" 
-                                 style="${!isUnmarked ? `background-color: ${colorCode}; box-shadow: 0 0 12px ${colorCode}50;` : ''}"></div>
+                        <div class="stat-card">
+                            <div class="w-4 h-4 rounded-full flex-shrink-0 ${isUnmarked ? 'bg-gray-800 border border-gray-700' : ''}" 
+                                 style="${!isUnmarked ? `background-color: ${colorCode}; box-shadow: 0 0 8px ${colorCode}40;` : ''}"></div>
                             <div>
-                                <div class="text-xs text-gray-600 font-bold uppercase tracking-wider">${color}</div>
-                                <div class="text-2xl font-black text-white">${count}<span class="text-sm text-gray-600 ml-1">天</span></div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">${color}</div>
+                                <div class="text-xl font-black text-white">${count}<span class="text-xs text-gray-600 ml-1">天</span></div>
                             </div>
                         </div>
                     `;
@@ -581,6 +725,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                this.showStatus('✓ 已导出文件', 'success');
             }
 
             importData(input) {
@@ -595,9 +740,9 @@
                         this.renderCalendar();
                         this.updateStats();
                         this.saveToLocal();
-                        alert('数据导入成功！');
+                        this.showStatus('✓ 导入成功', 'success');
                     } catch (err) {
-                        alert('文件格式错误，请上传有效的 JSON 文件');
+                        alert('文件格式错误');
                     }
                 };
                 reader.readAsText(file);
@@ -605,15 +750,15 @@
             }
 
             clearAll() {
-                if (confirm('确定要清空所有标注吗？此操作不可恢复。')) {
+                if (confirm('确定清空所有标注？')) {
                     this.markedDates = {};
                     this.renderCalendar();
                     this.updateStats();
                     this.saveToLocal();
+                    this.showStatus('✓ 已清空', 'success');
                 }
             }
 
-            // Gist Settings
             saveGistSettings() {
                 const settings = {
                     mode: this.gistMode,
@@ -640,9 +785,10 @@
             }
 
             getGistId() {
-                return this.gistMode === 'anonymous' 
+                const id = this.gistMode === 'anonymous' 
                     ? document.getElementById('gistId').value.trim()
                     : document.getElementById('gistIdAuth').value.trim();
+                return id;
             }
 
             showGistInfo(gistId) {
@@ -662,10 +808,9 @@
                 };
                 status.className = `text-sm font-bold ${colors[type] || colors.info}`;
                 status.textContent = message;
-                setTimeout(() => status.classList.add('hidden'), 5000);
+                setTimeout(() => status.classList.add('hidden'), 3000);
             }
 
-            // Gist API Operations
             async saveToGist() {
                 this.saveGistSettings();
                 const token = this.gistMode === 'authenticated' ? document.getElementById('githubToken').value : null;
@@ -677,41 +822,26 @@
                     return;
                 }
 
-                this.showStatus('正在保存到 Gist...', 'info');
+                this.showStatus('保存中...', 'info');
 
                 const content = JSON.stringify(this.markedDates, null, 2);
                 const body = {
-                    description: `Color Calendar Data - ${new Date().toLocaleString()}`,
-                    public: this.gistMode === 'anonymous', // 匿名必须是 public
+                    description: `Color Calendar - ${new Date().toLocaleDateString()}`,
+                    public: this.gistMode === 'anonymous',
                     files: {
-                        [filename]: {
-                            content: content
-                        }
+                        [filename]: { content: content }
                     }
                 };
 
                 try {
-                    let url;
-                    let method;
+                    let url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
+                    let method = gistId ? 'PATCH' : 'POST';
                     
-                    if (gistId) {
-                        // Update existing gist
-                        url = `https://api.github.com/gists/${gistId}`;
-                        method = 'PATCH';
-                    } else {
-                        // Create new gist
-                        url = 'https://api.github.com/gists';
-                        method = 'POST';
-                    }
-
                     const headers = {
                         'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json'
                     };
-                    
-                    if (token) {
-                        headers['Authorization'] = `token ${token}`;
-                    }
+                    if (token) headers['Authorization'] = `token ${token}`;
 
                     const res = await fetch(url, {
                         method: method,
@@ -722,25 +852,16 @@
                     if (res.ok) {
                         const data = await res.json();
                         this.showGistInfo(data.id);
-                        
-                        // Update input fields with new ID
                         document.getElementById('gistId').value = data.id;
                         document.getElementById('gistIdAuth').value = data.id;
                         this.saveGistSettings();
-                        
-                        const action = gistId ? '更新' : '创建';
-                        this.showStatus(`✓ 成功${action} Gist: ${data.id.substring(0, 8)}...`, 'success');
-                        
-                        // Show link for anonymous gists
-                        if (this.gistMode === 'anonymous') {
-                            console.log('Gist URL:', data.html_url);
-                        }
+                        this.showStatus(gistId ? '✓ 已更新' : '✓ 已创建', 'success');
                     } else {
                         const err = await res.json();
                         throw new Error(err.message);
                     }
                 } catch (err) {
-                    this.showStatus('✗ 保存失败: ' + err.message, 'error');
+                    this.showStatus('✗ 失败: ' + err.message, 'error');
                 }
             }
 
@@ -753,43 +874,37 @@
                     return;
                 }
 
-                this.showStatus('正在从 Gist 读取...', 'info');
+                this.showStatus('读取中...', 'info');
 
                 try {
                     const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                        headers: { 'Accept': 'application/vnd.github.v3+json' }
                     });
 
                     if (res.ok) {
                         const data = await res.json();
                         const file = data.files[filename];
+                        if (!file) throw new Error('文件不存在');
                         
-                        if (!file) {
-                            throw new Error(`文件 "${filename}" 不存在于此 Gist`);
-                        }
-                        
-                        const content = file.content;
-                        this.markedDates = JSON.parse(content);
+                        this.markedDates = JSON.parse(file.content);
                         this.renderCalendar();
                         this.updateStats();
                         this.saveToLocal();
                         this.showGistInfo(gistId);
-                        this.showStatus('✓ 成功读取 Gist 数据', 'success');
+                        this.showStatus('✓ 读取成功', 'success');
                     } else {
                         const err = await res.json();
                         throw new Error(err.message);
                     }
                 } catch (err) {
-                    this.showStatus('✗ 读取失败: ' + err.message, 'error');
+                    this.showStatus('✗ 失败: ' + err.message, 'error');
                 }
             }
 
             openGistLink() {
                 const gistId = this.currentGistId || this.getGistId();
                 if (!gistId) {
-                    alert('没有可用的 Gist ID');
+                    alert('没有 Gist ID');
                     return;
                 }
                 window.open(`https://gist.github.com/${gistId}`, '_blank');
@@ -798,10 +913,8 @@
             copyGistUrl() {
                 const gistId = this.currentGistId || this.getGistId();
                 if (!gistId) return;
-                
-                const url = `https://gist.github.com/${gistId}`;
-                navigator.clipboard.writeText(url).then(() => {
-                    this.showStatus('✓ 链接已复制到剪贴板', 'success');
+                navigator.clipboard.writeText(`https://gist.github.com/${gistId}`).then(() => {
+                    this.showStatus('✓ 已复制', 'success');
                 });
             }
         }
