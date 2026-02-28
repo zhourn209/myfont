@@ -253,7 +253,7 @@
             text-decoration: underline;
         }
 
-        /* 三栏卡片 */
+        /* 三栏卡片 - 不同背景色 */
         .dashboard {
             display: flex;
             flex-direction: column;
@@ -261,11 +261,79 @@
         }
 
         .column {
-            background: white;
             border-radius: 28px;
             padding: 18px 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #e9eef2;
+            border: 2px solid;
+        }
+
+        /* 进行中 - 暖橙色 */
+        .col-watching {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-color: #fed7aa;
+        }
+
+        .col-watching .column-header {
+            color: #c2410c;
+            border-bottom-color: #fb923c;
+        }
+
+        .col-watching .count-badge {
+            background: #ffedd5;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+
+        .col-watching .empty-message {
+            background: rgba(255, 247, 237, 0.8);
+            border-color: #fed7aa;
+            color: #c2410c;
+        }
+
+        /* 已完成 - 青绿色 */
+        .col-completed {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #86efac;
+        }
+
+        .col-completed .column-header {
+            color: #15803d;
+            border-bottom-color: #4ade80;
+        }
+
+        .col-completed .count-badge {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+
+        .col-completed .empty-message {
+            background: rgba(240, 253, 244, 0.8);
+            border-color: #86efac;
+            color: #15803d;
+        }
+
+        /* 计划中 - 天蓝色 */
+        .col-planned {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #93c5fd;
+        }
+
+        .col-planned .column-header {
+            color: #1d4ed8;
+            border-bottom-color: #60a5fa;
+        }
+
+        .col-planned .count-badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #93c5fd;
+        }
+
+        .col-planned .empty-message {
+            background: rgba(239, 246, 255, 0.8);
+            border-color: #93c5fd;
+            color: #1d4ed8;
         }
 
         .column-header {
@@ -279,32 +347,98 @@
             font-weight: 700;
         }
 
-        .col-watching .column-header {
-            color: #b45309;
-            border-bottom-color: #fbbf24;
-        }
-        .col-completed .column-header {
-            color: #0b5e42;
-            border-bottom-color: #34d399;
-        }
-        .col-planned .column-header {
-            color: #1e4b8b;
-            border-bottom-color: #60a5fa;
-        }
-
         .count-badge {
-            background: #e9eef2;
             padding: 4px 12px;
             border-radius: 30px;
             font-size: 16px;
             font-weight: 500;
         }
 
+        /* 已完成板块的子分类 - 各自不同背景色 */
         .subcategory-section {
-            background: #f8fafc;
             border-radius: 20px;
             padding: 14px 12px;
             margin-bottom: 16px;
+            border: 2px solid;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 欧美剧 - 浅紫色调 */
+        .subcategory-usuk {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-color: #d8b4fe;
+        }
+
+        .subcategory-usuk .subcategory-title {
+            color: #7e22ce;
+        }
+
+        .subcategory-usuk .subcategory-title .count-badge {
+            background: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #d8b4fe;
+        }
+
+        .subcategory-usuk .movie-item {
+            border-color: #e9d5ff;
+        }
+
+        .subcategory-usuk .empty-message {
+            background: rgba(250, 245, 255, 0.8);
+            border-color: #d8b4fe;
+            color: #7e22ce;
+        }
+
+        /* 日韩剧 - 浅粉色调 */
+        .subcategory-asia {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            border-color: #f9a8d4;
+        }
+
+        .subcategory-asia .subcategory-title {
+            color: #be185d;
+        }
+
+        .subcategory-asia .subcategory-title .count-badge {
+            background: #fce7f3;
+            color: #be185d;
+            border: 1px solid #f9a8d4;
+        }
+
+        .subcategory-asia .movie-item {
+            border-color: #fbcfe8;
+        }
+
+        .subcategory-asia .empty-message {
+            background: rgba(253, 242, 248, 0.8);
+            border-color: #f9a8d4;
+            color: #be185d;
+        }
+
+        /* 电影 - 浅琥珀/金色调 */
+        .subcategory-movie {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: #fcd34d;
+        }
+
+        .subcategory-movie .subcategory-title {
+            color: #b45309;
+        }
+
+        .subcategory-movie .subcategory-title .count-badge {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .subcategory-movie .movie-item {
+            border-color: #fde68a;
+        }
+
+        .subcategory-movie .empty-message {
+            background: rgba(255, 251, 235, 0.8);
+            border-color: #fcd34d;
+            color: #b45309;
         }
 
         .subcategory-title {
@@ -314,7 +448,6 @@
             margin-bottom: 10px;
             font-size: 18px;
             font-weight: 600;
-            color: #2c3e50;
         }
 
         .movie-list, .subcategory-list {
@@ -327,7 +460,7 @@
         .movie-item {
             background: white;
             border-radius: 24px;
-            border: 1px solid #e9eef2;
+            border: 1px solid;
             display: flex;
             align-items: center;
             padding: 8px 8px 8px 14px;
@@ -336,9 +469,18 @@
             transition: transform 0.1s;
         }
 
+        /* 不同板块的条目边框色 */
+        .col-watching .movie-item {
+            border-color: #fed7aa;
+        }
+
+        .col-planned .movie-item {
+            border-color: #bfdbfe;
+        }
+
         .movie-item:active {
-            background: #f1f5f9;
             transform: scale(0.99);
+            filter: brightness(0.98);
         }
 
         .movie-title {
@@ -401,13 +543,11 @@
         }
 
         .empty-message {
-            color: #94a3b8;
             text-align: center;
             padding: 16px 12px;
-            background: #f1f5f9;
             border-radius: 30px;
             font-size: 14px;
-            border: 1px dashed #cbd5e1;
+            border: 1px dashed;
         }
 
         .footer-note {
@@ -566,7 +706,7 @@
     </div>
 
     <div class="dashboard">
-        <!-- 进行中 -->
+        <!-- 进行中 - 暖橙色 -->
         <div class="column col-watching">
             <div class="column-header">
                 <span>⏳ 进行中</span>
@@ -575,29 +715,32 @@
             <ul class="movie-list" id="listWatching"></ul>
         </div>
 
-        <!-- 已完成 -->
+        <!-- 已完成 - 青绿色 -->
         <div class="column col-completed">
             <div class="column-header">
                 <span>✅ 已完成</span>
                 <span class="count-badge" id="countCompleted">0</span>
             </div>
             <div>
-                <div class="subcategory-section">
+                <!-- 欧美剧 - 浅紫色 -->
+                <div class="subcategory-section subcategory-usuk">
                     <div class="subcategory-title"><span>🌍 欧美剧</span><span class="count-badge" id="countUsuk">0</span></div>
                     <ul class="subcategory-list" id="listUsuk"></ul>
                 </div>
-                <div class="subcategory-section">
+                <!-- 日韩剧 - 浅粉色 -->
+                <div class="subcategory-section subcategory-asia">
                     <div class="subcategory-title"><span>🌸 日韩剧</span><span class="count-badge" id="countAsia">0</span></div>
                     <ul class="subcategory-list" id="listAsia"></ul>
                 </div>
-                <div class="subcategory-section">
+                <!-- 电影 - 浅琥珀色 -->
+                <div class="subcategory-section subcategory-movie">
                     <div class="subcategory-title"><span>🎞️ 电影</span><span class="count-badge" id="countMovie">0</span></div>
                     <ul class="subcategory-list" id="listMovie"></ul>
                 </div>
             </div>
         </div>
 
-        <!-- 计划中 -->
+        <!-- 计划中 - 天蓝色 -->
         <div class="column col-planned">
             <div class="column-header">
                 <span>📅 计划中</span>
@@ -709,7 +852,6 @@
 
         // ========== GitHub Gist API 操作 ==========
         
-        // 创建新的 Gist
         async function createGist(token, data) {
             const response = await fetch('https://api.github.com/gists', {
                 method: 'POST',
@@ -720,7 +862,7 @@
                 },
                 body: JSON.stringify({
                     description: GIST_DESCRIPTION,
-                    public: false, // 私密 Gist
+                    public: false,
                     files: {
                         [GIST_FILENAME]: {
                             content: JSON.stringify(data, null, 2)
@@ -737,7 +879,6 @@
             return await response.json();
         }
 
-        // 更新现有 Gist
         async function updateGist(token, gistId, data) {
             const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                 method: 'PATCH',
@@ -764,7 +905,6 @@
             return await response.json();
         }
 
-        // 获取 Gist 内容
         async function getGist(token, gistId) {
             const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                 method: 'GET',
@@ -789,7 +929,6 @@
                 throw new Error('Gist 中没有找到数据文件');
             }
 
-            // 获取文件内容
             const contentResponse = await fetch(file.raw_url);
             const content = await contentResponse.text();
             
@@ -800,7 +939,6 @@
             };
         }
 
-        // 验证 Token 有效性
         async function validateToken(token) {
             const response = await fetch('https://api.github.com/user', {
                 headers: {
@@ -836,7 +974,6 @@
             renderAll();
         }
 
-        // 智能合并数据
         function mergeData(local, remote) {
             const merged = {
                 watching: [...new Set([...local.watching, ...remote.watching])],
@@ -850,7 +987,6 @@
             return merged;
         }
 
-        // 连接到 GitHub
         async function connectToGitHub() {
             const token = document.getElementById('githubToken').value.trim();
             let gistId = document.getElementById('gistId').value.trim();
@@ -863,7 +999,6 @@
             updateSyncStatus('syncing', '连接中...');
 
             try {
-                // 验证 Token
                 const isValid = await validateToken(token);
                 if (!isValid) {
                     throw new Error('Token 无效，请检查是否正确');
@@ -871,7 +1006,6 @@
 
                 syncState.token = token;
 
-                // 如果没有 Gist ID，创建新的
                 if (!gistId) {
                     showToast('正在创建新的 Gist...', 'warning');
                     const data = getCurrentData();
@@ -880,13 +1014,11 @@
                     document.getElementById('gistId').value = gistId;
                     showToast(`✅ 已创建新的 Gist: ${gistId}`);
                 } else {
-                    // 验证 Gist 是否存在
                     try {
                         await getGist(token, gistId);
                         showToast('✅ 已连接到现有 Gist');
                     } catch (e) {
                         if (e.message.includes('不存在')) {
-                            // Gist 不存在，创建新的
                             showToast('Gist 不存在，正在创建新的...', 'warning');
                             const data = getCurrentData();
                             const gist = await createGist(token, data);
@@ -902,7 +1034,6 @@
                 syncState.gistId = gistId;
                 syncState.connected = true;
                 
-                // 保存到 localStorage
                 localStorage.setItem('github_sync_config', JSON.stringify({
                     token: token,
                     gistId: gistId,
@@ -920,7 +1051,6 @@
             }
         }
 
-        // 上传到云端
         async function syncUp() {
             if (!syncState.connected) return;
 
@@ -941,7 +1071,6 @@
             }
         }
 
-        // 从云端下载
         async function syncDown(force = false) {
             if (!syncState.connected) return;
 
@@ -952,14 +1081,12 @@
                 const remoteData = result.data;
                 const localData = getCurrentData();
 
-                // 检查是否有数据差异
                 const hasChanges = 
                     JSON.stringify(localData.watching) !== JSON.stringify(remoteData.watching) ||
                     JSON.stringify(localData.completed) !== JSON.stringify(remoteData.completed) ||
                     JSON.stringify(localData.planned) !== JSON.stringify(remoteData.planned);
 
                 if (hasChanges && !force) {
-                    // 显示冲突解决对话框
                     showConflictModal(remoteData);
                     updateSyncStatus('online', '需要解决冲突');
                     return;
@@ -977,15 +1104,13 @@
             }
         }
 
-        // 显示冲突解决对话框
         function showConflictModal(remoteData) {
             const modal = document.getElementById('conflictModal');
             modal.classList.add('show');
             
-            // 绑定按钮事件
             document.getElementById('keepLocalBtn').onclick = () => {
                 modal.classList.remove('show');
-                syncUp(); // 上传本地版本覆盖云端
+                syncUp();
             };
             
             document.getElementById('keepCloudBtn').onclick = () => {
@@ -1002,7 +1127,7 @@
                 const localData = getCurrentData();
                 const merged = mergeData(localData, remoteData);
                 loadData(merged);
-                syncUp(); // 合并后上传
+                syncUp();
                 showToast('✅ 已合并并上传');
             };
             
@@ -1012,7 +1137,6 @@
             };
         }
 
-        // 自动同步切换
         function toggleAutoSync() {
             syncState.autoSync = !syncState.autoSync;
             const btn = document.getElementById('autoSyncBtn');
@@ -1021,8 +1145,6 @@
                 btn.textContent = '🔄 自动同步: 开';
                 btn.style.background = 'rgba(16, 185, 129, 0.3)';
                 showToast('已开启自动同步（编辑后 3 秒自动上传）');
-                
-                // 设置自动同步监听器
                 setupAutoSyncListener();
             } else {
                 btn.textContent = '🔄 自动同步';
@@ -1030,7 +1152,6 @@
                 showToast('已关闭自动同步');
             }
             
-            // 保存配置
             const config = JSON.parse(localStorage.getItem('github_sync_config') || '{}');
             config.autoSync = syncState.autoSync;
             localStorage.setItem('github_sync_config', JSON.stringify(config));
@@ -1038,7 +1159,6 @@
 
         let autoSyncTimer = null;
         function setupAutoSyncListener() {
-            // 监听数据变化，延迟 3 秒后自动上传
             const observer = new MutationObserver(() => {
                 if (!syncState.autoSync || !syncState.connected) return;
                 
@@ -1055,7 +1175,6 @@
             observer.observe(document.getElementById('listPlanned'), { childList: true, subtree: true });
         }
 
-        // 断开连接
         function disconnect() {
             syncState = {
                 connected: false,
@@ -1075,7 +1194,6 @@
             showToast('已断开连接');
         }
 
-        // 更新按钮状态
         function updateButtonStates() {
             const connected = syncState.connected;
             document.getElementById('connectBtn').disabled = connected;
@@ -1088,7 +1206,6 @@
             document.getElementById('gistId').disabled = connected;
         }
 
-        // 恢复保存的配置
         function restoreSyncConfig() {
             const config = localStorage.getItem('github_sync_config');
             if (config) {
@@ -1098,7 +1215,6 @@
                     document.getElementById('gistId').value = parsed.gistId || '';
                     
                     if (parsed.token && parsed.gistId) {
-                        // 自动连接
                         connectToGitHub();
                         
                         if (parsed.autoSync) {
@@ -1267,7 +1383,6 @@
             }
         }
 
-        // ========== 导出备份 ==========
         function exportBackup() {
             const data = getCurrentData();
             
@@ -1290,7 +1405,6 @@
             alert(`✅ 已导出到：${fileName}\n（保存在浏览器下载目录中）`);
         }
 
-        // ========== 导入备份 ==========
         function importBackup(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1313,7 +1427,6 @@
             reader.readAsText(file);
         }
 
-        // ========== 事件绑定 ==========
         document.getElementById('addBtn').onclick = () => {
             const title = document.getElementById('newTitle').value.trim();
             if (!title) return alert('请输入剧名');
@@ -1341,16 +1454,13 @@
         
         document.getElementById('mainCategory').addEventListener('change', toggleSubcategorySelect);
 
-        // GitHub 同步按钮事件
         document.getElementById('connectBtn').onclick = connectToGitHub;
         document.getElementById('syncUpBtn').onclick = syncUp;
         document.getElementById('syncDownBtn').onclick = () => syncDown(false);
         document.getElementById('autoSyncBtn').onclick = toggleAutoSync;
         document.getElementById('disconnectBtn').onclick = disconnect;
 
-        // ========== 初始化数据 ==========
         function initializeData() {
-            // 进行中
             watchingTitles = [
                 "不期而淤S01E04", "FBI:国际 S01E01", "FBI:通缉要犯S01E01*", "FBI联邦调查局S06E05",
                 "尝试S01E02 *>", "城堡岩S01E01 5:00", "菜鸟老警S06E04", "都铎王朝S01E09",
@@ -1366,7 +1476,6 @@
                 "闲着干嘛呢 202502221116", "1 2 3 4 姜食堂1 花样青春winner篇 5 6姜食堂2 姜食堂3 冰岛的三餐 7 李食堂 8 春季露营"
             ];
 
-            // 欧美剧
             const rawUsuk = [
                 "1899 S01E08*", "1992 S01E10*", "9号秘事S09E06剧终*", "爱，死亡和机器人S04E10*",
                 "矮子毒枭S03E13*", "安多S02E12*", "安检.但愿君心似我心 S04E06*", "安妮[希尔斯堡惨案]E04",
@@ -1421,7 +1530,6 @@
             ];
             completed.usuk = rawUsuk.map(cleanAsterisk).filter(t => t !== '');
 
-            // 日韩剧
             const rawAsia = [
                 "1%的可能性[2016]*", "365：逆转命运的1年*", "W*两个世界*", "爱填满空白*", "奔向爱情Run On16集全*",
                 "毕业*", "不需要爱的夏天*", "布拉格恋人*", "超能异族*", "初恋[满岛光]*", "春夜*", "单恋原声带*",
@@ -1445,7 +1553,6 @@
             ];
             completed.asia = rawAsia.map(cleanAsterisk).filter(t => t !== '');
 
-            // 电影
             const rawMovie = [
                 "2012*", "阿修罗*", "爱因斯坦与爱丁顿*", "爱情奇遇记*", "奥林匹亚街区*", "八面埋伏*",
                 "疤面煞星*", "卑劣的街头*", "必死剑鸟刺*", "必胜球探*", "编号24 Nr. 24*", "兵临城下*",
@@ -1474,7 +1581,6 @@
             ];
             completed.movie = rawMovie.map(cleanAsterisk).filter(t => t !== '');
 
-            // 计划中
             plannedTitles = [
                 "死的赞美",
                 "待： 丹麦剧*怀疑  柏林之狗 第十三位使徒 功勋：李延年 我们的父辈  孤独的  达奇与莉莉   萨布丽娜的惊心冒险/河谷镇 间谍之妻",
@@ -1505,8 +1611,6 @@
 
             renderAll();
             toggleSubcategorySelect();
-            
-            // 恢复同步配置
             restoreSyncConfig();
         }
 
