@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>ZenNote | 极简便签 (导入导出版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenNote | 极简便签</title>
     <style>
         * {
             margin: 0;
@@ -72,8 +72,6 @@
             color: var(--text-primary);
             overflow-x: hidden;
             font-weight: 500;
-            transform: translateZ(0);
-            backface-visibility: hidden;
         }
 
         .bg-animation {
@@ -109,7 +107,6 @@
             padding: 20px;
             position: relative;
             z-index: 1;
-            transform: translateZ(0);
         }
 
         header {
@@ -149,9 +146,7 @@
 
         .header-actions {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
+            gap: 12px;
         }
 
         .btn-icon {
@@ -308,8 +303,7 @@
 
         .sync-actions {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .btn-small {
@@ -358,8 +352,6 @@
             position: relative;
             overflow: hidden;
             user-select: none;
-            transform: translateZ(0);
-            will-change: transform;
         }
 
         /* 拖拽状态 */
@@ -598,7 +590,6 @@
             z-index: 1000;
             padding: 20px;
             overflow-y: auto;
-            transform: translateZ(0);
         }
 
         .modal.active {
@@ -737,8 +728,6 @@
             font-family: inherit;
             transition: all 0.3s ease;
             font-weight: 600;
-            transform: translateZ(0);
-            will-change: contents;
         }
 
         .editor-content:focus {
@@ -751,7 +740,7 @@
             font-weight: 500;
         }
 
-        /* 颜色选择器 */
+        /* 颜色选择器 - 更多颜色 */
         .color-picker {
             display: flex;
             gap: 10px;
@@ -807,6 +796,7 @@
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
 
+        /* 颜色定义 */
         .color-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
         .color-sky { background: linear-gradient(135deg, #0ea5e9, #0369a1); }
         .color-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
@@ -1093,11 +1083,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        /* 隐藏的文件上传输入框 */
-        .hidden-file-input {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -1110,15 +1095,10 @@
                 <span>ZenNote</span>
             </div>
             <div class="header-actions">
-                <button class="btn-icon" onclick="exportNotes()" title="导出便签为JSON文件">📤</button>
-                <button class="btn-icon" onclick="document.getElementById('importFile').click()" title="从JSON文件导入便签">📥</button>
                 <button class="btn-icon" onclick="toggleSettings()" title="设置">⚙️</button>
                 <button class="btn-icon" onclick="createNewNote()" title="新建便签">+</button>
             </div>
         </header>
-
-        <!-- 隐藏的文件输入框，用于导入 -->
-        <input type="file" id="importFile" class="hidden-file-input" accept=".json,application/json" onchange="importNotes(event)">
 
         <div class="settings-panel" id="settingsPanel">
             <div class="settings-title">⚙️ GitHub 同步设置</div>
@@ -1153,7 +1133,7 @@
                         <li>点击 👁️ 核对 Token 是否正确（注意是否有空格）</li>
                         <li>确认 Token 有 'gist' 权限（classic token）</li>
                         <li>检查网络连接</li>
-                        <li>如果之前用过其他版本，确认 Gist ID 正确</li>
+                        <li>如果之前用过 DeepSeek 版本，确认 Gist ID 正确</li>
                     </ul>
                 </div>
                 <div class="debug-info" id="debugInfo"></div>
@@ -1182,7 +1162,7 @@
         </div>
 
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="搜索便签..." oninput="debouncedSearch()">
+            <input type="text" id="searchInput" placeholder="搜索便签..." oninput="searchNotes()">
         </div>
 
         <div class="notes-list" id="notesList">
@@ -1205,17 +1185,17 @@
             </div>
         </div>
         <div class="editor-container">
-            <input type="text" class="editor-title" id="noteTitle" placeholder="便签标题" oninput="markUnsaved()">
+            <input type="text" class="editor-title" id="noteTitle" placeholder="便签标题">
             
             <div class="color-picker">
                 <span class="color-label">选择便签颜色</span>
                 <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')" title="蓝色"></div>
                 <div class="color-option color-sky" data-color="sky" onclick="selectColor('sky')" title="天蓝"></div>
                 <div class="color-option color-cyan" data-color="cyan" onclick="selectColor('cyan')" title="青色"></div>
-                <div class="color-option color-teal" data-color="teal" onclick="selectColor('teal')" title="teal"></div>
+                <div class="color-option color-teal" data-color="teal" onclick="selectColor('teal')" title=" teal"></div>
                 <div class="color-option color-emerald" data-color="emerald" onclick="selectColor('emerald')" title="翠绿"></div>
                 <div class="color-option color-green" data-color="green" onclick="selectColor('green')" title="绿色"></div>
-                <div class="color-option color-lime" data-color="lime" onclick="selectColor('lime')" title="lime"></div>
+                <div class="color-option color-lime" data-color="lime" onclick="selectColor('lime')" title=" lime"></div>
                 <div class="color-option color-yellow" data-color="yellow" onclick="selectColor('yellow')" title="黄色"></div>
                 <div class="color-option color-amber" data-color="amber" onclick="selectColor('amber')" title="琥珀"></div>
                 <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')" title="橙色"></div>
@@ -1229,7 +1209,7 @@
                 <div class="color-option color-gray selected" data-color="gray" onclick="selectColor('gray')" title="灰色"></div>
             </div>
 
-            <textarea class="editor-content" id="noteContent" placeholder="写点什么..." oninput="markUnsaved()"></textarea>
+            <textarea class="editor-content" id="noteContent" placeholder="写点什么..."></textarea>
         </div>
     </div>
 
@@ -1239,34 +1219,6 @@
     </div>
 
     <script>
-        // ---------- 性能优化工具函数 ----------
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        function throttle(func, limit) {
-            let inThrottle;
-            return function(...args) {
-                if (!inThrottle) {
-                    func.apply(this, args);
-                    inThrottle = true;
-                    setTimeout(() => inThrottle = false, limit);
-                }
-            };
-        }
-
-        // 检测浏览器
-        const isEdge = /Edg\//.test(navigator.userAgent);
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
         // 数据存储
         let notes = [];
         let currentNoteId = null;
@@ -1277,11 +1229,6 @@
         // 拖拽状态
         let draggedItem = null;
         let draggedIndex = null;
-        let touchItem = null;
-        let touchOffset = { x: 0, y: 0 };
-        let pendingRender = false;
-        let saveTimeout = null;
-        let unsavedChanges = false;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -1302,112 +1249,6 @@
             }
         });
 
-        // ---------- 新增：导入/导出功能 ----------
-        function exportNotes() {
-            if (notes.length === 0) {
-                showToast('没有便签可导出', 'error');
-                return;
-            }
-
-            // 创建要导出的数据对象（包含版本信息和导出时间）
-            const exportData = {
-                version: '1.0',
-                exportTime: new Date().toISOString(),
-                notes: notes
-            };
-
-            // 转换为JSON字符串（格式化）
-            const jsonStr = JSON.stringify(exportData, null, 2);
-            
-            // 创建Blob并下载
-            const blob = new Blob([jsonStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `zennote-backup-${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showToast(`成功导出 ${notes.length} 个便签`);
-        }
-
-        function importNotes(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const content = e.target.result;
-                    const imported = JSON.parse(content);
-                    
-                    // 检查格式：支持新版本（带version字段）和老版本（直接是数组）
-                    let importedNotes = [];
-                    if (Array.isArray(imported)) {
-                        // 老格式：直接是便签数组
-                        importedNotes = imported;
-                    } else if (imported.version && Array.isArray(imported.notes)) {
-                        // 新格式：包含版本信息
-                        importedNotes = imported.notes;
-                    } else {
-                        throw new Error('无法识别的文件格式');
-                    }
-
-                    if (importedNotes.length === 0) {
-                        showToast('文件中没有便签', 'error');
-                        return;
-                    }
-
-                    // 验证每个便签的必要字段
-                    const validNotes = importedNotes.filter(n => 
-                        n && typeof n === 'object' && n.id && (n.title !== undefined || n.content !== undefined)
-                    );
-
-                    if (validNotes.length === 0) {
-                        showToast('文件中没有有效的便签数据', 'error');
-                        return;
-                    }
-
-                    // 询问用户是替换还是合并
-                    if (notes.length === 0) {
-                        // 本地为空，直接替换
-                        notes = validNotes;
-                        saveToLocal();
-                        renderNotes();
-                        showToast(`成功导入 ${validNotes.length} 个便签`);
-                    } else {
-                        // 有现有数据，询问
-                        const action = confirm('选择“确定”替换所有现有便签，选择“取消”将合并导入（保留现有便签）');
-                        if (action) {
-                            // 替换
-                            notes = validNotes;
-                        } else {
-                            // 合并：去重（基于id），保留本地版本优先
-                            const existingIds = new Set(notes.map(n => n.id));
-                            const newNotes = validNotes.filter(n => !existingIds.has(n.id));
-                            notes = [...notes, ...newNotes];
-                        }
-                        saveToLocal();
-                        renderNotes();
-                        showToast(`操作完成，现有 ${notes.length} 个便签`);
-                    }
-
-                    // 标记未保存并触发自动同步
-                    unsavedChanges = true;
-                    
-                } catch (error) {
-                    console.error('导入失败:', error);
-                    showToast('导入失败：文件格式错误', 'error');
-                } finally {
-                    // 清空文件输入，以便再次导入同一个文件
-                    event.target.value = '';
-                }
-            };
-            reader.readAsText(file);
-        }
-
         // Token 显示/隐藏切换
         function toggleTokenVisibility() {
             const input = document.getElementById('githubToken');
@@ -1424,7 +1265,7 @@
             }
         }
 
-        // 发送请求
+        // 发送请求（直接访问，无代理）
         async function githubRequest(url, options = {}) {
             console.log('GitHub Request:', { url, method: options.method || 'GET' });
 
@@ -1512,84 +1353,52 @@
         function loadNotes() {
             const saved = localStorage.getItem('zen_notes');
             if (saved) {
-                try {
-                    notes = JSON.parse(saved);
-                } catch (e) {
-                    notes = [];
-                }
+                notes = JSON.parse(saved);
             }
             renderNotes();
         }
 
-        // 优化版保存到本地（带防抖）
         function saveToLocal() {
-            if (saveTimeout) clearTimeout(saveTimeout);
-            
-            saveTimeout = setTimeout(() => {
-                localStorage.setItem('zen_notes', JSON.stringify(notes));
-                saveTimeout = null;
-                
-                // 自动同步
-                if (unsavedChanges && githubToken && gistId) {
-                    unsavedChanges = false;
-                    setTimeout(() => syncToGithub(), 2000);
-                }
-            }, isEdge ? 500 : 300);
+            localStorage.setItem('zen_notes', JSON.stringify(notes));
+            renderNotes();
         }
 
-        // 标记未保存
-        function markUnsaved() {
-            unsavedChanges = true;
-        }
-
-        // 优化版渲染便签列表
+        // 渲染便签列表（带拖拽）
         function renderNotes(filter = '') {
-            if (pendingRender) return;
-            
-            pendingRender = true;
-            requestAnimationFrame(() => {
-                const list = document.getElementById('notesList');
-                const filtered = notes.filter(n => 
-                    n.title.toLowerCase().includes(filter.toLowerCase()) || 
-                    n.content.toLowerCase().includes(filter.toLowerCase())
-                );
+            const list = document.getElementById('notesList');
+            const filtered = notes.filter(n => 
+                n.title.toLowerCase().includes(filter.toLowerCase()) || 
+                n.content.toLowerCase().includes(filter.toLowerCase())
+            );
 
-                if (filtered.length === 0) {
-                    list.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <div>${filter ? '没有找到匹配的便签' : '还没有便签，点击右上角 + 创建'}</div>
-                        </div>
-                    `;
-                } else {
-                    list.innerHTML = filtered.map((note, index) => `
-                        <div class="note-item note-${note.color || 'gray'} ${currentNoteId === note.id ? 'active' : ''}" 
-                             data-id="${note.id}" 
-                             data-index="${index}"
-                             draggable="true"
-                             onclick="openNote('${note.id}')">
-                            <div class="drag-handle" onclick="event.stopPropagation()"></div>
-                            <div class="note-header">
-                                <div class="note-title">${escapeHtml(note.title) || '无标题'}</div>
-                                <div class="note-date">${formatDate(note.updated)}</div>
-                            </div>
-                            <div class="note-preview">${escapeHtml(note.content)}</div>
-                        </div>
-                    `).join('');
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>${filter ? '没有找到匹配的便签' : '还没有便签，点击右上角 + 创建'}</div>
+                    </div>
+                `;
+                return;
+            }
 
-                    // 绑定拖拽事件
-                    bindDragEvents();
-                }
-                
-                pendingRender = false;
-            });
+            list.innerHTML = filtered.map((note, index) => `
+                <div class="note-item note-${note.color || 'gray'} ${currentNoteId === note.id ? 'active' : ''}" 
+                     data-id="${note.id}" 
+                     data-index="${index}"
+                     draggable="true"
+                     onclick="openNote('${note.id}')">
+                    <div class="drag-handle" onclick="event.stopPropagation()"></div>
+                    <div class="note-header">
+                        <div class="note-title">${escapeHtml(note.title) || '无标题'}</div>
+                        <div class="note-date">${formatDate(note.updated)}</div>
+                    </div>
+                    <div class="note-preview">${escapeHtml(note.content)}</div>
+                </div>
+            `).join('');
+
+            // 绑定拖拽事件
+            bindDragEvents();
         }
-
-        // 搜索防抖
-        const debouncedSearch = debounce(() => {
-            const filter = document.getElementById('searchInput').value;
-            renderNotes(filter);
-        }, 300);
 
         // 绑定拖拽事件
         function bindDragEvents() {
@@ -1604,11 +1413,9 @@
                 item.addEventListener('dragleave', handleDragLeave);
                 
                 // 触摸支持（移动端）
-                if (isMobile) {
-                    item.addEventListener('touchstart', handleTouchStart, { passive: false });
-                    item.addEventListener('touchmove', handleTouchMove, { passive: false });
-                    item.addEventListener('touchend', handleTouchEnd);
-                }
+                item.addEventListener('touchstart', handleTouchStart, { passive: false });
+                item.addEventListener('touchmove', handleTouchMove, { passive: false });
+                item.addEventListener('touchend', handleTouchEnd);
             });
         }
 
@@ -1672,15 +1479,21 @@
                 });
                 
                 saveToLocal();
-                markUnsaved();
-                renderNotes();
                 showToast('顺序已更新');
+                
+                // 自动同步
+                if (githubToken && gistId) {
+                    setTimeout(() => syncToGithub(), 1000);
+                }
             }
             
             return false;
         }
 
         // 触摸拖拽支持
+        let touchItem = null;
+        let touchOffset = { x: 0, y: 0 };
+
         function handleTouchStart(e) {
             touchItem = this;
             const touch = e.touches[0];
@@ -1688,7 +1501,6 @@
             touchOffset.x = touch.clientX - rect.left;
             touchOffset.y = touch.clientY - rect.top;
             this.classList.add('dragging');
-            e.preventDefault();
         }
 
         function handleTouchMove(e) {
@@ -1715,6 +1527,7 @@
             const noteBelow = elementBelow?.closest('.note-item');
             
             if (noteBelow && noteBelow !== touchItem) {
+                // 模拟 drop
                 const draggedId = touchItem.dataset.id;
                 const targetId = noteBelow.dataset.id;
                 
@@ -1732,9 +1545,11 @@
                 });
                 
                 saveToLocal();
-                markUnsaved();
-                renderNotes();
                 showToast('顺序已更新');
+                
+                if (githubToken && gistId) {
+                    setTimeout(() => syncToGithub(), 1000);
+                }
             }
             
             touchItem.classList.remove('dragging');
@@ -1793,7 +1608,7 @@
                 note.updated = now;
             } else {
                 notes.push({
-                    id: 'note_' + now + '_' + Math.random().toString(36).substr(2, 9),
+                    id: 'note_' + now,
                     title: title,
                     content: content,
                     color: currentColor,
@@ -1803,11 +1618,13 @@
                 });
             }
 
-            markUnsaved();
             saveToLocal();
             closeEditor();
-            renderNotes();
             showToast('保存成功');
+            
+            if (githubToken && gistId) {
+                setTimeout(() => syncToGithub(), 1000);
+            }
         }
 
         function deleteCurrentNote() {
@@ -1818,11 +1635,13 @@
             
             if (confirm('确定要删除这个便签吗？')) {
                 notes = notes.filter(n => n.id !== currentNoteId);
-                markUnsaved();
                 saveToLocal();
                 closeEditor();
-                renderNotes();
                 showToast('删除成功');
+                
+                if (githubToken && gistId) {
+                    setTimeout(() => syncToGithub(), 1000);
+                }
             }
         }
 
@@ -1830,6 +1649,11 @@
             document.getElementById('editorModal').classList.remove('active');
             currentNoteId = null;
             currentColor = 'gray';
+        }
+
+        function searchNotes() {
+            const filter = document.getElementById('searchInput').value;
+            renderNotes(filter);
         }
 
         function toggleSettings() {
@@ -1936,7 +1760,6 @@
                     })
                 });
 
-                unsavedChanges = false;
                 showToast('已推送到 GitHub');
             } catch (error) {
                 showError('推送失败', error);
@@ -1964,7 +1787,6 @@
                     const merged = mergeNotes(notes, remoteNotes);
                     notes = merged;
                     saveToLocal();
-                    renderNotes();
                     if (!silent) showToast('已从 GitHub 拉取');
                 }
             } catch (error) {
@@ -2082,18 +1904,6 @@
                 }
             }
         });
-
-        // 页面关闭前提醒
-        window.addEventListener('beforeunload', (e) => {
-            if (unsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '有未保存的更改，确定离开？';
-            }
-        });
-
-        // 被动事件监听提高滚动性能
-        document.addEventListener('touchstart', (e) => {}, { passive: true });
-        document.addEventListener('wheel', (e) => {}, { passive: true });
     </script>
 </body>
 </html>
