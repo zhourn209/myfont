@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>天气时钟</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('https://picsum.photos/1200/600') no-repeat center/cover;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay {
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 20px 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      font-size: 18px;
+    }
+
+    .time {
+      font-size: 48px;
+      font-weight: bold;
+    }
+
+    .temp {
+      font-size: 28px;
+    }
+
+    .small {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div>
+      <div id="weather">☁️ 加载中...</div>
+      <div class="small" id="location">--</div>
+    </div>
+    <div class="time" id="time">00:00</div>
+    <div>
+      <div class="temp" id="temp">--°C</div>
+      <div class="small" id="extra">--</div>
+    </div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2,'0');
+      const m = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('time').innerText = `${h}:${m}`;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 简单天气API（无需key示例，可替换为你自己的）
+    async function loadWeather() {
+      try {
+        const res = await fetch('https://wttr.in/?format=j1');
+        const data = await res.json();
+        const current = data.current_condition[0];
+
+        document.getElementById('weather').innerText = current.weatherDesc[0].value;
+        document.getElementById('temp').innerText = current.temp_C + '°C';
+        document.getElementById('extra').innerText = '湿度 ' + current.humidity + '%';
+        document.getElementById('location').innerText = '自动定位';
+      } catch (e) {
+        document.getElementById('weather').innerText = '天气加载失败';
+      }
+    }
+
+    loadWeather();
+  </script>
+</body>
+</html>
