@@ -6,56 +6,56 @@
 <title>终极锁屏天气时钟</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  width: 2400px; /* 设置固定宽度以适合横屏 */
-  height: 1080px; /* 设置固定高度以适应横屏 */
-  font-family:'Nunito',sans-serif;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  padding:40px 20px;
-  color:#fff;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 2400px; /* 横屏固定宽度 */
+  height: 1080px; /* 横屏固定高度 */
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 20px;
+  color: #fff;
 }
-.day{background:linear-gradient(180deg,#4facfe,#00f2fe)}
-.night{background:linear-gradient(180deg,#0f2027,#000)}
-.glass{
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(25px);
-  border-radius:25px;
-  padding:15px 20px;
+.day { background: linear-gradient(180deg, #4facfe, #00f2fe); }
+.night { background: linear-gradient(180deg, #0f2027, #000); }
+.glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(25px);
+  border-radius: 25px;
+  padding: 15px 20px;
 }
 
-.top{
-  display:flex;
-  justify-content:space-between; 
-  align-items:center;
+.top {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
   width: 100%; 
 }
 
-.date-group{
-  display:flex;
-  flex-direction:column;
+.date-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.date{font-size:36px;font-weight:700} /* 放大日期 */
-.week{font-size:24px;opacity:0.8} /* 放大星期 */
-.lunar{font-size:24px;opacity:0.8} /* 放大农历字体 */
+.date { font-size: 36px; font-weight: 700; } /* 放大日期 */
+.week { font-size: 24px; opacity: 0.8; } /* 放大星期 */
+.lunar { font-size: 24px; opacity: 0.8; } /* 放大农历字体 */
 
-.city{font-size:18px;opacity:0.7;margin-top:5px} /* 增大城市字体 */
+.city { font-size: 18px; opacity: 0.7; margin-top: 5px; } /* 增大城市字体 */
 
-.time{
-  font-size:240px; /* 放大时间显示 */
-  font-weight:700;
-  text-align:center;
+.time {
+  font-size: 240px; /* 放大时间显示 */
+  font-weight: 700;
+  text-align: center;
 }
 
-.bottom{display:flex;justify-content:space-between;align-items:center}
-.weather{display:flex;gap:20px;align-items:center}
-.right{display:flex;gap:30px}
-.item{text-align:center;font-size:18px} /* 增大底部信息字体 */
-.temp-main{font-size:48px;font-weight:700} /* 放大温度字体 */
-.temp-sub{font-size:24px;opacity:0.7} /* 放大温度范围字体 */
+.bottom { display: flex; justify-content: space-between; align-items: center; }
+.weather { display: flex; gap: 20px; align-items: center; }
+.right { display: flex; gap: 30px; }
+.item { text-align: center; font-size: 18px; } /* 增大底部信息字体 */
+.temp-main { font-size: 48px; font-weight: 700; } /* 放大温度字体 */
+.temp-sub { font-size: 24px; opacity: 0.7; } /* 放大温度范围字体 */
 </style>
 </head>
 <body>
@@ -93,19 +93,19 @@ body{
 
 <script>
 function updateTime(){
-  const now=new Date();
-  const h=String(now.getHours()).padStart(2,'0');
-  const m=String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('time').innerText=`${h}:${m}`;
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('time').innerText = `${h}:${m}`;
 
-  const days=['日','一','二','三','四','五','六'];
-  document.getElementById('week').innerText='星期'+days[now.getDay()];
-  document.getElementById('date').innerText=
-    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+  const days = ['日', '一', '二', '三', '四', '五', '六'];
+  document.getElementById('week').innerText = '星期' + days[now.getDay()];
+  document.getElementById('date').innerText =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
 
-  document.body.className=(now.getHours()>=6&&now.getHours()<18)?'day':'night';
+  document.body.className = (now.getHours() >= 6 && now.getHours() < 18) ? 'day' : 'night';
 }
-setInterval(updateTime,1000);
+setInterval(updateTime, 1000);
 updateTime();
 
 // 农历获取示例（可以使用第三方库来替代此代码）
@@ -115,33 +115,33 @@ function loadLunar() {
 }
 
 // 固定城市为上海的天气信息
-async function loadWeather(cityName='Shanghai'){
-  try{
+async function loadWeather(cityName = 'Shanghai') {
+  try {
     const url = `https://wttr.in/${cityName}?format=j1`;
-    const res=await fetch(url);
-    const data=await res.json();
+    const res = await fetch(url);
+    const data = await res.json();
 
-    const c=data.current_condition[0];
-    const today=data.weather[0];
+    const c = data.current_condition[0];
+    const today = data.weather[0];
 
     document.getElementById('city').innerText = cityName;
-    document.getElementById('desc').innerText=c.weatherDesc[0].value;
-    document.getElementById('temp').innerText=c.temp_C+'°C';
-    document.getElementById('range').innerText=
-      today.mintempC+'° / '+today.maxtempC+'°';
+    document.getElementById('desc').innerText = c.weatherDesc[0].value;
+    document.getElementById('temp').innerText = c.temp_C + '°C';
+    document.getElementById('range').innerText =
+      today.mintempC + '° / ' + today.maxtempC + '°';
 
-    document.getElementById('hum').innerText=c.humidity;
-    document.getElementById('wind').innerText=c.windspeedKmph;
+    document.getElementById('hum').innerText = c.humidity;
+    document.getElementById('wind').innerText = c.windspeedKmph;
 
-    let icon='☁️';
-    const code=c.weatherCode;
-    if(code==113) icon='☀️';
-    else if(code==116) icon='⛅';
-    else if(code>=176) icon='🌧️';
-    document.getElementById('icon').innerText=icon;
+    let icon = '☁️';
+    const code = c.weatherCode;
+    if (code == 113) icon = '☀️';
+    else if (code == 116) icon = '⛅';
+    else if (code >= 176) icon = '🌧️';
+    document.getElementById('icon').innerText = icon;
 
-  }catch(e){
-    document.getElementById('desc').innerText='天气加载失败';
+  } catch (e) {
+    document.getElementById('desc').innerText = '天气加载失败';
   }
 }
 
