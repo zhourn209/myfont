@@ -19,15 +19,18 @@
             text-overflow: clip !important;
             line-height: 1.5 !important;
         }
+
         body {
             background: #f4f6fa;
             padding: 12px;
             min-height: 100vh;
         }
+
         .container {
             max-width: 600px;
             margin: 0 auto;
         }
+
         /* 头部 */
         .header {
             display: flex;
@@ -38,16 +41,19 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+
         .main-title {
             font-size: 28px;
             font-weight: 700;
             color: #1e293b;
         }
+
         .btn-group {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
+
         .btn {
             background: white;
             border: 1px solid #cbd5e1;
@@ -62,67 +68,67 @@
             white-space: nowrap;
             transition: all 0.2s;
         }
+
         .btn-primary {
             background: #8b5cf6;
             border-color: #7c3aed;
             color: white;
         }
+
         .btn-success {
             background: #10b981;
             border-color: #059669;
             color: white;
         }
+
         .btn-warning {
             background: #f59e0b;
             border-color: #d97706;
             color: white;
         }
+
         .btn:active {
             transform: scale(0.97);
             filter: brightness(0.95);
         }
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
+
         #fileImport {
             display: none;
         }
-        /* 全局统计卡片 - 置于导入导出下一排 */
-        .global-stats {
-            background: white;
-            border-radius: 32px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
+
+        /* 计数置顶区域 - 新增 */
+        .counter-section {
             display: flex;
-            justify-content: space-around;
             flex-wrap: wrap;
             gap: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+
+        .counter-item {
+            flex: 1 1 140px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 20px;
             border: 1px solid #e2e8f0;
-        }
-        .stat-card {
-            text-align: center;
-            background: #f8fafc;
-            border-radius: 28px;
-            padding: 6px 16px;
-            min-width: 80px;
-        }
-        .stat-label {
-            font-size: 13px;
+            font-size: 14px;
             color: #475569;
-            letter-spacing: 0.5px;
         }
-        .stat-number {
-            font-size: 26px;
-            font-weight: 800;
+
+        .counter-value {
+            font-weight: 700;
+            font-size: 16px;
             color: #1e293b;
-            line-height: 1.2;
         }
-        .stat-number.watching { color: #c2410c; }
-        .stat-number.completed { color: #15803d; }
-        .stat-number.planned { color: #1d4ed8; }
-        .stat-number.total { color: #6b21a5; }
+
         /* 添加面板 */
         .add-panel {
             background: white;
@@ -134,11 +140,13 @@
             gap: 12px;
             border: 1px solid #e2e8f0;
         }
+
         .add-row {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
+
         .add-panel input, .add-panel select {
             flex: 2 1 200px;
             padding: 12px 16px;
@@ -149,22 +157,27 @@
             outline: none;
             width: 100%;
         }
+
         .add-panel input:focus, .add-panel select:focus {
             border-color: #8b5cf6;
             box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
         }
+
         .add-panel select {
             flex: 1 1 120px;
         }
+
         .add-panel .btn-primary {
             width: 100%;
             justify-content: center;
             padding: 12px;
             font-size: 16px;
         }
+
         .subcategory-select.hidden {
             display: none;
         }
+
         /* GitHub 同步面板 */
         .sync-panel {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -174,6 +187,7 @@
             color: white;
             border: 1px solid rgba(255,255,255,0.2);
         }
+
         .sync-panel h3 {
             font-size: 18px;
             margin-bottom: 12px;
@@ -181,6 +195,7 @@
             align-items: center;
             gap: 8px;
         }
+
         .sync-status {
             display: inline-flex;
             align-items: center;
@@ -191,26 +206,32 @@
             background: rgba(255,255,255,0.2);
             margin-bottom: 12px;
         }
+
         .sync-status.online {
             background: rgba(16, 185, 129, 0.3);
         }
+
         .sync-status.offline {
             background: rgba(239, 68, 68, 0.3);
         }
+
         .sync-status.syncing {
             background: rgba(245, 158, 11, 0.3);
             animation: pulse 1.5s infinite;
         }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
+
         .sync-inputs {
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin-bottom: 12px;
         }
+
         .sync-inputs input {
             padding: 10px 14px;
             border-radius: 20px;
@@ -220,18 +241,22 @@
             font-size: 14px;
             outline: none;
         }
+
         .sync-inputs input::placeholder {
             color: rgba(255,255,255,0.6);
         }
+
         .sync-inputs input:focus {
             background: rgba(255,255,255,0.2);
             border-color: rgba(255,255,255,0.5);
         }
+
         .sync-actions {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
+
         .sync-actions .btn {
             background: rgba(255,255,255,0.2);
             border-color: rgba(255,255,255,0.3);
@@ -239,88 +264,106 @@
             font-size: 13px;
             padding: 8px 14px;
         }
+
         .sync-actions .btn:hover {
             background: rgba(255,255,255,0.3);
         }
+
         .sync-info {
             font-size: 12px;
             opacity: 0.9;
             margin-top: 10px;
             line-height: 1.6;
         }
+
         .sync-info a {
             color: #ffd700;
             text-decoration: underline;
         }
-        /* 三栏卡片 */
+
+        /* 三栏卡片 - 不同背景色 */
         .dashboard {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
+
         .column {
             border-radius: 28px;
             padding: 18px 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             border: 2px solid;
         }
+
         /* 进行中 - 暖橙色 */
         .col-watching {
             background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
             border-color: #fed7aa;
         }
+
         .col-watching .column-header {
             color: #c2410c;
             border-bottom-color: #fb923c;
         }
+
         .col-watching .count-badge {
             background: #ffedd5;
             color: #c2410c;
             border: 1px solid #fed7aa;
         }
+
         .col-watching .empty-message {
             background: rgba(255, 247, 237, 0.8);
             border-color: #fed7aa;
             color: #c2410c;
         }
+
         /* 已完成 - 青绿色 */
         .col-completed {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border-color: #86efac;
         }
+
         .col-completed .column-header {
             color: #15803d;
             border-bottom-color: #4ade80;
         }
+
         .col-completed .count-badge {
             background: #dcfce7;
             color: #15803d;
             border: 1px solid #86efac;
         }
+
         .col-completed .empty-message {
             background: rgba(240, 253, 244, 0.8);
             border-color: #86efac;
             color: #15803d;
         }
+
         /* 计划中 - 天蓝色 */
         .col-planned {
             background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
             border-color: #93c5fd;
         }
+
         .col-planned .column-header {
             color: #1d4ed8;
             border-bottom-color: #60a5fa;
         }
+
         .col-planned .count-badge {
             background: #dbeafe;
             color: #1d4ed8;
             border: 1px solid #93c5fd;
         }
+
         .col-planned .empty-message {
             background: rgba(239, 246, 255, 0.8);
             border-color: #93c5fd;
             color: #1d4ed8;
         }
+
         .column-header {
             display: flex;
             align-items: center;
@@ -331,13 +374,15 @@
             font-size: 22px;
             font-weight: 700;
         }
+
         .count-badge {
             padding: 4px 12px;
             border-radius: 30px;
             font-size: 16px;
             font-weight: 500;
         }
-        /* 已完成板块的子分类 */
+
+        /* 已完成板块的子分类 - 各自不同背景色 */
         .subcategory-section {
             border-radius: 20px;
             padding: 14px 12px;
@@ -345,24 +390,85 @@
             border: 2px solid;
             backdrop-filter: blur(4px);
         }
+
+        /* 欧美剧 - 浅紫色调 */
         .subcategory-usuk {
             background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
             border-color: #d8b4fe;
         }
-        .subcategory-usuk .subcategory-title { color: #7e22ce; }
-        .subcategory-usuk .subcategory-title .count-badge { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
+
+        .subcategory-usuk .subcategory-title {
+            color: #7e22ce;
+        }
+
+        .subcategory-usuk .subcategory-title .count-badge {
+            background: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #d8b4fe;
+        }
+
+        .subcategory-usuk .movie-item {
+            border-color: #e9d5ff;
+        }
+
+        .subcategory-usuk .empty-message {
+            background: rgba(250, 245, 255, 0.8);
+            border-color: #d8b4fe;
+            color: #7e22ce;
+        }
+
+        /* 日韩剧 - 浅粉色调 */
         .subcategory-asia {
             background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
             border-color: #f9a8d4;
         }
-        .subcategory-asia .subcategory-title { color: #be185d; }
-        .subcategory-asia .subcategory-title .count-badge { background: #fce7f3; color: #be185d; border: 1px solid #f9a8d4; }
+
+        .subcategory-asia .subcategory-title {
+            color: #be185d;
+        }
+
+        .subcategory-asia .subcategory-title .count-badge {
+            background: #fce7f3;
+            color: #be185d;
+            border: 1px solid #f9a8d4;
+        }
+
+        .subcategory-asia .movie-item {
+            border-color: #fbcfe8;
+        }
+
+        .subcategory-asia .empty-message {
+            background: rgba(253, 242, 248, 0.8);
+            border-color: #f9a8d4;
+            color: #be185d;
+        }
+
+        /* 电影 - 浅琥珀/金色调 */
         .subcategory-movie {
             background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
             border-color: #fcd34d;
         }
-        .subcategory-movie .subcategory-title { color: #b45309; }
-        .subcategory-movie .subcategory-title .count-badge { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+
+        .subcategory-movie .subcategory-title {
+            color: #b45309;
+        }
+
+        .subcategory-movie .subcategory-title .count-badge {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .subcategory-movie .movie-item {
+            border-color: #fde68a;
+        }
+
+        .subcategory-movie .empty-message {
+            background: rgba(255, 251, 235, 0.8);
+            border-color: #fcd34d;
+            color: #b45309;
+        }
+
         .subcategory-title {
             display: flex;
             align-items: center;
@@ -371,12 +477,14 @@
             font-size: 18px;
             font-weight: 600;
         }
+
         .movie-list, .subcategory-list {
             list-style: none;
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
+
         .movie-item {
             background: white;
             border-radius: 24px;
@@ -388,12 +496,21 @@
             min-height: 48px;
             transition: transform 0.1s;
         }
-        .col-watching .movie-item { border-color: #fed7aa; }
-        .col-planned .movie-item { border-color: #bfdbfe; }
+
+        /* 不同板块的条目边框色 */
+        .col-watching .movie-item {
+            border-color: #fed7aa;
+        }
+
+        .col-planned .movie-item {
+            border-color: #bfdbfe;
+        }
+
         .movie-item:active {
             transform: scale(0.99);
             filter: brightness(0.98);
         }
+
         .movie-title {
             flex: 1;
             font-size: 15px;
@@ -409,16 +526,19 @@
             display: block;
             width: 100%;
         }
+
         .movie-title:focus {
             background: #f0f3f8;
             border-radius: 16px;
             padding-left: 8px;
         }
+
         .item-actions {
             display: flex;
             gap: 2px;
             flex-shrink: 0;
         }
+
         .item-btn {
             background: #f1f5f9;
             border: none;
@@ -434,18 +554,22 @@
             color: #475569;
             transition: all 0.2s;
         }
+
         .item-btn:active {
             background: #cbd5e1;
             transform: scale(0.94);
         }
+
         .delete-btn:active {
             background: #fee2e2;
             color: #b91c1c;
         }
+
         .move-btn:active {
             background: #d1fae5;
             color: #0b5e42;
         }
+
         .empty-message {
             text-align: center;
             padding: 16px 12px;
@@ -453,6 +577,7 @@
             font-size: 14px;
             border: 1px dashed;
         }
+
         .footer-note {
             margin-top: 24px;
             text-align: center;
@@ -461,6 +586,8 @@
             border-top: 1px solid #e2e8f0;
             padding-top: 18px;
         }
+
+        /* 提示消息 */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -476,13 +603,17 @@
             z-index: 1000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+
         .toast.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
         .toast.warning { background: #f59e0b; }
+
+        /* 冲突解决对话框 */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -496,7 +627,11 @@
             z-index: 2000;
             padding: 20px;
         }
-        .modal-overlay.show { display: flex; }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
         .modal {
             background: white;
             border-radius: 24px;
@@ -507,11 +642,36 @@
             overflow-y: auto;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
-        .modal h3 { font-size: 20px; margin-bottom: 16px; color: #1e293b; }
-        .modal p { font-size: 14px; color: #64748b; margin-bottom: 20px; }
-        .modal-actions { display: flex; gap: 10px; flex-direction: column; }
-        .modal-actions .btn { width: 100%; justify-content: center; }
-        .last-sync-info { font-size: 11px; opacity: 0.8; margin-top: 8px; }
+
+        .modal h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #1e293b;
+        }
+
+        .modal p {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .modal-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .last-sync-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -526,15 +686,32 @@
         </div>
     </div>
 
-    <!-- 全局统计卡片：导入导出下一排，大项+子项全部紧凑显示 -->
-    <div class="global-stats" id="globalStatsBar">
-        <div class="stat-card"><div class="stat-label">🎬 进行中</div><div class="stat-number watching" id="statWatching">0</div></div>
-        <div class="stat-card"><div class="stat-label">✅ 已完成</div><div class="stat-number completed" id="statCompleted">0</div></div>
-        <div class="stat-card"><div class="stat-label">📅 计划中</div><div class="stat-number planned" id="statPlanned">0</div></div>
-        <div class="stat-card"><div class="stat-label">📀 总计</div><div class="stat-number total" id="statTotal">0</div></div>
-        <div class="stat-card"><div class="stat-label">🌍 欧美剧</div><div class="stat-number" id="statUsuk" style="color:#7e22ce">0</div></div>
-        <div class="stat-card"><div class="stat-label">🌸 日韩剧</div><div class="stat-number" id="statAsia" style="color:#be185d">0</div></div>
-        <div class="stat-card"><div class="stat-label">🎞️ 电影</div><div class="stat-number" id="statMovie" style="color:#b45309">0</div></div>
+    <!-- 计数置顶区域 - 新增 -->
+    <div class="counter-section">
+        <div class="counter-item">
+            <span>进行中</span>
+            <span class="counter-value" id="counterWatching">0</span>
+        </div>
+        <div class="counter-item">
+            <span>已完成</span>
+            <span class="counter-value" id="counterCompleted">0</span>
+        </div>
+        <div class="counter-item">
+            <span>计划中</span>
+            <span class="counter-value" id="counterPlanned">0</span>
+        </div>
+        <div class="counter-item">
+            <span>欧美剧</span>
+            <span class="counter-value" id="counterUsuk">0</span>
+        </div>
+        <div class="counter-item">
+            <span>日韩剧</span>
+            <span class="counter-value" id="counterAsia">0</span>
+        </div>
+        <div class="counter-item">
+            <span>电影</span>
+            <span class="counter-value" id="counterMovie">0</span>
+        </div>
     </div>
 
     <!-- GitHub 同步面板 -->
@@ -565,6 +742,7 @@
             <div class="last-sync-info" id="lastSyncInfo"></div>
         </div>
     </div>
+
     <!-- 添加面板 -->
     <div class="add-panel">
         <input type="text" id="newTitle" placeholder="输入剧名...">
@@ -582,39 +760,61 @@
         </div>
         <button class="btn btn-primary" id="addBtn">➕ 添加剧集</button>
     </div>
+
     <div class="dashboard">
-        <!-- 进行中 -->
+        <!-- 进行中 - 暖橙色 -->
         <div class="column col-watching">
-            <div class="column-header"><span>⏳ 进行中</span><span class="count-badge" id="countWatching">0</span></div>
+            <div class="column-header">
+                <span>⏳ 进行中</span>
+                <span class="count-badge" id="countWatching">0</span>
+            </div>
             <ul class="movie-list" id="listWatching"></ul>
         </div>
-        <!-- 已完成 -->
+
+        <!-- 已完成 - 青绿色 -->
         <div class="column col-completed">
-            <div class="column-header"><span>✅ 已完成</span><span class="count-badge" id="countCompleted">0</span></div>
+            <div class="column-header">
+                <span>✅ 已完成</span>
+                <span class="count-badge" id="countCompleted">0</span>
+            </div>
             <div>
+                <!-- 欧美剧 - 浅紫色 -->
                 <div class="subcategory-section subcategory-usuk">
                     <div class="subcategory-title"><span>🌍 欧美剧</span><span class="count-badge" id="countUsuk">0</span></div>
                     <ul class="subcategory-list" id="listUsuk"></ul>
                 </div>
+                <!-- 日韩剧 - 浅粉色 -->
                 <div class="subcategory-section subcategory-asia">
                     <div class="subcategory-title"><span>🌸 日韩剧</span><span class="count-badge" id="countAsia">0</span></div>
                     <ul class="subcategory-list" id="listAsia"></ul>
                 </div>
+                <!-- 电影 - 浅琥珀色 -->
                 <div class="subcategory-section subcategory-movie">
                     <div class="subcategory-title"><span>🎞️ 电影</span><span class="count-badge" id="countMovie">0</span></div>
                     <ul class="subcategory-list" id="listMovie"></ul>
                 </div>
             </div>
         </div>
-        <!-- 计划中 -->
+
+        <!-- 计划中 - 天蓝色 -->
         <div class="column col-planned">
-            <div class="column-header"><span>📅 计划中</span><span class="count-badge" id="countPlanned">0</span></div>
+            <div class="column-header">
+                <span>📅 计划中</span>
+                <span class="count-badge" id="countPlanned">0</span>
+            </div>
             <ul class="movie-list" id="listPlanned"></ul>
         </div>
     </div>
-    <div class="footer-note">✨ 双击文字编辑 · 进行中条目➡️移入欧美剧 · 中文按拼音排序 · 支持 GitHub Gist 云端同步</div>
+
+    <div class="footer-note">
+        ✨ 双击文字编辑 · 进行中条目➡️移入欧美剧 · 中文按拼音排序 · 支持 GitHub Gist 云端同步
+    </div>
 </div>
+
+<!-- 提示消息 -->
 <div class="toast" id="toast"></div>
+
+<!-- 冲突解决对话框 -->
 <div class="modal-overlay" id="conflictModal">
     <div class="modal">
         <h3>⚠️ 数据冲突</h3>
@@ -627,46 +827,67 @@
         </div>
     </div>
 </div>
+
 <script>
-    (function(){
+    (function() {
+        // ========== 数据存储 ========== 
         let watchingTitles = [];
         let completed = { usuk: [], asia: [], movie: [] };
         let plannedTitles = [];
         
-        let syncState = { connected: false, token: '', gistId: '', lastSyncTime: null, autoSync: false };
+        // GitHub 同步状态
+        let syncState = {
+            connected: false,
+            token: '',
+            gistId: '',
+            lastSyncTime: null,
+            autoSync: false
+        };
+
         const GIST_FILENAME = 'my-series-data.json';
         const GIST_DESCRIPTION = '我的影剧追踪数据 - 由 我的影剧 应用自动创建';
 
-        // 拼音排序
+        // ========== 拼音排序函数 ========== 
         function compareTitles(a, b) {
-            const cleanA = a.replace(/[:*【】\[\]\(\)\s+]/g, '').trim();
-            const cleanB = b.replace(/[:*【】\[\]\(\)\s+]/g, '').trim();
-            const getType = (ch) => { if (ch >= '0' && ch <= '9') return 1; if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) return 2; return 3; };
-            const typeA = getType(cleanA.charAt(0)), typeB = getType(cleanB.charAt(0));
-            if (typeA !== typeB) return typeA - typeB;
-            return cleanA.localeCompare(cleanB, 'zh-CN', { sensitivity: 'base', ignorePunctuation: true, numeric: true });
-        }
-        function cleanAsterisk(str) { return str.replace(/\*+$/g, '').trim(); }
-        function showToast(msg, type='success', duration=3000) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = `toast ${type} show`;
-            setTimeout(() => toast.classList.remove('show'), duration);
+            const cleanA = a.replace(/[:\-*【】\[\]\(\)\s+]/g, '').trim();
+            const cleanB = b.replace(/[:\-*【】\[\]\(\)\s+]/g, '').trim();
+            
+            const firstCharA = cleanA.charAt(0);
+            const firstCharB = cleanB.charAt(0);
+            
+            const getType = (char) => {
+                if (char >= '0' && char <= '9') return 1;
+                if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')) return 2;
+                return 3;
+            };
+            
+            const typeA = getType(firstCharA);
+            const typeB = getType(firstCharB);
+            
+            if (typeA !== typeB) {
+                return typeA - typeB;
+            }
+            
+            return cleanA.localeCompare(cleanB, 'zh-CN', { 
+                sensitivity: 'base',
+                ignorePunctuation: true,
+                numeric: true
+            });
         }
 
-        // 更新全局统计（顶部大项+子项全部显示）
-        function updateGlobalStats() {
-            const watchingCount = watchingTitles.length;
-            const completedCount = completed.usuk.length + completed.asia.length + completed.movie.length;
-            const plannedCount = plannedTitles.length;
-            const total = watchingCount + completedCount + plannedCount;
-            document.getElementById('statWatching').innerText = watchingCount;
-            document.getElementById('statCompleted').innerText = completedCount;
-            document.getElementById('statPlanned').innerText = plannedCount;
-            document.getElementById('statTotal').innerText = total;
-            document.getElementById('statUsuk').innerText = completed.usuk.length;
-            document.getElementById('statAsia').innerText = completed.asia.length;
-            document.getElementById('statMovie').innerText = completed.movie.length;
+        function cleanAsterisk(str) {
+            return str.replace(/\*+$/g, '').trim();
+        }
+
+        // ========== UI 辅助函数 ========== 
+        function showToast(message, type = 'success', duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
         }
 
         function updateSyncStatus(status, text) {
@@ -674,29 +895,143 @@
             statusEl.className = `sync-status ${status}`;
             statusEl.innerHTML = `<span>${status === 'online' ? '🟢' : status === 'syncing' ? '🟡' : '⚪'}</span> ${text}`;
         }
+
         function updateLastSyncInfo() {
             const infoEl = document.getElementById('lastSyncInfo');
-            infoEl.textContent = syncState.lastSyncTime ? `上次同步: ${new Date(syncState.lastSyncTime).toLocaleString()}` : '';
+            if (syncState.lastSyncTime) {
+                const date = new Date(syncState.lastSyncTime);
+                infoEl.textContent = `上次同步: ${date.toLocaleString()}`;
+            } else {
+                infoEl.textContent = '';
+            }
         }
 
-        // 数据操作
-        function getCurrentData() {
-            return { watching: watchingTitles, completed: completed, planned: plannedTitles, exportDate: new Date().toISOString(), version: '2.0' };
+        // ========== GitHub Gist API 操作 ========== 
+        
+        async function createGist(token, data) {
+            const response = await fetch('https://api.github.com/gists', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: GIST_DESCRIPTION,
+                    public: false,
+                    files: {
+                        [GIST_FILENAME]: {
+                            content: JSON.stringify(data, null, 2)
+                        }
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || '创建 Gist 失败');
+            }
+
+            return await response.json();
         }
+
+        async function updateGist(token, gistId, data) {
+            const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: GIST_DESCRIPTION,
+                    files: {
+                        [GIST_FILENAME]: {
+                            content: JSON.stringify(data, null, 2)
+                        }
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || '更新 Gist 失败');
+            }
+
+            return await response.json();
+        }
+
+        async function getGist(token, gistId) {
+            const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Gist 不存在，请检查 Gist ID 是否正确');
+                }
+                const error = await response.json();
+                throw new Error(error.message || '获取 Gist 失败');
+            }
+
+            const gist = await response.json();
+            const file = gist.files[GIST_FILENAME];
+            
+            if (!file) {
+                throw new Error('Gist 中没有找到数据文件');
+            }
+
+            const contentResponse = await fetch(file.raw_url);
+            const content = await contentResponse.text();
+            
+            return {
+                gist: gist,
+                data: JSON.parse(content),
+                updatedAt: gist.updated_at
+            };
+        }
+
+        async function validateToken(token) {
+            const response = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            return response.ok;
+        }
+
+        // ========== 同步逻辑 ========== 
+        
+        function getCurrentData() {
+            return {
+                watching: watchingTitles,
+                completed: completed,
+                planned: plannedTitles,
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+        }
+
         function loadData(data) {
-            if (Array.isArray(data.watching)) watchingTitles = data.watching.map(s=>s.trim()).filter(s=>s);
+            if (Array.isArray(data.watching)) watchingTitles = data.watching.map(s => s.trim()).filter(s => s);
             if (data.completed && typeof data.completed === 'object') {
                 completed = {
-                    usuk: (data.completed.usuk || []).map(s=>s.trim()).filter(s=>s),
-                    asia: (data.completed.asia || []).map(s=>s.trim()).filter(s=>s),
-                    movie: (data.completed.movie || []).map(s=>s.trim()).filter(s=>s)
+                    usuk: (data.completed.usuk || []).map(s => s.trim()).filter(s => s),
+                    asia: (data.completed.asia || []).map(s => s.trim()).filter(s => s),
+                    movie: (data.completed.movie || []).map(s => s.trim()).filter(s => s)
                 };
             }
-            if (Array.isArray(data.planned)) plannedTitles = data.planned.map(s=>s.trim()).filter(s=>s);
+            if (Array.isArray(data.planned)) plannedTitles = data.planned.map(s => s.trim()).filter(s => s);
             renderAll();
         }
+
         function mergeData(local, remote) {
-            return {
+            const merged = {
                 watching: [...new Set([...local.watching, ...remote.watching])],
                 completed: {
                     usuk: [...new Set([...local.completed.usuk, ...remote.completed.usuk])],
@@ -705,240 +1040,669 @@
                 },
                 planned: [...new Set([...local.planned, ...remote.planned])]
             };
+            return merged;
         }
 
-        // GitHub API
-        async function createGist(token, data) {
-            const res = await fetch('https://api.github.com/gists', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type':'application/json' }, body: JSON.stringify({ description: GIST_DESCRIPTION, public: false, files: { [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } } }) });
-            if (!res.ok) throw new Error((await res.json()).message || '创建失败');
-            return await res.json();
-        }
-        async function updateGist(token, gistId, data) {
-            const res = await fetch(`https://api.github.com/gists/${gistId}`, { method: 'PATCH', headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type':'application/json' }, body: JSON.stringify({ description: GIST_DESCRIPTION, files: { [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } } }) });
-            if (!res.ok) throw new Error((await res.json()).message || '更新失败');
-            return await res.json();
-        }
-        async function getGist(token, gistId) {
-            const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
-            if (!res.ok) throw new Error(res.status===404 ? 'Gist 不存在' : (await res.json()).message || '获取失败');
-            const gist = await res.json();
-            const file = gist.files[GIST_FILENAME];
-            if(!file) throw new Error('Gist中没有数据文件');
-            const contentRes = await fetch(file.raw_url);
-            const content = await contentRes.text();
-            return { gist, data: JSON.parse(content), updatedAt: gist.updated_at };
-        }
-        async function validateToken(token) {
-            const res = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${token}` } });
-            return res.ok;
-        }
+        async function connectToGitHub() {
+            const token = document.getElementById('githubToken').value.trim();
+            let gistId = document.getElementById('gistId').value.trim();
 
-        // 云端下载（自动执行）
-        async function syncDownAuto(force=true) {
-            if (!syncState.connected) return false;
+            if (!token) {
+                showToast('请输入 GitHub Token', 'error');
+                return;
+            }
+
+            updateSyncStatus('syncing', '连接中...');
+
             try {
-                updateSyncStatus('syncing', '下载云端数据...');
-                const result = await getGist(syncState.token, syncState.gistId);
-                const remoteData = result.data;
-                loadData(remoteData);
-                syncState.lastSyncTime = new Date().toISOString();
-                updateSyncStatus('online', '已同步');
+                const isValid = await validateToken(token);
+                if (!isValid) {
+                    throw new Error('Token 无效，请检查是否正确');
+                }
+
+                syncState.token = token;
+
+                if (!gistId) {
+                    showToast('正在创建新的 Gist...', 'warning');
+                    const data = getCurrentData();
+                    const gist = await createGist(token, data);
+                    gistId = gist.id;
+                    document.getElementById('gistId').value = gistId;
+                    showToast(`✅ 已创建新的 Gist: ${gistId}`);
+                } else {
+                    try {
+                        await getGist(token, gistId);
+                        showToast('✅ 已连接到现有 Gist');
+                    } catch (e) {
+                        if (e.message.includes('不存在')) {
+                            showToast('Gist 不存在，正在创建新的...', 'warning');
+                            const data = getCurrentData();
+                            const gist = await createGist(token, data);
+                            gistId = gist.id;
+                            document.getElementById('gistId').value = gistId;
+                            showToast(`✅ 已创建新的 Gist: ${gistId}`);
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+
+                syncState.gistId = gistId;
+                syncState.connected = true;
+                
+                localStorage.setItem('github_sync_config', JSON.stringify({
+                    token: token,
+                    gistId: gistId,
+                    autoSync: false
+                }));
+
+                updateSyncStatus('online', '已连接');
+                updateButtonStates();
                 updateLastSyncInfo();
-                showToast('✅ 已自动下载云端数据', 'success');
-                return true;
-            } catch(e) {
-                console.warn(e);
-                updateSyncStatus('online', '云端加载失败，使用本地数据');
-                return false;
+                
+            } catch (error) {
+                showToast(`❌ 连接失败: ${error.message}`, 'error');
+                updateSyncStatus('offline', '连接失败');
+                console.error(error);
             }
         }
 
         async function syncUp() {
             if (!syncState.connected) return;
+
             updateSyncStatus('syncing', '上传中...');
+            
             try {
-                await updateGist(syncState.token, syncState.gistId, getCurrentData());
+                const data = getCurrentData();
+                await updateGist(syncState.token, syncState.gistId, data);
+                
                 syncState.lastSyncTime = new Date().toISOString();
                 updateSyncStatus('online', '已同步');
                 updateLastSyncInfo();
-                showToast('✅ 已上传到云端', 'success');
-            } catch(e) { showToast(`❌ 上传失败: ${e.message}`, 'error'); updateSyncStatus('online', '上传失败'); }
+                showToast('✅ 已上传到云端');
+                
+            } catch (error) {
+                showToast(`❌ 上传失败: ${error.message}`, 'error');
+                updateSyncStatus('online', '上传失败');
+            }
         }
 
-        let conflictResolve = null;
+        async function syncDown(force = false) {
+            if (!syncState.connected) return;
+
+            updateSyncStatus('syncing', '下载中...');
+            
+            try {
+                const result = await getGist(syncState.token, syncState.gistId);
+                const remoteData = result.data;
+                const localData = getCurrentData();
+
+                const hasChanges = 
+                    JSON.stringify(localData.watching) !== JSON.stringify(remoteData.watching) ||
+                    JSON.stringify(localData.completed) !== JSON.stringify(remoteData.completed) ||
+                    JSON.stringify(localData.planned) !== JSON.stringify(remoteData.planned);
+
+                if (hasChanges && !force) {
+                    showConflictModal(remoteData);
+                    updateSyncStatus('online', '需要解决冲突');
+                    return;
+                }
+
+                loadData(remoteData);
+                syncState.lastSyncTime = new Date().toISOString();
+                updateSyncStatus('online', '已同步');
+                updateLastSyncInfo();
+                showToast('✅ 已从云端下载');
+                
+            } catch (error) {
+                showToast(`❌ 下载失败: ${error.message}`, 'error');
+                updateSyncStatus('online', '下载失败');
+            }
+        }
+
         function showConflictModal(remoteData) {
             const modal = document.getElementById('conflictModal');
             modal.classList.add('show');
-            const localData = getCurrentData();
-            document.getElementById('keepLocalBtn').onclick = () => { modal.classList.remove('show'); syncUp(); };
-            document.getElementById('keepCloudBtn').onclick = () => { modal.classList.remove('show'); loadData(remoteData); syncState.lastSyncTime = new Date().toISOString(); updateSyncStatus('online', '已同步'); updateLastSyncInfo(); showToast('✅ 已使用云端版本'); };
-            document.getElementById('mergeBtn').onclick = () => { modal.classList.remove('show'); const merged = mergeData(localData, remoteData); loadData(merged); syncUp(); showToast('✅ 已合并并上传'); };
-            document.getElementById('cancelSyncBtn').onclick = () => { modal.classList.remove('show'); updateSyncStatus('online', '已取消'); };
+            
+            document.getElementById('keepLocalBtn').onclick = () => {
+                modal.classList.remove('show');
+                syncUp();
+            };
+            
+            document.getElementById('keepCloudBtn').onclick = () => {
+                modal.classList.remove('show');
+                loadData(remoteData);
+                syncState.lastSyncTime = new Date().toISOString();
+                updateSyncStatus('online', '已同步');
+                updateLastSyncInfo();
+                showToast('✅ 已使用云端版本');
+            };
+            
+            document.getElementById('mergeBtn').onclick = () => {
+                modal.classList.remove('show');
+                const localData = getCurrentData();
+                const merged = mergeData(localData, remoteData);
+                loadData(merged);
+                syncUp();
+                showToast('✅ 已合并并上传');
+            };
+            
+            document.getElementById('cancelSyncBtn').onclick = () => {
+                modal.classList.remove('show');
+                updateSyncStatus('online', '已取消');
+            };
         }
 
-        // 自动同步监听
-        let autoSyncTimer = null;
-        function setupAutoSyncListener() {
-            const observer = new MutationObserver(() => {
-                if (!syncState.autoSync || !syncState.connected) return;
-                clearTimeout(autoSyncTimer);
-                autoSyncTimer = setTimeout(() => syncUp(), 3000);
-            });
-            const targets = ['listWatching','listUsuk','listAsia','listMovie','listPlanned'].map(id=>document.getElementById(id));
-            targets.forEach(el => el && observer.observe(el, { childList: true, subtree: true }));
-        }
         function toggleAutoSync() {
             syncState.autoSync = !syncState.autoSync;
             const btn = document.getElementById('autoSyncBtn');
-            if(syncState.autoSync) { btn.textContent = '🔄 自动同步: 开'; btn.style.background = 'rgba(16, 185, 129, 0.3)'; showToast('自动同步已开启'); setupAutoSyncListener(); }
-            else { btn.textContent = '🔄 自动同步'; btn.style.background = ''; showToast('自动同步已关闭'); }
-            const config = JSON.parse(localStorage.getItem('github_sync_config')||'{}');
+            
+            if (syncState.autoSync) {
+                btn.textContent = '🔄 自动同步: 开';
+                btn.style.background = 'rgba(16, 185, 129, 0.3)';
+                showToast('已开启自动同步（编辑后 3 秒自动上传）');
+                setupAutoSyncListener();
+            } else {
+                btn.textContent = '🔄 自动同步';
+                btn.style.background = '';
+                showToast('已关闭自动同步');
+            }
+            
+            const config = JSON.parse(localStorage.getItem('github_sync_config') || '{}');
             config.autoSync = syncState.autoSync;
             localStorage.setItem('github_sync_config', JSON.stringify(config));
         }
 
-        async function connectToGitHub(autoPull=true) {
-            const token = document.getElementById('githubToken').value.trim();
-            let gistId = document.getElementById('gistId').value.trim();
-            if (!token) { showToast('请输入 GitHub Token', 'error'); return; }
-            updateSyncStatus('syncing', '连接中...');
-            try {
-                const isValid = await validateToken(token);
-                if (!isValid) throw new Error('Token 无效');
-                syncState.token = token;
-                if (!gistId) {
-                    showToast('创建新 Gist...', 'warning');
-                    const gist = await createGist(token, getCurrentData());
-                    gistId = gist.id;
-                    document.getElementById('gistId').value = gistId;
-                    showToast(`✅ 已创建 Gist: ${gistId}`);
-                } else {
-                    try { await getGist(token, gistId); showToast('✅ 已连接到现有 Gist'); } catch(e) {
-                        if(e.message.includes('不存在')) { const gist = await createGist(token, getCurrentData()); gistId = gist.id; document.getElementById('gistId').value = gistId; showToast(`✅ Gist 不存在，已创建新 Gist: ${gistId}`); }
-                        else throw e;
-                    }
-                }
-                syncState.gistId = gistId; syncState.connected = true;
-                localStorage.setItem('github_sync_config', JSON.stringify({ token, gistId, autoSync: syncState.autoSync }));
-                updateSyncStatus('online', '已连接');
-                updateButtonStates();
-                if (autoPull) { await syncDownAuto(true); }
-                updateLastSyncInfo();
-            } catch(e) { showToast(`❌ 连接失败: ${e.message}`, 'error'); updateSyncStatus('offline', '连接失败'); console.error(e); }
+        let autoSyncTimer = null;
+        function setupAutoSyncListener() {
+            const observer = new MutationObserver(() => {
+                if (!syncState.autoSync || !syncState.connected) return;
+                
+                clearTimeout(autoSyncTimer);
+                autoSyncTimer = setTimeout(() => {
+                    syncUp();
+                }, 3000);
+            });
+            
+            observer.observe(document.getElementById('listWatching'), { childList: true, subtree: true });
+            observer.observe(document.getElementById('listUsuk'), { childList: true, subtree: true });
+            observer.observe(document.getElementById('listAsia'), { childList: true, subtree: true });
+            observer.observe(document.getElementById('listMovie'), { childList: true, subtree: true });
+            observer.observe(document.getElementById('listPlanned'), { childList: true, subtree: true });
         }
 
         function disconnect() {
-            syncState = { connected: false, token: '', gistId: '', lastSyncTime: null, autoSync: false };
+            syncState = {
+                connected: false,
+                token: '',
+                gistId: '',
+                lastSyncTime: null,
+                autoSync: false
+            };
+            
             localStorage.removeItem('github_sync_config');
+            
             document.getElementById('githubToken').value = '';
             document.getElementById('gistId').value = '';
+            
             updateSyncStatus('offline', '未连接');
             updateButtonStates();
             showToast('已断开连接');
         }
 
         function updateButtonStates() {
-            const c = syncState.connected;
-            document.getElementById('connectBtn').disabled = c;
-            document.getElementById('syncUpBtn').disabled = !c;
-            document.getElementById('syncDownBtn').disabled = !c;
-            document.getElementById('autoSyncBtn').disabled = !c;
-            document.getElementById('disconnectBtn').disabled = !c;
-            document.getElementById('githubToken').disabled = c;
-            document.getElementById('gistId').disabled = c;
+            const connected = syncState.connected;
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('syncUpBtn').disabled = !connected;
+            document.getElementById('syncDownBtn').disabled = !connected;
+            document.getElementById('autoSyncBtn').disabled = !connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            
+            document.getElementById('githubToken').disabled = connected;
+            document.getElementById('gistId').disabled = connected;
         }
 
-        // 页面打开立即自动连接并下载云端数据
         function restoreSyncConfig() {
             const config = localStorage.getItem('github_sync_config');
-            if(config) {
+            if (config) {
                 try {
                     const parsed = JSON.parse(config);
                     document.getElementById('githubToken').value = parsed.token || '';
                     document.getElementById('gistId').value = parsed.gistId || '';
-                    if(parsed.token && parsed.gistId) {
-                        setTimeout(async ()=>{
-                            await connectToGitHub(true);
-                            if(parsed.autoSync) setTimeout(() => toggleAutoSync(), 1200);
-                        }, 500);
+                    
+                    if (parsed.token && parsed.gistId) {
+                        // 自动连接并下载云端数据
+                        connectToGitHub().then(() => {
+                            if (syncState.connected) {
+                                showToast('正在下载云端数据...', 'warning');
+                                syncDown(true).then(() => {
+                                    showToast('✅ 已从云端下载数据');
+                                }).catch(() => {
+                                    showToast('❌ 云端下载失败，使用本地数据', 'error');
+                                });
+                            }
+                        }).catch(() => {
+                            showToast('❌ 自动连接失败，使用本地数据', 'error');
+                        });
+                        
+                        if (parsed.autoSync) {
+                            setTimeout(() => {
+                                toggleAutoSync();
+                            }, 1000);
+                        }
                     }
-                } catch(e) { console.error(e); }
+                } catch (e) {
+                    console.error('恢复配置失败', e);
+                }
+            } else {
+                // 没有配置，直接渲染本地数据
+                renderAll();
             }
         }
 
-        // 渲染逻辑
+        // ========== 原有功能 ========== 
+        
+        function toggleSubcategorySelect() {
+            const mainCat = document.getElementById('mainCategory').value;
+            const subSelect = document.getElementById('subCategory');
+            if (mainCat === 'completed') {
+                subSelect.classList.remove('hidden');
+            } else {
+                subSelect.classList.add('hidden');
+            }
+        }
+
         function renderAll() {
             watchingTitles.sort(compareTitles);
-            completed.usuk.sort(compareTitles); completed.asia.sort(compareTitles); completed.movie.sort(compareTitles);
+            completed.usuk.sort(compareTitles);
+            completed.asia.sort(compareTitles);
+            completed.movie.sort(compareTitles);
             plannedTitles.sort(compareTitles);
+
             renderList('listWatching', watchingTitles, 'watching');
             renderList('listUsuk', completed.usuk, 'completed', 'usuk');
             renderList('listAsia', completed.asia, 'completed', 'asia');
             renderList('listMovie', completed.movie, 'completed', 'movie');
             renderList('listPlanned', plannedTitles, 'planned');
-            document.getElementById('countWatching').innerText = watchingTitles.length;
-            document.getElementById('countCompleted').innerText = completed.usuk.length+completed.asia.length+completed.movie.length;
-            document.getElementById('countPlanned').innerText = plannedTitles.length;
+
+            // 更新顶部计数
+            const totalWatching = watchingTitles.length;
+            const totalCompleted = completed.usuk.length + completed.asia.length + completed.movie.length;
+            const totalPlanned = plannedTitles.length;
+            
+            document.getElementById('counterWatching').innerText = totalWatching;
+            document.getElementById('counterCompleted').innerText = totalCompleted;
+            document.getElementById('counterPlanned').innerText = totalPlanned;
+            document.getElementById('counterUsuk').innerText = completed.usuk.length;
+            document.getElementById('counterAsia').innerText = completed.asia.length;
+            document.getElementById('counterMovie').innerText = completed.movie.length;
+            
+            // 更新原来的计数
+            document.getElementById('countWatching').innerText = totalWatching;
+            document.getElementById('countCompleted').innerText = totalCompleted;
+            document.getElementById('countPlanned').innerText = totalPlanned;
             document.getElementById('countUsuk').innerText = completed.usuk.length;
             document.getElementById('countAsia').innerText = completed.asia.length;
             document.getElementById('countMovie').innerText = completed.movie.length;
-            updateGlobalStats();
         }
 
-        function renderList(listId, titlesArray, type, subType='') {
+        function renderList(listId, titlesArray, type, subType = '') {
             const ul = document.getElementById(listId);
             if (!ul) return;
-            if (titlesArray.length === 0) { ul.innerHTML = `<li class="empty-message">✨ 暂无</li>`; return; }
+
+            if (titlesArray.length === 0) {
+                ul.innerHTML = `<li class="empty-message">✨ 暂无</li>`;
+                return;
+            }
+
             let html = '';
             titlesArray.forEach(title => {
                 const safeTitle = title.replace(/"/g, '&quot;');
-                let buttons = `<div class="item-actions"><button class="item-btn edit-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">✏️</button>`;
-                if(type === 'watching') buttons += `<button class="item-btn move-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">➡️</button>`;
-                buttons += `<button class="item-btn delete-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">🗑️</button></div>`;
-                html += `<li class="movie-item"><span class="movie-title" contenteditable="true" data-type="${type}" data-sub="${subType}" data-oldtitle="${safeTitle}">${title}</span>${buttons}</li>`;
+                let buttons = '';
+                if (type === 'watching') {
+                    buttons = `<div class="item-actions">
+                        <button class="item-btn edit-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">✏️</button>
+                        <button class="item-btn move-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">➡️</button>
+                        <button class="item-btn delete-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">🗑️</button>
+                    </div>`;
+                } else {
+                    buttons = `<div class="item-actions">
+                        <button class="item-btn edit-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">✏️</button>
+                        <button class="item-btn delete-btn" data-type="${type}" data-sub="${subType}" data-title="${safeTitle}">🗑️</button>
+                    </div>`;
+                }
+
+                html += `<li class="movie-item">
+                    <span class="movie-title" contenteditable="true" data-type="${type}" data-sub="${subType}" data-oldtitle="${safeTitle}">${title}</span>
+                    ${buttons}
+                </li>`;
             });
             ul.innerHTML = html;
-            ul.querySelectorAll('.movie-title').forEach(span => { span.onblur = handleTitleBlur; span.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); span.blur(); } }; });
-            ul.querySelectorAll('.delete-btn').forEach(btn => btn.onclick = handleDelete);
-            if(type === 'watching') ul.querySelectorAll('.move-btn').forEach(btn => btn.onclick = handleMove);
-            ul.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = (e) => { const li = e.currentTarget.closest('li'); if(li) li.querySelector('.movie-title').focus(); });
+
+            ul.querySelectorAll('.movie-title').forEach(span => {
+                span.onblur = handleTitleBlur;
+                span.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); span.blur(); } };
+            });
+
+            ul.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = handleDelete;
+            });
+
+            if (type === 'watching') {
+                ul.querySelectorAll('.move-btn').forEach(btn => {
+                    btn.onclick = handleMove;
+                });
+            }
+
+            ul.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    const li = e.currentTarget.closest('li');
+                    if(li) li.querySelector('.movie-title').focus();
+                };
+            });
         }
 
-        function handleTitleBlur(e) { 
-            const span = e.currentTarget; const newText = span.innerText.trim(); const oldTitle = span.dataset.oldtitle; const type = span.dataset.type; const sub = span.dataset.sub;
-            if(!newText || newText===oldTitle) { span.innerText = oldTitle; return; }
-            let arr = type==='watching' ? watchingTitles : type==='planned' ? plannedTitles : completed[sub];
-            if(arr) { const idx = arr.findIndex(t=>t===oldTitle); if(idx!==-1) { arr[idx]=newText; span.dataset.oldtitle=newText; const li=span.closest('li'); if(li) li.querySelectorAll('[data-title]').forEach(btn=>btn.dataset.title=newText); renderAll(); } else span.innerText=oldTitle; }
+        function handleTitleBlur(e) {
+            const span = e.currentTarget;
+            const newText = span.innerText.trim();
+            const oldTitle = span.dataset.oldtitle;
+            const type = span.dataset.type;
+            const sub = span.dataset.sub;
+
+            if (!newText || newText === oldTitle) {
+                span.innerText = oldTitle;
+                return;
+            }
+
+            let arr = type === 'watching' ? watchingTitles :
+                     type === 'planned' ? plannedTitles :
+                     completed[sub];
+
+            if (arr) {
+                const idx = arr.findIndex(t => t === oldTitle);
+                if (idx !== -1) {
+                    arr[idx] = newText;
+                    span.dataset.oldtitle = newText;
+                    const li = span.closest('li');
+                    if (li) {
+                        li.querySelectorAll('[data-title]').forEach(btn => {
+                            btn.dataset.title = newText;
+                        });
+                    }
+                    renderAll();
+                } else {
+                    span.innerText = oldTitle;
+                }
+            }
         }
+
         function handleDelete(e) {
-            const btn=e.currentTarget; const title=btn.dataset.title; const type=btn.dataset.type; const sub=btn.dataset.sub;
-            if(type==='watching') watchingTitles = watchingTitles.filter(t=>t!==title);
-            else if(type==='planned') plannedTitles = plannedTitles.filter(t=>t!==title);
-            else if(type==='completed' && sub && completed[sub]) completed[sub] = completed[sub].filter(t=>t!==title);
+            const btn = e.currentTarget;
+            const title = btn.dataset.title;
+            const type = btn.dataset.type;
+            const sub = btn.dataset.sub;
+
+            if (type === 'watching') {
+                const idx = watchingTitles.findIndex(t => t === title);
+                if (idx !== -1) watchingTitles.splice(idx, 1);
+            } else if (type === 'planned') {
+                const idx = plannedTitles.findIndex(t => t === title);
+                if (idx !== -1) plannedTitles.splice(idx, 1);
+            } else if (type === 'completed' && sub && completed[sub]) {
+                const arr = completed[sub];
+                const idx = arr.findIndex(t => t === title);
+                if (idx !== -1) arr.splice(idx, 1);
+            }
             renderAll();
         }
-        function handleMove(e) { const title=e.currentTarget.dataset.title; const idx = watchingTitles.findIndex(t=>t===title); if(idx!==-1) { watchingTitles.splice(idx,1); completed.usuk.push(title); renderAll(); } }
 
-        function exportBackup() { const data=getCurrentData(); const fileName=`我的影剧_${new Date().toISOString().slice(0,10)}.json`; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href); showToast("✅ 导出成功"); }
-        function importBackup(file) { const reader=new FileReader(); reader.onload=e=>{ try{ const data=JSON.parse(e.target.result); if(Array.isArray(data.watching) && data.completed && Array.isArray(data.completed.usuk) && Array.isArray(data.completed.asia) && Array.isArray(data.completed.movie) && Array.isArray(data.planned)) { loadData(data); showToast('✅ 导入成功！'); } else alert('❌ 备份文件格式不正确'); } catch(err){ alert('❌ 解析失败'); } }; reader.readAsText(file); }
+        function handleMove(e) {
+            const btn = e.currentTarget;
+            const title = btn.dataset.title;
+            const idx = watchingTitles.findIndex(t => t === title);
+            if (idx !== -1) {
+                watchingTitles.splice(idx, 1);
+                completed.usuk.push(title);
+                renderAll();
+            }
+        }
 
-        // 事件绑定
-        document.getElementById('addBtn').onclick = () => { const title=document.getElementById('newTitle').value.trim(); if(!title) return alert('请输入剧名'); const main=document.getElementById('mainCategory').value; const sub=document.getElementById('subCategory').value; if(main==='watching') watchingTitles.push(title); else if(main==='planned') plannedTitles.push(title); else completed[sub].push(title); document.getElementById('newTitle').value=''; renderAll(); };
-        document.getElementById('newTitle').onkeypress = e => { if(e.key==='Enter') document.getElementById('addBtn').click(); };
+        function exportBackup() {
+            const data = getCurrentData();
+            
+            const dateStr = new Date().toISOString().slice(0,10);
+            const fileName = `我的影剧_${dateStr}.json`;
+            
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(link.href);
+            
+            alert(`✅ 已导出到：${fileName}\n（保存在浏览器下载目录中）`);
+        }
+
+        function importBackup(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (Array.isArray(data.watching) && data.completed && 
+                        Array.isArray(data.completed.usuk) && Array.isArray(data.completed.asia) && 
+                        Array.isArray(data.completed.movie) && Array.isArray(data.planned)) {
+                        
+                        loadData(data);
+                        alert('✅ 导入成功！');
+                    } else {
+                        alert('❌ 备份文件格式不正确');
+                    }
+                } catch (err) {
+                    alert('❌ 解析失败：无效的JSON文件');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('addBtn').onclick = () => {
+            const title = document.getElementById('newTitle').value.trim();
+            if (!title) return alert('请输入剧名');
+            const main = document.getElementById('mainCategory').value;
+            const sub = document.getElementById('subCategory').value;
+            
+            if (main === 'watching') watchingTitles.push(title);
+            else if (main === 'planned') plannedTitles.push(title);
+            else completed[sub].push(title);
+
+            document.getElementById('newTitle').value = '';
+            renderAll();
+        };
+
+        document.getElementById('newTitle').onkeypress = (e) => {
+            if (e.key === 'Enter') document.getElementById('addBtn').click();
+        };
+
         document.getElementById('exportBtn').onclick = exportBackup;
-        document.getElementById('fileImport').onchange = e => { if(e.target.files[0]) importBackup(e.target.files[0]); e.target.value=''; };
-        document.getElementById('mainCategory').addEventListener('change', function() { const subSelect=document.getElementById('subCategory'); if(this.value==='completed') subSelect.classList.remove('hidden'); else subSelect.classList.add('hidden'); });
-        document.getElementById('connectBtn').onclick = () => connectToGitHub(true);
+        
+        document.getElementById('fileImport').onchange = (e) => {
+            if (e.target.files[0]) importBackup(e.target.files[0]);
+            e.target.value = '';
+        };
+        
+        document.getElementById('mainCategory').addEventListener('change', toggleSubcategorySelect);
+
+        document.getElementById('connectBtn').onclick = connectToGitHub;
         document.getElementById('syncUpBtn').onclick = syncUp;
-        document.getElementById('syncDownBtn').onclick = () => syncDownAuto(true);
+        document.getElementById('syncDownBtn').onclick = () => syncDown(false);
         document.getElementById('autoSyncBtn').onclick = toggleAutoSync;
         document.getElementById('disconnectBtn').onclick = disconnect;
 
-        // 初始化数据
         function initializeData() {
-            watchingTitles = ["不期而淤S01E04", "FBI:国际 S01E01", "FBI:通缉要犯S01E01*", "FBI联邦调查局S06E05","尝试S01E02 *>","城堡岩S01E01 5:00","菜鸟老警S06E04","都铎王朝S01E09","第五共和国E11 9:00","辐射E01E03","反击S08E02 5:00","反恐特勤组S04E04 24:00","搞笑一家人S01E04*","海军罪案调查处NCIS.L.A.S13E01 *>","海军罪案调查处NCIS.S20E11","海军罪案调查处NCIS：夏威夷S01E01","黑袍纠察队S02E03 1:00","火线警探之原始都市S01E02>","杰克泰勒.S01E01","罗斯威尔S03E08","摩斯探长S01E01","命悬一线.特工疑云no limit S03E06","谋杀S02E03*百度网盘","幕后危机S01E02*aliyun度盘","神烦警探S07E2*>","神秘博士S13E01","少年谢尔顿S07E01","双峰S03E01","铁证悬案S02E06*>","万物生灵.万物既伟大又渺小S04E01","我爱上的人是奇葩S05E09*>9","无耻家庭S02E01*>","新费雪小姐探案集S01E03 22:00","芝加哥法则S01E02*","罪恶黑名单S10E07*","重案组女警S02E01","美秋里S02E04","认识的哥哥 20220611","RUNNINGMAN","情man转转转 3","情书060408","天才冲冲冲","闲着干嘛呢 202502221116","1 2 3 4 姜食堂1 花样青春winner篇 5 6姜食堂2 姜食堂3 冰岛的三餐 7 李食堂 8 春季露营"];
-            const rawUsuk = ["1899 S01E08*","1992 S01E10*","9号秘事S09E06剧终*","爱，死亡和机器人S04E10*","矮子毒枭S03E13*","安多S02E12*","安检.但愿君心似我心 S04E06*","安妮[希尔斯堡惨案]E04","安妮卡S02E06*","暗夜情报员S02E10*","奥维尔号S03E10*","肮脏的黑袋子S01E08*","巴比伦柏林S04E12*","白屋农场E06*","豹[剧版][意大利]","贝鲁特幽灵S01E04*","边隧谜案[英]S03E06剧终*","边缘世界S01E08*","冰血暴S04E11*","冰血暴S04E11季终*","波巴·费特之书S01E07*","波尔达克S05E08*","柏林之狗S01E10*","不得安宁E02*","不可遗忘S06E06*","不列颠党卫军S01E05*","不眠vigilS02E06*","豺狼的日子S01E10*","成婚未成恋*","陈尸谜案S01E04*","齿轮S08E10剧终*","刺杀斯大林[俄]*","从海底出击S04E06*","传奇办公室[法国]S05E10剧终*","传奇办公室[美国]S01E10*","传奇卧底.潜龙谍影S02E10*","春天的十七个瞬间S01E12*","大陆酒店S01E03*","东京罪恶S02E10*","东门S01E06*","赌你也会做/大巴劫案疑云S01E08*","都是她的错S01E08*","毒枭.墨西哥S03E10*","毒枭S03E10*","堕落S03E06剧终*","法外之徒[BRAQUO][法国]S04E08剧终*","犯罪心理S17E10*","荒境狂途S01E06*","高墙边的混乱S04E12*","格莫拉S05E10剧终*","孤国春秋S05E10剧终+七王必死*","古战场传奇S07E16*","海豹突击队S07E10剧终*","海军罪案调查处NCIS：新奥尔良S07E16剧终*","汉娜S03E06剧终*","好母亲S01E06*","浩渺猎杀S01E06*","黑帮领地S01E10*","黑道无边 黑道无国界 戈德曼家族 S01E08*","黑帆S04E10剧终*","黑鸽S01E06*","黑镜S07E06*","黑金新秩序S01E08*","黑海[俄]*","黑鸟S01E06*","黑钱胜地S04E14剧终*","红眼航班S02E06*","蝴蝶风暴S01E06*","华沙间谍2集全*","黄石S05E14剧终*","混沌少年时S01E04*","魂归故里[法版]S02E08*","火线警探S06E13剧终*","火星生活S02E08剧终*","基地S01E10季终*","基督山伯爵[意/法2024]E08*","间谍兔洞S01E08*","劫机7小时S01E07*","杰克莱恩.S04E06*","金斯顿市长S04E10*","警之光.一线警事S03E06*","镜像人生S01E06*","绝夜逢生S02E06*","凯伦·皮里S02E03*","恐怖间谍S01E04[法][电影\"十一月\"剧版]*","控方证人2集全+电影1957版*","拉布雷亚S03E06剧终*","拉科尼亚号的沉没*","老头子S01E07*","泪之谷S01E10*","冷杉溪S02E03*","离亲叛众S01E02*","零零零S01E08*","零日风暴S01E06*","流人S05E06*","龙之家族S02E08*","伦敦黑帮S03E08*","洛基S02E06*","妈妈是杀手S01E06*","曼达洛人S03E08*","梅格雷探案[2025]S01E06*","弥留国的爱丽丝S1E0*","迷失太空S03E08剧终*","谜探路德维希S01E06*","密屋陌路S01E06*","命运航班S04E20剧终*","明日传奇S07E13*","谋杀[丹麦版]S03E10剧终*","幕府将军S01E10*","母狮:特别行动S01E08*","你.安眠书店S05E10剧终*","逆转奇兵S04E10剧终*","潘尼沃斯S03E10*","企鹅人S01E08*","桥S04E08剧终*","清道夫S07E10剧终+电影版*","清洁工S01E03弃*","去他X的世界S02E08*","全能侦探社S02E10*","权欲S06E15*","权欲第二章S03E10*","群星S01E08*","人生复本S01E09*","杀死伊芙S04E08剧终*","少年间谍S03E08*","设得兰谜案S10E06*","圣殿春秋S01E08*","绅士们S01E08*","审讯室[德国]S01E03*","审讯室[法国]S01E03*","审讯室[西班牙]S01E03*","审讯室[英国]S02E04*","时间旅行者的妻子S01E06*","时空旋涡[法国]S01E06*","失魂舍伍德S02E06*","失序边缘S01E10*","尸体.搜索尸间线S01E08*","斯特莱克探案集S06E04*","嗜血法医[杀魔重生]S01E10*","私家侦探S05E08*","守望尘世S03E08剧终*","殊途同归[英]S02E04*","塔尔萨之王S01E09*","螳螂La Mante.S01E06*","特别小组TaskS01E07*","天才.爱因斯坦E10*","同样的天空S01E03*","头号人质S01E05*","头号外交官S03E08*","图书馆员S04E12剧终*","纨绔子弟(俄)S03E16*","万神殿S01E08*","王冠S04E10*","维京传奇S06E20剧终*","维京传奇:英灵殿S03E08剧终*","维兰德S01E03*","为全人类S04E10*","危险关系LiasonS01E06*","我的天才女友S03E08*","我们WIR.S01E12*","我们的父辈S01E03*","我们的男孩E10*","无丁之地S01E08*","无可救药S02E08*","无神S01E07剧终*","无垠的太空.苍穹浩瀚S06E06剧终*","毋庸置疑S04E03*","袭击.急袭(俄)S01E08*","侠探杰克S01E08*","先见之明S02E08剧终*","小镇疑云[英版]S03E08剧终*","逍遥法外S06E15剧终*","幸福谷S03E06*","星际迷航:发现号.短途S01E04*","星际迷航:发现号S05E10剧终*","星际迷航:皮卡特S03E10*","星际迷航:奇异新世界S02E10*","行尸走肉S11E24剧终*","行尸走肉:存活之人S01E06*","行尸走肉:死亡之城S02E08*","行尸走肉:达里尔·迪克森S02E06*","行尸之惧S08E12*","悬案解码S01E09*","掩耳盗邻S01E09*","夜空S01E08*","一触即发S02E06*","依法相爱*","伊普克雷斯档案S01E06*","异星灾变S02E08*","浴血黑帮S06E06剧终*","远古入侵S05E06*","越洋救援S01E07*","月之暗面S02E16[俄]*","战士S03E10*","占领区S03E06*","政客之夫*","真相捕捉TheCapturesS02E06季终*","争分夺秒TIME3集全*","子不雨 双姝奇探.雨女S05E08*","纸钞屋S05E10剧终*","窒风之中S03E08*","中间人先生S03E09*","终极名单S01E08*","重任在肩S06E07*","足球教练Ted LassoS03E12剧终*","罪恶黑名单S09E22*","最后的警察[法国版]S04E08剧终*","最后的曙光.全球危机S01E05*","最后生还者S02E07*","追凶S02E04"];
-            completed.usuk = rawUsuk.map(cleanAsterisk).filter(t=>t);
-            const rawAsia = ["1%的可能性[2016]*","365：逆转命运的1年*","W*两个世界*","爱填满空白*","奔向爱情Run On16集全*","毕业*","不需要爱的夏天*","布拉格恋人*","超能异族*","初恋[满岛光]*","春夜*","单恋原声带*","第二次20岁*","第一次遇见花香的那刻*","东京太阳雨*","对不起，我爱你*","二十五，二十一*","恶缘*","非自然死亡*","粉红理论[泰]*","过来抱抱我*","狗和狼的时间*","豪杰春香*","海岸村恰恰恰*","黑暗荣耀 I+II*","黑色太阳+特辑[莫比乌斯]*","狐狸啊你干啥呢*","花样年华*生如夏花*","火车[景收真]*","火鸟*","极恶非道1*3*","继母与女儿的蓝调+2020SP+2022SP*","结婚契约*","金科长*","浪客行*","泪之女王.眼泪女王*","镰仓殿的13人*","恋爱大战*","恋人(2018李瑞镇)*","恋人(2023南宫珉)*","两个人的独角戏*","妈妈朋友的儿子 *","美妙人生[韩]*","梦幻情侣*","秘密森林[1+2]*","密会*","明星的恋人*","那个男人的记忆法*","那年冬天,风在吹*","那年，我们的夏天*","你来自哪颗星*","平清盛*","奇怪的搭档*","巧克力*","强力侦察队.H.I.T重案组*","亲爱的恩东啊*","认识的妻子[日版+韩版]*","仁显王后的男人*","仁医*","日本沉没*希望之人*","求婚大作战+SP*","三流之路*","社内相亲*","森林*","她的私生活*","她很漂亮*","甜蜜间谍*","天空之城[2018韩剧]*","The K2*","Transit Girl*","拖旅行箱的女人*","文森佐*","我的解放日志*","我的ID是江南美人*","我的完美秘书*","我们都无法成为大人*","我们的蓝调*","我亲爱的朋友们*","我也是花*","无法抗拒的他E01~弃*","无情都市*","陷入纯情*","现在拨打的电话*","新婚甜心是同事*","幸福伽菜子的快乐杀手生活*","雪滴花*","血谜拼图*","雪之女王*","阳光先生*","耀眼*","义经*","一起吃晚餐吗*","医生们*","衣袖红镶边*","以神之名：信仰的背叛*","以吾之名8集全*","有钱男与贫穷女*","于星降之夜9集全*","宇宙嫁给我*","鱿鱼游戏9集全*","只是相爱的关系*","治愈者*","重击*","掟上今日子的备忘录*","主君的太阳*","追踪者游戏W 职权骚扰的上司是我的前女友*"];
-            completed.asia = rawAsia.map(cleanAsterisk).filter(t=>t);
-            const rawMovie = ["2012*","阿修罗*","爱因斯坦与爱丁顿*","爱情奇遇记*","奥林匹亚街区*","八面埋伏*","疤面煞星*","卑劣的街头*","必死剑鸟刺*","必胜球探*","编号24 Nr. 24*","兵临城下*","波斯语课*","曾经*","刺杀盖世太保+类人猿行动*","刺杀据点*","丑女大翻身*","穿条纹睡衣的男孩*","大佬Brother[北野武]*","搭讪的法则*","登陆之日*","第十二个人*","点球成金*","F1:狂飙飞车*","非常突然[港]*","高地战*","革命往事*","过往人生*","共犯者们.帮凶*","共助1+2*","哈尔滨*","和声*","黑暗面*","黑袋行动*","红十字：女人们的入伍通知单*","轰炸机之歌*","黄海*","灰影人*","花束般的恋爱*","活埋*","火烧天堂镇*","极速车王*","疾速追杀1*4*","疾速追杀*芭蕾杀姬*","家族荣誉1*","禁闭岛*","惊天营救1+2*","九月五日*","JSA共同警备区*","局内人[韩国 加长版]*","决斗犹马镇*","会计刺客1+2*","老手*","雷霆特攻队*","利刃出鞘*","里斯本丸沉没*","烈日阳光[俄]*","硫磺岛的来信*","妈妈咪呀1+2*","漫画威龙之大话特务*","曼联重生*","美国内战*","美国往事*","梅格雷的陷阱/梅格雷的亡者/梅格雷的十字路口夜/梅格雷的蒙马特*","盟约*","密阳*","鸣梁海战*","明星助理*","那天的氛围*","怒火 重案*","女狙击手/塞瓦斯托波尔战*","前哨*","杀死比尔1+2*","杀手面包师*","三方国界*","盛夏的方程式*","伸冤人1+2+3*","十三刺客*","十三条命+营救野猪队/奇迹救援+泰国洞穴救援[纪录片]*","世上最美的离别*","苏芬战争*","瞬息全宇宙*","十一月*","逃离索比堡*","套装/誓不低头*","特工老爸*","甜蜜的人生*","突袭1+2","万湖会议+阴谋*","王者2017*","我爱你[2011韩国]*","我记得.厄忆追凶*","我是山姆*","无处逢生*","无名战士*","无姓之人*","西部往事*","嫌疑人[韩国]*","现在去见你[孙艺珍
+            watchingTitles = [
+                "不期而淤S01E04", "FBI:国际 S01E01", "FBI:通缉要犯S01E01*", "FBI联邦调查局S06E05",
+                "尝试S01E02 *>", "城堡岩S01E01 5:00", "菜鸟老警S06E04", "都铎王朝S01E09",
+                "第五共和国E11 9:00", "辐射E01E03", "反击S08E02 5:00", "反恐特勤组S04E04 24:00",
+                "搞笑一家人S01E04*", "海军罪案调查处NCIS.L.A.S13E01 *>", "海军罪案调查处NCIS.S20E11",
+                "海军罪案调查处NCIS：夏威夷S01E01", "黑袍纠察队S02E03 1:00", "火线警探之原始都市S01E02>",
+                "杰克泰勒.S01E01", "罗斯威尔S03E08", "摩斯探长S01E01", "命悬一线.特工疑云no limit S03E06",
+                "谋杀S02E03*百度网盘", "幕后危机S01E02*aliyun度盘", "神烦警探S07E2*>", "神秘博士S13E01",
+                "少年谢尔顿S07E01", "双峰S03E01", "铁证悬案S02E06*>", "万物生灵.万物既伟大又渺小S04E01",
+                "我爱上的人是奇葩S05E09*>9", "无耻家庭S02E01*>", "新费雪小姐探案集S01E03 22:00",
+                "芝加哥法则S01E02*", "罪恶黑名单S10E07*", "重案组女警S02E01", "美秋里S02E04",
+                "认识的哥哥 20220611", "RUNNINGMAN", "情man转转转 3", "情书060408", "天才冲冲冲",
+                "闲着干嘛呢 202502221116", "1 2 3 4 姜食堂1 花样青春winner篇 5 6姜食堂2 姜食堂3 冰岛的三餐 7 李食堂 8 春季露营"
+            ];
+
+            const rawUsuk = [
+                "1899 S01E08*", "1992 S01E10*", "9号秘事S09E06剧终*", "爱，死亡和机器人S04E10*",
+                "矮子毒枭S03E13*", "安多S02E12*", "安检.但愿君心似我心 S04E06*", "安妮[希尔斯堡惨案]E04",
+                "安妮卡S02E06*", "暗夜情报员S02E10*", "奥维尔号S03E10*", "肮脏的黑袋子S01E08*",
+                "巴比伦柏林S04E12*", "白屋农场E06*", "豹[剧版][意大利]", "贝鲁特幽灵S01E04*",
+                "边隧谜案[英]S03E06剧终*", "边缘世界S01E08*", "冰血暴S04E11*", "冰血暴S04E11季终*",
+                "波巴·费特之书S01E07*", "波尔达克S05E08*", "柏林之狗S01E10*", "不得安宁E02*",
+                "不可遗忘S06E06*", "不列颠党卫军S01E05*", "不眠vigilS02E06*", "豺狼的日子S01E10*",
+                "成婚未成恋*", "陈尸谜案S01E04*", "齿轮S08E10剧终*", "刺杀斯大林[俄]*", "从海底出击S04E06*",
+                "传奇办公室[法国]S05E10剧终*", "传奇办公室[美国]S01E10*", "传奇卧底.潜龙谍影S02E10*",
+                "春天的十七个瞬间S01E12*", "大陆酒店S01E03*", "东京罪恶S02E10*", "东门S01E06*",
+                "赌你也会做/大巴劫案疑云S01E08*", "都是她的错S01E08*", "毒枭.墨西哥S03E10*", "毒枭S03E10*",
+                "堕落S03E06剧终*", "法外之徒[BRAQUO][法国]S04E08剧终*", "犯罪心理S17E10*", "荒境狂途S01E06*",
+                "高墙边的混乱S04E12*", "格莫拉S05E10剧终*", "孤国春秋S05E10剧终+七王必死*", "古战场传奇S07E16*",
+                "海豹突击队S07E10剧终*", "海军罪案调查处NCIS：新奥尔良S07E16剧终*", "汉娜S03E06剧终*",
+                "好母亲S01E06*", "浩渺猎杀S01E06*", "黑帮领地S01E10*", "黑道无边 黑道无国界 戈德曼家族 S01E08*",
+                "黑帆S04E10剧终*", "黑鸽S01E06*", "黑镜S07E06*", "黑金新秩序S01E08*", "黑海[俄]*",
+                "黑鸟S01E06*", "黑钱胜地S04E14剧终*", "红眼航班S02E06*", "蝴蝶风暴S01E06*", "华沙间谍2集全*",
+                "黄石S05E14剧终*", "混沌少年时S01E04*", "魂归故里[法版]S02E08*", "火线警探S06E13剧终*",
+                "火星生活S02E08剧终*", "基地S01E10季终*", "基督山伯爵[意/法2024]E08*", "间谍兔洞S01E08*",
+                "劫机7小时S01E07*", "杰克莱恩.S04E06*", "金斯顿市长S04E10*", "警之光.一线警事S03E06*",
+                "镜像人生S01E06*", "绝夜逢生S02E06*", "凯伦·皮里S02E03*", "恐怖间谍S01E04[法][电影\"十一月\"剧版]*",
+                "控方证人2集全+电影1957版*", "拉布雷亚S03E06剧终*", "拉科尼亚号的沉没*", "老头子S01E07*",
+                "泪之谷S01E10*", "冷杉溪S02E03*", "离亲叛众S01E02*", "零零零S01E08*", "零日风暴S01E06*",
+                "流人S05E06*", "龙之家族S02E08*", "伦敦黑帮S03E08*", "洛基S02E06*", "妈妈是杀手S01E06*",
+                "曼达洛人S03E08*", "梅格雷探案[2025]S01E06*", "弥留国的爱丽丝S1E0*", "迷失太空S03E08剧终*",
+                "谜探路德维希S01E06*", "密屋陌路S01E06*", "命运航班S04E20剧终*", "明日传奇S07E13*",
+                "谋杀[丹麦版]S03E10剧终*", "幕府将军S01E10*", "母狮:特别行动S01E08*", "你.安眠书店S05E10剧终*",
+                "逆转奇兵S04E10剧终*", "潘尼沃斯S03E10*", "企鹅人S01E08*", "桥S04E08剧终*", "清道夫S07E10剧终+电影版*",
+                "清洁工S01E03弃*", "去他X的世界S02E08*", "全能侦探社S02E10*", "权欲S06E15*", "权欲第二章S03E10*",
+                "群星S01E08*", "人生复本S01E09*", "杀死伊芙S04E08剧终*", "少年间谍S03E08*", "设得兰谜案S10E06*",
+                "圣殿春秋S01E08*", "绅士们S01E08*", "审讯室[德国]S01E03*", "审讯室[法国]S01E03*", "审讯室[西班牙]S01E03*",
+                "审讯室[英国]S02E04*", "时间旅行者的妻子S01E06*", "时空旋涡[法国]S01E06*", "失魂舍伍德S02E06*",
+                "失序边缘S01E10*", "尸体.搜索尸间线S01E08*", "斯特莱克探案集S06E04*", "嗜血法医[杀魔重生]S01E10*",
+                "私家侦探S05E08*", "守望尘世S03E08剧终*", "殊途同归[英]S02E04*", "塔尔萨之王S01E09*",
+                "螳螂La Mante.S01E06*", "特别小组TaskS01E07*", "天才.爱因斯坦E10*", "同样的天空S01E03*",
+                "头号人质S01E05*", "头号外交官S03E08*", "图书馆员S04E12剧终*", "纨绔子弟(俄)S03E16*",
+                "万神殿S01E08*", "王冠S04E10*", "维京传奇S06E20剧终*", "维京传奇:英灵殿S03E08剧终*",
+                "维兰德S01E03*", "为全人类S04E10*", "危险关系LiasonS01E06*", "我的天才女友S03E08*",
+                "我们WIR.S01E12*", "我们的父辈S01E03*", "我们的男孩E10*", "无丁之地S01E08*", "无可救药S02E08*",
+                "无神S01E07剧终*", "无垠的太空.苍穹浩瀚S06E06剧终*", "毋庸置疑S04E03*", "袭击.急袭(俄)S01E08*",
+                "侠探杰克S01E08*", "先见之明S02E08剧终*", "小镇疑云[英版]S03E08剧终*", "逍遥法外S06E15剧终*",
+                "幸福谷S03E06*", "星际迷航:发现号.短途S01E04*", "星际迷航:发现号S05E10剧终*", "星际迷航:皮卡特S03E10*",
+                "星际迷航:奇异新世界S02E10*", "行尸走肉S11E24剧终*", "行尸走肉:存活之人S01E06*", "行尸走肉:死亡之城S02E08*",
+                "行尸走肉:达里尔·迪克森S02E06*", "行尸之惧S08E12*", "悬案解码S01E09*", "掩耳盗邻S01E09*",
+                "夜空S01E08*", "一触即发S02E06*", "依法相爱*", "伊普克雷斯档案S01E06*", "异星灾变S02E08*",
+                "浴血黑帮S06E06剧终*", "远古入侵S05E06*", "越洋救援S01E07*", "月之暗面S02E16[俄]*", "战士S03E10*",
+                "占领区S03E06*", "政客之夫*", "真相捕捉TheCapturesS02E06季终*", "争分夺秒TIME3集全*",
+                "子不雨 双姝奇探.雨女S05E08*", "纸钞屋S05E10剧终*", "窒风之中S03E08*", "中间人先生S03E09*",
+                "终极名单S01E08*", "重任在肩S06E07*", "足球教练Ted LassoS03E12剧终*", "罪恶黑名单S09E22*",
+                "最后的警察[法国版]S04E08剧终*", "最后的曙光.全球危机S01E05*", "最后生还者S02E07*", "追凶S02E04"
+            ];
+            completed.usuk = rawUsuk.map(cleanAsterisk).filter(t => t !== '');
+
+            const rawAsia = [
+                "1%的可能性[2016]*", "365：逆转命运的1年*", "W*两个世界*", "爱填满空白*", "奔向爱情Run On16集全*",
+                "毕业*", "不需要爱的夏天*", "布拉格恋人*", "超能异族*", "初恋[满岛光]*", "春夜*", "单恋原声带*",
+                "第二次20岁*", "第一次遇见花香的那刻*", "东京太阳雨*", "对不起，我爱你*", "二十五，二十一*",
+                "恶缘*", "非自然死亡*", "粉红理论[泰]*", "过来抱抱我*", "狗和狼的时间*", "豪杰春香*", "海岸村恰恰恰*",
+                "黑暗荣耀 I+II*", "黑色太阳+特辑[莫比乌斯]*", "狐狸啊你干啥呢*", "花样年华*生如夏花*", "火车[景收真]*",
+                "火鸟*", "极恶非道1*3*", "继母与女儿的蓝调+2020SP+2022SP*", "结婚契约*", "金科长*", "浪客行*",
+                "泪之女王.眼泪女王*", "镰仓殿的13人*", "恋爱大战*", "恋人(2018李瑞镇)*", "恋人(2023南宫珉)*",
+                "两个人的独角戏*", "妈妈朋友的儿子 *", "美妙人生[韩]*", "梦幻情侣*", "秘密森林[1+2]*", "密会*",
+                "明星的恋人*", "那个男人的记忆法*", "那年冬天,风在吹*", "那年，我们的夏天*", "你来自哪颗星*",
+                "平清盛*", "奇怪的搭档*", "巧克力*", "强力侦察队.H.I.T重案组*", "亲爱的恩东啊*", "认识的妻子[日版+韩版]*",
+                "仁显王后的男人*", "仁医*", "日本沉没*希望之人*", "求婚大作战+SP*", "三流之路*", "社内相亲*",
+                "森林*", "她的私生活*", "她很漂亮*", "甜蜜间谍*", "天空之城[2018韩剧]*", "The K2*", "Transit Girl*",
+                "拖旅行箱的女人*", "文森佐*", "我的解放日志*", "我的ID是江南美人*", "我的完美秘书*", "我们都无法成为大人*",
+                "我们的蓝调*", "我亲爱的朋友们*", "我也是花*", "无法抗拒的他E01~弃*", "无情都市*", "陷入纯情*",
+                "现在拨打的电话*", "新婚甜心是同事*", "幸福伽菜子的快乐杀手生活*", "雪滴花*", "血谜拼图*",
+                "雪之女王*", "阳光先生*", "耀眼*", "义经*", "一起吃晚餐吗*", "医生们*", "衣袖红镶边*",
+                "以神之名：信仰的背叛*", "以吾之名8集全*", "有钱男与贫穷女*", "于星降之夜9集全*", "宇宙嫁给我*",
+                "鱿鱼游戏9集全*", "只是相爱的关系*", "治愈者*", "重击*", "掟上今日子的备忘录*", "主君的太阳*",
+                "追踪者游戏W 职权骚扰的上司是我的前女友*"
+            ];
+            completed.asia = rawAsia.map(cleanAsterisk).filter(t => t !== '');
+
+            const rawMovie = [
+                "2012*", "阿修罗*", "爱因斯坦与爱丁顿*", "爱情奇遇记*", "奥林匹亚街区*", "八面埋伏*",
+                "疤面煞星*", "卑劣的街头*", "必死剑鸟刺*", "必胜球探*", "编号24 Nr. 24*", "兵临城下*",
+                "波斯语课*", "曾经*", "刺杀盖世太保+类人猿行动*", "刺杀据点*", "丑女大翻身*",
+                "穿条纹睡衣的男孩*", "大佬Brother[北野武]*", "搭讪的法则*", "登陆之日*", "第十二个人*",
+                "点球成金*", "F1:狂飙飞车*", "非常突然[港]*", "高地战*", "革命往事*", "过往人生*",
+                "共犯者们.帮凶*", "共助1+2*", "哈尔滨*", "和声*", "黑暗面*", "黑袋行动*",
+                "红十字：女人们的入伍通知单*", "轰炸机之歌*", "黄海*", "灰影人*", "花束般的恋爱*",
+                "活埋*", "火烧天堂镇*", "极速车王*", "疾速追杀1*4*", "疾速追杀*芭蕾杀姬*", "家族荣誉1*",
+                "禁闭岛*", "惊天营救1+2*", "九月五日*", "JSA共同警备区*", "局内人[韩国 加长版]*",
+                "决斗犹马镇*", "会计刺客1+2*", "老手*", "雷霆特攻队*", "利刃出鞘*", "里斯本丸沉没*",
+                "烈日阳光[俄]*", "硫磺岛的来信*", "妈妈咪呀1+2*", "漫画威龙之大话特务*", "曼联重生*",
+                "美国内战*", "美国往事*", "梅格雷的陷阱/梅格雷的亡者/梅格雷的十字路口夜/梅格雷的蒙马特*",
+                "盟约*", "密阳*", "鸣梁海战*", "明星助理*", "那天的氛围*", "怒火 重案*",
+                "女狙击手/塞瓦斯托波尔战*", "前哨*", "杀死比尔1+2*", "杀手面包师*", "三方国界*",
+                "盛夏的方程式*", "伸冤人1+2+3*", "十三刺客*", "十三条命+营救野猪队/奇迹救援+泰国洞穴救援[纪录片]*",
+                "世上最美的离别*", "苏芬战争*", "瞬息全宇宙*", "十一月*", "逃离索比堡*", "套装/誓不低头*",
+                "特工老爸*", "甜蜜的人生*", "突袭1+2", "万湖会议+阴谋*", "王者2017*", "我爱你[2011韩国]*",
+                "我记得.厄忆追凶*", "我是山姆*", "无处逢生*", "无名战士*", "无姓之人*", "西部往事*",
+                "嫌疑人[韩国]*", "现在去见你[孙艺珍]*", "向日葵*", "小妈妈*", "摇滚黑帮*", "一九四四*",
+                "一命*", "幽灵[韩版风声]*", "浴血华沙*", "与犯罪的战争：坏家伙的全盛时代*", "炸药屋*",
+                "再次出发之纽约遇见你 Begin Again/歌曲改变人生*", "再见我们的幼儿园*", "战·争 Warfare (2025)*",
+                "贼巢1+2*", "只有你[韩孝珠]*", "子弹列车*", "致命最前线/最后的前线[俄]*", "重金属天团/金属霸主*",
+                "终极对弈*", "最后的决斗*", "最普通的恋爱*", "奏鸣曲[北野武]*", "坠落*", "座头市1962*",
+                "座头市2003*", "风筝/潜伏/暗算/黎明之前/悬崖/誓言无声/誓言永恒*"
+            ];
+            completed.movie = rawMovie.map(cleanAsterisk).filter(t => t !== '');
+
+            plannedTitles = [
+                "死的赞美",
+                "待： 丹麦剧*怀疑  柏林之狗 第十三位使徒 功勋：李延年 我们的父辈  孤独的  达奇与莉莉   萨布丽娜的惊心冒险/河谷镇 间谍之妻",
+                "燃烧女子的肖像   春夜 家门的荣光 healer 制作人",
+                "最后之舞  都市男女的爱情法则 阿斯达年代记 超级巨星柳白 【【#锦绣佳人#/#Wives and Daughters#】[1999][英剧]】 《她很漂亮》黄正音、朴叙俊  《加油吧威基基》【《母亲》吉永小百合、浅野忠信*百度网盘中】德鲁纳酒店iu   LIVE  制作人 黑帆 樱姬 孤鸽镇 致命最前线  恶作剧之吻  奇怪的搭档  火口的两人 沉睡者 妻子变成小学生",
+                "再次我的人生   不汗党 洛城警事[夸克盘]   矮子毒枭[阿里云盘]",
+                "真爱故事*英剧  你是我的春天",
+                "《尝试》第三季，苹果 Apple+ 出品，超高口碑英剧，豆瓣9.3分。",
+                "罪案第六感  预约爱情",
+                "跨越彩虹2002**百度云盘",
+                "大河剧:新选组/龙马传/军师官兵卫[迅雷云盘OK]  女城主直虎/笃姬/独眼龙政宗/武田信玄/春日局/",
+                "书单：万福玛利亚计划",
+                "今村昌弘 宫部E美雪 青崎有吾",
+                "日本《电影旬报》杂志公布2024年度十佳日影：",
+                "1.《黎明的一切》",
+                "2.《纳米比亚沙漠》",
+                "3.《邪恶不存在》",
+                "4.《云》",
+                "4.《我的阳光》",
+                "6.《我生活的两个世界》",
+                "7.《蓦然回首》",
+                "8.《暴劫青春：我们无法阻挡2》",
+                "9.《最后的里程》",
+                "10.《杏运》",
+                "11.《箱男》",
+                "英雄志  稻草之盾"
+            ];
+
+            // 初始化渲染
+            renderAll();
+            toggleSubcategorySelect();
+            
+            // 检查并恢复同步配置（包括自动下载云端数据）
+            restoreSyncConfig();
+        }
+
+        initializeData();
+    })();
+</script>
+</body>
+</html>
