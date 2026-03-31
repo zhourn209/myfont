@@ -8,7 +8,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  height:100vh;
+  width: 2400px; /* 设置固定宽度以适合横屏 */
+  height: 1080px; /* 设置固定高度以适应横屏 */
   font-family:'Nunito',sans-serif;
   display:flex;
   flex-direction:column;
@@ -27,9 +28,9 @@ body{
 
 .top{
   display:flex;
-  justify-content:space-between; /* 调整为 space-between 以对齐 */
+  justify-content:space-between; 
   align-items:center;
-  width: 100%; /* 确保宽度为 100% */
+  width: 100%; 
 }
 
 .date-group{
@@ -37,24 +38,24 @@ body{
   flex-direction:column;
 }
 
-.date{font-size:18px;font-weight:700}
-.week{font-size:14px;opacity:0.8}
-.lunar{font-size:14px;opacity:0.8}
+.date{font-size:36px;font-weight:700} /* 放大日期 */
+.week{font-size:24px;opacity:0.8} /* 放大星期 */
+.lunar{font-size:24px;opacity:0.8} /* 放大农历字体 */
 
-.city{font-size:12px;opacity:0.7;margin-top:5px}
+.city{font-size:18px;opacity:0.7;margin-top:5px} /* 增大城市字体 */
 
 .time{
-  font-size:165px; /* 放大 150% */
+  font-size:240px; /* 放大时间显示 */
   font-weight:700;
   text-align:center;
 }
 
 .bottom{display:flex;justify-content:space-between;align-items:center}
-.weather{display:flex;gap:10px;align-items:center}
-.right{display:flex;gap:15px}
-.item{text-align:center;font-size:12px}
-.temp-main{font-size:30px;font-weight:700}
-.temp-sub{font-size:14px;opacity:0.7}
+.weather{display:flex;gap:20px;align-items:center}
+.right{display:flex;gap:30px}
+.item{text-align:center;font-size:18px} /* 增大底部信息字体 */
+.temp-main{font-size:48px;font-weight:700} /* 放大温度字体 */
+.temp-sub{font-size:24px;opacity:0.7} /* 放大温度范围字体 */
 </style>
 </head>
 <body>
@@ -63,9 +64,9 @@ body{
   <div class="date-group">
     <div class="week" id="week"></div>
     <div class="date" id="date"></div>
-    <div class="city" id="city">上海</div> <!-- 这里设置固定为上海 -->
+    <div class="city" id="city">上海</div> 
   </div>
-  <div class="lunar" id="lunar">农历：正在加载...</div> <!-- 农历显示 -->
+  <div class="lunar" id="lunar">农历：正在加载...</div> 
 </div>
 
 <div class="time" id="time">00:00</div>
