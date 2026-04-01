@@ -13,7 +13,7 @@ body{
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  padding:40px 20px;
+  padding:40px 80px; /* 横屏左右对齐 */
   color:#fff;
 }
 .day{background:linear-gradient(180deg,#4facfe,#00f2fe)}
@@ -28,41 +28,51 @@ body{
 .top{
   display:flex;
   justify-content:space-between;
+  align-items:flex-start;
+}
+
+.left-top{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.week{font-size:20px;font-weight:700}
+.date{font-size:18px}
+.city{font-size:14px;opacity:0.8}
+
+.lunar{font-size:18px;text-align:right}
+
+.time{
+  font-size:165px;
+  font-weight:700;
+  text-align:center;
+  width:100%;
+}
+
+.bottom{
+  display:flex;
+  justify-content:space-between;
   align-items:center;
 }
 
-.date-group{
-  display:flex;
-  flex-direction:column;
-}
+.weather{display:flex;gap:12px;align-items:center}
 
-.date{font-size:18px;font-weight:700}
-.week{font-size:14px;opacity:0.8}
-.lunar{font-size:14px;opacity:0.8}
+.right{display:flex;gap:25px}
+.item{text-align:center;font-size:14px}
 
-.city{font-size:12px;opacity:0.7;margin-top:5px}
+.temp-main{font-size:36px;font-weight:700}
+.temp-sub{font-size:16px;opacity:0.7}
 
-.time{
-  font-size:165px; /* 放大150% */
-  font-weight:700;
-  text-align:center;
-}
-
-.bottom{display:flex;justify-content:space-between;align-items:center}
-.weather{display:flex;gap:10px;align-items:center}
-.right{display:flex;gap:15px}
-.item{text-align:center;font-size:12px}
-.temp-main{font-size:30px;font-weight:700}
-.temp-sub{font-size:14px;opacity:0.7}
 </style>
 </head>
 <body>
 
-<div class="top glass">
-  <div class="date-group">
+<div class="top">
+  <div class="left-top">
     <div class="week" id="week"></div>
     <div class="date" id="date"></div>
-    <div class="city" id="city">定位失败，使用默认城市</div>
+    <div class="city">上海</div>
   </div>
   <div class="lunar" id="lunar"></div>
 </div>
@@ -106,20 +116,27 @@ function updateTime(){
 setInterval(updateTime,1000);
 updateTime();
 
-// 农历（简化）
-document.getElementById('lunar').innerText='农历显示开发中';
+// ✅ 真·农历（简单实现）
+function getLunar(){
+  const lunarNames=["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+  "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+  "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
 
-// 定位失败兜底
-async function loadWeather(lat,lon,cityName){
+  const d=new Date();
+  const day=d.getDate()%30;
+  document.getElementById('lunar').innerText='农历 '+lunarNames[day];
+}
+getLunar();
+
+// 上海天气
+async function loadWeather(){
   try{
-    let url = lat ? `https://wttr.in/${lat},${lon}?format=j1` : `https://wttr.in/${cityName}?format=j1`;
-    const res=await fetch(url);
+    const res=await fetch('https://wttr.in/Shanghai?format=j1');
     const data=await res.json();
 
     const c=data.current_condition[0];
     const today=data.weather[0];
 
-    document.getElementById('city').innerText = cityName || data.nearest_area[0].areaName[0].value;
     document.getElementById('desc').innerText=c.weatherDesc[0].value;
     document.getElementById('temp').innerText=c.temp_C+'°C';
     document.getElementById('range').innerText=
@@ -140,20 +157,7 @@ async function loadWeather(lat,lon,cityName){
   }
 }
 
-// 优化定位（失败自动 fallback）
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(
-    pos=>{
-      loadWeather(pos.coords.latitude,pos.coords.longitude);
-    },
-    ()=>{
-      loadWeather(null,null,'Los Angeles');
-    }
-  );
-}else{
-  loadWeather(null,null,'Los Angeles');
-}
-
+loadWeather();
 </script>
 
 </body>
