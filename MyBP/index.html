@@ -5,20 +5,12 @@
 <title>血压记录</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- 字体（带 fallback） -->
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
 body{
     margin:0;
-
-    font-family:
-    "Nunito",
-    "PingFang SC",
-    "Microsoft YaHei",
-    "Segoe UI",
-    sans-serif;
-
+    font-family:"Nunito","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
     background:#0f172a;
     color:#fff;
     padding:12px;
@@ -44,7 +36,6 @@ body{
     margin-bottom:14px;
 }
 
-/* 输入 */
 input{
     width:100%;
     padding:10px;
@@ -53,7 +44,6 @@ input{
     border:none;
 }
 
-/* 按钮 */
 button{
     padding:8px 14px;
     margin:4px;
@@ -63,16 +53,9 @@ button{
     color:#fff;
 }
 
-/* 工具栏 */
-.toolbar{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-}
-
-/* 分级（单行 + 放大） */
+/* 分级 */
 .ref{
-    font-size:16px; /* 放大 */
+    font-size:16px;
     font-weight:800;
     color:#facc15;
     margin-top:6px;
@@ -82,7 +65,6 @@ button{
 table{
     width:100%;
     border-collapse:collapse;
-    font-size:15px;
 }
 
 td,th{
@@ -90,34 +72,13 @@ td,th{
     text-align:center;
 }
 
-/* 手机卡片 */
+/* 手机 */
 @media (max-width:600px){
-
     table thead{display:none;}
-
-    table,tbody,tr,td{
-        display:block;
-        width:100%;
-    }
-
-    tr{
-        background:#334155;
-        margin-bottom:12px;
-        border-radius:14px;
-        padding:12px;
-    }
-
-    td{
-        text-align:left;
-        padding:6px 0;
-    }
-
-    td::before{
-        content:attr(data-label);
-        font-size:12px;
-        color:#94a3b8;
-        display:block;
-    }
+    table,tbody,tr,td{display:block;width:100%;}
+    tr{background:#334155;margin-bottom:12px;border-radius:14px;padding:12px;}
+    td{text-align:left;}
+    td::before{content:attr(data-label);font-size:12px;color:#94a3b8;}
 }
 </style>
 </head>
@@ -137,7 +98,7 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
-<div class="card toolbar">
+<div class="card">
 <button onclick="addRow()">添加</button>
 <button onclick="exportCSV()">CSV</button>
 <button onclick="exportJSON()">JSON</button>
@@ -152,11 +113,7 @@ td,th{
 <table>
 <thead>
 <tr>
-<th>时间</th>
-<th>血压</th>
-<th>心率</th>
-<th>备注</th>
-<th>操作</th>
+<th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -165,6 +122,7 @@ td,th{
 
 <script>
 let data=[];
+let timer=null;
 
 /* 提示 */
 function show(msg,type="success"){
@@ -173,6 +131,14 @@ function show(msg,type="success"){
     el.className=type;
     el.style.display="block";
     setTimeout(()=>el.style.display="none",2000);
+}
+
+/* 自动上传（核心） */
+function autoSync(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+        sync();
+    },60000); // 60秒
 }
 
 /* 配置 */
@@ -208,6 +174,7 @@ function addRow(){
         note:""
     });
     render();
+    autoSync();
 }
 
 /* 渲染 */
@@ -232,12 +199,14 @@ function render(){
 /* 编辑 */
 function edit(i,k,v){
     data[i][k]=v.trim();
+    autoSync();
 }
 
 /* 删除 */
 function del(i){
     data.splice(i,1);
     render();
+    autoSync();
 }
 
 /* 上传 */
@@ -254,25 +223,22 @@ async function sync(){
                 }
             })
         });
-        show("更新完成");
+        show("自动已同步");
     }catch{
         show("上传失败","error");
     }
 }
 
-/* 下载（兼容所有格式） */
+/* 下载（自动+兼容） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
-        if(!res.ok){show("下载失败","error");return;}
+        if(!res.ok){return;}
 
         const j=await res.json();
         const content=j.files["data.json"]?.content;
 
-        if(!content){
-            show("远程无数据","error");
-            return;
-        }
+        if(!content) return;
 
         const parsed=JSON.parse(content);
 
@@ -280,17 +246,10 @@ async function loadFromGist(){
             data=parsed;
         }else if(parsed.data){
             data=parsed.data;
-        }else{
-            show("数据格式不支持","error");
-            return;
         }
 
         render();
-        show("更新完成");
-    }catch(e){
-        console.error(e);
-        show("下载失败","error");
-    }
+    }catch{}
 }
 
 /* 导出 */
@@ -333,6 +292,7 @@ function importFile(){
                 });
             }
             render();
+            autoSync();
             show("导入完成");
         };
 
@@ -342,8 +302,9 @@ function importFile(){
     input.click();
 }
 
+/* 初始化 */
 loadConfig();
-render();
+loadFromGist(); // ✅ 自动下载
 </script>
 
 </body>
