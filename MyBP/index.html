@@ -5,80 +5,79 @@
 <title>血压记录</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- 圆润字体 -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+
 <style>
 body{
     margin:0;
-    font-family:"Segoe UI";
-    font-weight:600; /* 字体整体加粗 */
+    font-family:
+    "Nunito",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+
     background:#0f172a;
     color:#fff;
-    padding:10px;
+    padding:12px;
 }
 
 /* 状态提示 */
 #status{
     position:fixed;
-    top:10px;
+    top:12px;
     left:50%;
     transform:translateX(-50%);
     padding:8px 16px;
-    border-radius:6px;
+    border-radius:999px;
     display:none;
+    font-size:14px;
 }
 .success{background:#22c55e;}
 .error{background:#ef4444;}
 
 .card{
     background:#1e293b;
-    padding:12px;
-    border-radius:12px;
-    margin-bottom:12px;
+    padding:14px;
+    border-radius:16px;
+    margin-bottom:14px;
 }
 
+/* 输入框 */
 input{
-    padding:6px;
-    margin:3px;
-    border-radius:6px;
+    width:100%;
+    padding:10px;
+    margin:6px 0;
+    border-radius:10px;
     border:none;
+    font-size:14px;
 }
 
+/* 按钮 */
 button{
-    padding:6px 10px;
-    margin:3px;
+    padding:8px 14px;
+    margin:4px;
     border:none;
-    border-radius:6px;
+    border-radius:999px;
     background:#22c55e;
     color:#fff;
     font-size:13px;
-}
-
-/* 圆形选色 */
-#colorPicker{
-    width:28px;
-    height:28px;
-    border-radius:50%;
-    border:none;
-    padding:0;
-}
-
-/* 标记颜色 */
-.marked{
-    font-weight:700;
 }
 
 /* 工具栏 */
 .toolbar{
     display:flex;
     flex-wrap:wrap;
-    align-items:center;
-    gap:6px;
 }
 
-/* 分级参考（重点加粗） */
+/* 分级标签 */
 .ref{
-    font-size:14px;
-    font-weight:800;
+    margin-top:6px;
+    font-size:13px;
+    font-weight:700;
     color:#facc15;
+    line-height:1.6;
 }
 
 /* 表格 */
@@ -89,7 +88,7 @@ table{
 }
 
 td,th{
-    padding:8px;
+    padding:10px;
     text-align:center;
 }
 
@@ -105,14 +104,14 @@ td,th{
 
     tr{
         background:#334155;
-        margin-bottom:10px;
-        border-radius:10px;
-        padding:10px;
+        margin-bottom:12px;
+        border-radius:14px;
+        padding:12px;
     }
 
     td{
         text-align:left;
-        padding:4px 0;
+        padding:6px 0;
     }
 
     td::before{
@@ -120,6 +119,7 @@ td,th{
         display:block;
         font-size:12px;
         color:#94a3b8;
+        margin-bottom:2px;
     }
 }
 </style>
@@ -133,29 +133,23 @@ td,th{
 <h3>GitHub 同步</h3>
 <input id="token" placeholder="Token">
 <input id="gist" placeholder="Gist ID">
-<br>
+
 <button onclick="saveConfig()">保存</button>
 <button onclick="testConnection()">测试连接</button>
-<button onclick="loadFromGist()">⬇️ 下载</button>
-<button onclick="sync()">⬆️ 上传</button>
+<button onclick="loadFromGist()">下载</button>
+<button onclick="sync()">上传</button>
 </div>
 
 <div class="card toolbar">
-
-<button onclick="addRow()">➕ 添加</button>
+<button onclick="addRow()">添加</button>
 <button onclick="exportCSV()">CSV</button>
 <button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
 
-<!-- 圆形选色 -->
-<input type="color" id="colorPicker" value="#ff0000">
-<input id="markInput" placeholder="行,列 如 0,bp">
-<button onclick="markCell()">标记</button>
-
 <div class="ref">
-正常 <120/<80 ｜ 正常高值 120-139/80-89 ｜ 1级 140-159/90-99 ｜ 2级 ≥160/≥100
+正常 <120/<80 ｜ 正常高值 120-139/80-89<br>
+1级高血压 140-159/90-99 ｜ 2级高血压 ≥160/≥100
 </div>
-
 </div>
 
 <div class="card">
@@ -175,7 +169,6 @@ td,th{
 
 <script>
 let data=[];
-let marked={};
 
 /* 提示 */
 function show(msg,type="success"){
@@ -221,18 +214,6 @@ function addRow(){
     render();
 }
 
-/* 标记 */
-function markCell(){
-    const val=markInput.value.trim();
-    if(!val) return;
-
-    const [row,col]=val.split(",");
-    const key=row+"_"+col;
-
-    marked[key]=document.getElementById("colorPicker").value;
-    render();
-}
-
 /* 渲染 */
 function render(){
     const tbody=document.getElementById("tbody");
@@ -241,16 +222,11 @@ function render(){
     data.forEach((r,i)=>{
         const tr=document.createElement("tr");
 
-        function style(col){
-            const c=marked[i+"_"+col];
-            return c?`style="color:${c};font-weight:700"`:"";
-        }
-
         tr.innerHTML=`
-<td data-label="时间" ${style('time')} contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td data-label="血压" ${style('bp')} contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td data-label="心率" ${style('hr')} contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
-<td data-label="备注" ${style('note')} contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td data-label="时间" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td data-label="血压" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td data-label="心率" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td data-label="备注" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
 <td data-label="操作"><button onclick="del(${i})">删除</button></td>
 `;
         tbody.appendChild(tr);
@@ -277,7 +253,7 @@ async function sync(){
             body:JSON.stringify({
                 files:{
                     "data.json":{
-                        content:JSON.stringify({data,marked},null,2)
+                        content:JSON.stringify(data,null,2)
                     }
                 }
             })
@@ -288,7 +264,7 @@ async function sync(){
     }
 }
 
-/* 下载（防丢数据修复） */
+/* 下载（安全） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -298,23 +274,20 @@ async function loadFromGist(){
         const content=j.files["data.json"]?.content;
 
         if(!content){
-            show("远程无数据，已保留本地数据","error");
+            show("远程无数据","error");
             return;
         }
 
         const parsed=JSON.parse(content);
-
-        if(!parsed.data){
-            show("数据格式异常，未覆盖","error");
+        if(!Array.isArray(parsed)){
+            show("格式错误","error");
             return;
         }
 
-        data=parsed.data;
-        marked=parsed.marked||{};
-
+        data=parsed;
         render();
         show("更新完成");
-    }catch(e){
+    }catch{
         show("下载失败","error");
     }
 }
@@ -329,7 +302,7 @@ function exportCSV(){
 }
 
 function exportJSON(){
-    download(JSON.stringify({data,marked},null,2),"data.json");
+    download(JSON.stringify(data,null,2),"data.json");
 }
 
 function download(c,n){
@@ -350,9 +323,7 @@ function importFile(){
 
         reader.onload=()=>{
             if(file.name.endsWith(".json")){
-                const parsed=JSON.parse(reader.result);
-                data=parsed.data||[];
-                marked=parsed.marked||{};
+                data=JSON.parse(reader.result);
             }else{
                 const lines=reader.result.split("\n").slice(1);
                 data=lines.map(l=>{
