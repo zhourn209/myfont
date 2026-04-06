@@ -5,17 +5,18 @@
 <title>血压记录</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- 圆润字体 -->
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<!-- 字体（带 fallback） -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
 body{
     margin:0;
+
     font-family:
     "Nunito",
     "PingFang SC",
-    "Hiragino Sans GB",
     "Microsoft YaHei",
+    "Segoe UI",
     sans-serif;
 
     background:#0f172a;
@@ -32,7 +33,6 @@ body{
     padding:8px 16px;
     border-radius:999px;
     display:none;
-    font-size:14px;
 }
 .success{background:#22c55e;}
 .error{background:#ef4444;}
@@ -44,14 +44,13 @@ body{
     margin-bottom:14px;
 }
 
-/* 输入框 */
+/* 输入 */
 input{
     width:100%;
     padding:10px;
     margin:6px 0;
     border-radius:10px;
     border:none;
-    font-size:14px;
 }
 
 /* 按钮 */
@@ -62,22 +61,21 @@ button{
     border-radius:999px;
     background:#22c55e;
     color:#fff;
-    font-size:13px;
 }
 
 /* 工具栏 */
 .toolbar{
     display:flex;
     flex-wrap:wrap;
+    align-items:center;
 }
 
-/* 分级标签 */
+/* 分级（单行 + 放大） */
 .ref{
-    margin-top:6px;
-    font-size:13px;
-    font-weight:700;
+    font-size:16px; /* 放大 */
+    font-weight:800;
     color:#facc15;
-    line-height:1.6;
+    margin-top:6px;
 }
 
 /* 表格 */
@@ -116,10 +114,9 @@ td,th{
 
     td::before{
         content:attr(data-label);
-        display:block;
         font-size:12px;
         color:#94a3b8;
-        margin-bottom:2px;
+        display:block;
     }
 }
 </style>
@@ -147,8 +144,7 @@ td,th{
 <button onclick="importFile()">导入</button>
 
 <div class="ref">
-正常 <120/<80 ｜ 正常高值 120-139/80-89<br>
-1级高血压 140-159/90-99 ｜ 2级高血压 ≥160/≥100
+正常<120/<80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100
 </div>
 </div>
 
@@ -264,7 +260,7 @@ async function sync(){
     }
 }
 
-/* 下载（安全） */
+/* 下载（兼容所有格式） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -279,15 +275,20 @@ async function loadFromGist(){
         }
 
         const parsed=JSON.parse(content);
-        if(!Array.isArray(parsed)){
-            show("格式错误","error");
+
+        if(Array.isArray(parsed)){
+            data=parsed;
+        }else if(parsed.data){
+            data=parsed.data;
+        }else{
+            show("数据格式不支持","error");
             return;
         }
 
-        data=parsed;
         render();
         show("更新完成");
-    }catch{
+    }catch(e){
+        console.error(e);
         show("下载失败","error");
     }
 }
