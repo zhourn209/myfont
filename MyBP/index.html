@@ -1,1 +1,266 @@
-My
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>健康记录</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    font-family: "Segoe UI";
+    background: linear-gradient(135deg,#eef2ff,#f8fafc);
+    padding:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    margin-bottom:20px;
+}
+
+input{
+    padding:8px;
+    margin:5px;
+}
+
+button{
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    background:#4CAF50;
+    color:white;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+td,th{
+    padding:10px;
+    text-align:center;
+}
+
+tr:nth-child(even){
+    background:#f9fafb;
+}
+
+.abnormal{
+    color:red;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2>🔐 GitHub 同步</h2>
+Token: <input id="token"><br>
+Gist ID: <input id="gist"><br>
+<button onclick="saveConfig()">保存配置</button>
+<button onclick="loadFromGist()">⬇️ 下载</button>
+<button onclick="sync()">⬆️ 上传</button>
+</div>
+
+<div class="card">
+<button onclick="addRow()">➕ 添加</button>
+<button onclick="exportCSV()">导出CSV</button>
+<button onclick="exportJSON()">导出JSON</button>
+<button onclick="importFile()">导入</button>
+</div>
+
+<div class="card">
+<table id="table">
+<thead>
+<tr>
+<th>时间</th>
+<th>血压</th>
+<th>心率</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>统计</h3>
+正常: <span id="ok">0</span> |
+异常: <span id="bad">0</span>
+</div>
+
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
+
+<script>
+let data=[];
+
+function saveConfig(){
+    localStorage.token = token.value;
+    localStorage.gist = gist.value;
+}
+
+function loadConfig(){
+    token.value = localStorage.token||"";
+    gist.value = localStorage.gist||"";
+}
+
+function addRow(){
+    data.push({
+        time:new Date().toLocaleString(),
+        bp:"120/80",
+        hr:"70",
+        note:""
+    });
+    render();
+}
+
+function render(){
+    const tbody=document.querySelector("tbody");
+    tbody.innerHTML="";
+
+    let ok=0,bad=0;
+
+    data.forEach((r,i)=>{
+
+        const [s,d]=r.bp.split("/").map(Number);
+        const isBad=s>130||d>90;
+
+        if(isBad) bad++; else ok++;
+
+        const tr=document.createElement("tr");
+
+        tr.innerHTML=`
+<td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td contenteditable class="${isBad?'abnormal':''}" onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td><button onclick="del(${i})">❌</button></td>
+`;
+
+        tbody.appendChild(tr);
+    });
+
+    okSpan.innerText=ok;
+    badSpan.innerText=bad;
+
+    drawChart();
+}
+
+function edit(i,k,v){
+    data[i][k]=v.trim();
+    sync();
+}
+
+function del(i){
+    data.splice(i,1);
+    render();
+    sync();
+}
+
+async function sync(){
+    if(!token.value||!gist.value) return;
+
+    await fetch(`https://api.github.com/gists/${gist.value}`,{
+        method:"PATCH",
+        headers:{Authorization:"token "+token.value},
+        body:JSON.stringify({
+            files:{
+                "data.json":{
+                    content:JSON.stringify(data)
+                }
+            }
+        })
+    });
+}
+
+async function loadFromGist(){
+    const res=await fetch(`https://api.github.com/gists/${gist.value}`);
+    const j=await res.json();
+    data=JSON.parse(j.files["data.json"].content);
+    render();
+}
+
+function exportCSV(){
+    let csv="time,bp,hr,note\n";
+    data.forEach(r=>{
+        csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
+    });
+
+    download(csv,"data.csv");
+}
+
+function exportJSON(){
+    download(JSON.stringify(data,null,2),"data.json");
+}
+
+function download(content,name){
+    const blob=new Blob([content]);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=name;
+    a.click();
+}
+
+function importFile(){
+    const input=document.createElement("input");
+    input.type="file";
+
+    input.onchange=e=>{
+        const file=e.target.files[0];
+        const reader=new FileReader();
+
+        reader.onload=()=>{
+            if(file.name.endsWith(".json")){
+                data=JSON.parse(reader.result);
+            }else{
+                const lines=reader.result.split("\n").slice(1);
+                data=lines.map(l=>{
+                    const [t,bp,hr,n]=l.split(",");
+                    return {time:t,bp,hr,note:n};
+                });
+            }
+            render();
+        };
+
+        reader.readAsText(file);
+    };
+
+    input.click();
+}
+
+/* 图表 */
+let chart;
+
+function drawChart(){
+    const labels=data.map(d=>d.time);
+    const sys=data.map(d=>parseInt(d.bp.split("/")[0]));
+
+    if(chart) chart.destroy();
+
+    chart=new Chart(document.getElementById("chart"),{
+        type:"line",
+        data:{
+            labels:labels,
+            datasets:[{
+                label:"收缩压",
+                data:sys
+            }]
+        }
+    });
+}
+
+loadConfig();
+render();
+</script>
+
+</body>
+</html>
