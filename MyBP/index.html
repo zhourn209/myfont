@@ -9,6 +9,7 @@
 body{
     margin:0;
     font-family:"Segoe UI";
+    font-weight:600; /* 字体整体加粗 */
     background:#0f172a;
     color:#fff;
     padding:10px;
@@ -51,13 +52,21 @@ button{
     font-size:13px;
 }
 
-/* 标红 */
-.mark-red{
-    color:#ef4444;
-    font-weight:bold;
+/* 圆形选色 */
+#colorPicker{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    border:none;
+    padding:0;
 }
 
-/* 工具栏紧凑 */
+/* 标记颜色 */
+.marked{
+    font-weight:700;
+}
+
+/* 工具栏 */
 .toolbar{
     display:flex;
     flex-wrap:wrap;
@@ -65,17 +74,18 @@ button{
     gap:6px;
 }
 
-/* 血压参考 */
+/* 分级参考（重点加粗） */
 .ref{
-    font-size:12px;
-    color:#94a3b8;
+    font-size:14px;
+    font-weight:800;
+    color:#facc15;
 }
 
 /* 表格 */
 table{
     width:100%;
     border-collapse:collapse;
-    font-size:14px;
+    font-size:15px;
 }
 
 td,th{
@@ -137,11 +147,11 @@ td,th{
 <button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
 
-<!-- 手动标红 -->
-<input id="markInput" placeholder="标红: 1,bp">
-<button onclick="markCell()">标红</button>
+<!-- 圆形选色 -->
+<input type="color" id="colorPicker" value="#ff0000">
+<input id="markInput" placeholder="行,列 如 0,bp">
+<button onclick="markCell()">标记</button>
 
-<!-- 血压参考 -->
 <div class="ref">
 正常 <120/<80 ｜ 正常高值 120-139/80-89 ｜ 1级 140-159/90-99 ｜ 2级 ≥160/≥100
 </div>
@@ -211,15 +221,15 @@ function addRow(){
     render();
 }
 
-/* 标红 */
+/* 标记 */
 function markCell(){
-    const input=markInput.value.trim();
-    if(!input) return;
+    const val=markInput.value.trim();
+    if(!val) return;
 
-    const [row,col]=input.split(",");
+    const [row,col]=val.split(",");
     const key=row+"_"+col;
 
-    marked[key]=true;
+    marked[key]=document.getElementById("colorPicker").value;
     render();
 }
 
@@ -231,15 +241,16 @@ function render(){
     data.forEach((r,i)=>{
         const tr=document.createElement("tr");
 
-        function cls(col){
-            return marked[i+"_"+col]?"mark-red":"";
+        function style(col){
+            const c=marked[i+"_"+col];
+            return c?`style="color:${c};font-weight:700"`:"";
         }
 
         tr.innerHTML=`
-<td data-label="时间" class="${cls('time')}" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td data-label="血压" class="${cls('bp')}" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td data-label="心率" class="${cls('hr')}" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
-<td data-label="备注" class="${cls('note')}" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td data-label="时间" ${style('time')} contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td data-label="血压" ${style('bp')} contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td data-label="心率" ${style('hr')} contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td data-label="备注" ${style('note')} contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
 <td data-label="操作"><button onclick="del(${i})">删除</button></td>
 `;
         tbody.appendChild(tr);
@@ -277,7 +288,7 @@ async function sync(){
     }
 }
 
-/* 下载 */
+/* 下载（防丢数据修复） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -286,13 +297,24 @@ async function loadFromGist(){
         const j=await res.json();
         const content=j.files["data.json"]?.content;
 
-        const parsed=JSON.parse(content||"{}");
-        data=parsed.data||[];
+        if(!content){
+            show("远程无数据，已保留本地数据","error");
+            return;
+        }
+
+        const parsed=JSON.parse(content);
+
+        if(!parsed.data){
+            show("数据格式异常，未覆盖","error");
+            return;
+        }
+
+        data=parsed.data;
         marked=parsed.marked||{};
 
         render();
         show("更新完成");
-    }catch{
+    }catch(e){
         show("下载失败","error");
     }
 }
