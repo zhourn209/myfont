@@ -2,16 +2,16 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>健康记录</title>
+<title>血压记录</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{
+    margin:0;
     font-family:"Segoe UI";
-    background:linear-gradient(135deg,#eef2ff,#f8fafc);
-    padding:20px;
+    background:#0f172a;
+    color:#fff;
+    padding:10px;
 }
 
 /* 状态提示 */
@@ -20,40 +20,80 @@ body{
     top:10px;
     left:50%;
     transform:translateX(-50%);
-    padding:10px 20px;
-    border-radius:8px;
-    color:white;
+    padding:8px 16px;
+    border-radius:6px;
     display:none;
 }
-
-.success{background:#4CAF50;}
-.error{background:#f44336;}
+.success{background:#22c55e;}
+.error{background:#ef4444;}
 
 .card{
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    background:#1e293b;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:12px;
+}
+
+input{
+    width:100%;
+    padding:8px;
+    margin:5px 0;
+    border-radius:6px;
+    border:none;
 }
 
 button{
-    padding:8px 12px;
-    margin:5px;
+    padding:8px;
+    margin:4px 2px;
     border:none;
     border-radius:6px;
-    background:#4CAF50;
-    color:white;
-    cursor:pointer;
+    background:#22c55e;
+    color:#fff;
 }
 
-input{padding:6px;margin:5px;}
+/* 表格桌面 */
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+}
 
-table{width:100%;border-collapse:collapse;}
-td,th{padding:10px;text-align:center;}
-tr:nth-child(even){background:#f9fafb;}
+td,th{
+    padding:8px;
+    text-align:center;
+}
 
-.abnormal{color:red;font-weight:bold;}
+/* 手机卡片模式 */
+@media (max-width:600px){
+
+    table thead{
+        display:none;
+    }
+
+    table,tbody,tr,td{
+        display:block;
+        width:100%;
+    }
+
+    tr{
+        background:#334155;
+        margin-bottom:10px;
+        border-radius:10px;
+        padding:10px;
+    }
+
+    td{
+        text-align:left;
+        padding:4px 0;
+    }
+
+    td::before{
+        content:attr(data-label);
+        display:block;
+        font-size:12px;
+        color:#94a3b8;
+    }
+}
 </style>
 </head>
 
@@ -62,11 +102,11 @@ tr:nth-child(even){background:#f9fafb;}
 <div id="status"></div>
 
 <div class="card">
-<h3>🔐 GitHub 同步</h3>
-Token: <input id="token"><br>
-Gist ID: <input id="gist"><br>
+<h3>GitHub 同步</h3>
+<input id="token" placeholder="输入 Token">
+<input id="gist" placeholder="输入 Gist ID">
 
-<button onclick="saveConfig()">保存配置</button>
+<button onclick="saveConfig()">保存</button>
 <button onclick="testConnection()">测试连接</button>
 <button onclick="loadFromGist()">⬇️ 下载</button>
 <button onclick="sync()">⬆️ 上传</button>
@@ -83,25 +123,21 @@ Gist ID: <input id="gist"><br>
 <table>
 <thead>
 <tr>
-<th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th>
+<th>时间</th>
+<th>血压</th>
+<th>心率</th>
+<th>备注</th>
+<th>操作</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-<div class="card">
-正常:<span id="ok">0</span> | 异常:<span id="bad">0</span>
-</div>
-
-<div class="card">
-<canvas id="chart"></canvas>
-</div>
-
 <script>
 let data=[];
 
-/* 状态提示 */
+/* 提示 */
 function show(msg,type="success"){
     const el=document.getElementById("status");
     el.innerText=msg;
@@ -114,7 +150,7 @@ function show(msg,type="success"){
 function saveConfig(){
     localStorage.token=token.value;
     localStorage.gist=gist.value;
-    show("已保存配置");
+    show("已保存");
 }
 
 function loadConfig(){
@@ -129,7 +165,7 @@ async function testConnection(){
             headers:{Authorization:"token "+token.value}
         });
 
-        if(res.status===200){
+        if(res.ok){
             show("✅ 连接成功");
         }else{
             show("❌ 连接失败","error");
@@ -143,8 +179,8 @@ async function testConnection(){
 function addRow(){
     data.push({
         time:new Date().toLocaleString(),
-        bp:"120/80",
-        hr:"70",
+        bp:"",
+        hr:"",
         note:""
     });
     render();
@@ -155,42 +191,29 @@ function render(){
     const tbody=document.getElementById("tbody");
     tbody.innerHTML="";
 
-    let ok=0,bad=0;
-
     data.forEach((r,i)=>{
-        const [s,d]=r.bp.split("/").map(Number);
-        const isBad=s>130||d>90;
-
-        if(isBad) bad++; else ok++;
-
         const tr=document.createElement("tr");
+
         tr.innerHTML=`
-<td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td contenteditable class="${isBad?'abnormal':''}" onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
-<td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td><button onclick="del(${i})">❌</button></td>
+<td data-label="时间" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td data-label="血压" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td data-label="心率" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td data-label="备注" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td data-label="操作"><button onclick="del(${i})">删除</button></td>
 `;
         tbody.appendChild(tr);
     });
-
-    ok.innerText=ok;
-    bad.innerText=bad;
-
-    drawChart();
 }
 
 /* 编辑 */
 function edit(i,k,v){
     data[i][k]=v.trim();
-    sync();
 }
 
 /* 删除 */
 function del(i){
     data.splice(i,1);
     render();
-    sync();
 }
 
 /* 上传 */
@@ -202,7 +225,7 @@ async function sync(){
             body:JSON.stringify({
                 files:{
                     "data.json":{
-                        content:JSON.stringify(data)
+                        content:JSON.stringify(data,null,2)
                     }
                 }
             })
@@ -213,12 +236,25 @@ async function sync(){
     }
 }
 
-/* 下载 */
+/* 下载（已修复） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
+
+        if(!res.ok){
+            show("❌ 下载失败","error");
+            return;
+        }
+
         const j=await res.json();
-        data=JSON.parse(j.files["data.json"].content);
+
+        if(!j.files || !j.files["data.json"]){
+            show("❌ 无数据文件","error");
+            return;
+        }
+
+        data=JSON.parse(j.files["data.json"].content||"[]");
+
         render();
         show("⬇️ 更新完成");
     }catch(e){
@@ -229,7 +265,10 @@ async function loadFromGist(){
 /* 导出 */
 function exportCSV(){
     let csv="time,bp,hr,note\n";
-    data.forEach(r=>csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`);
+    data.forEach(r=>{
+        csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
+    });
+
     download(csv,"data.csv");
     show("已导出CSV");
 }
@@ -239,10 +278,10 @@ function exportJSON(){
     show("已导出JSON");
 }
 
-function download(c,n){
+function download(content,name){
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([c]));
-    a.download=n;
+    a.href=URL.createObjectURL(new Blob([content]));
+    a.download=name;
     a.click();
 }
 
@@ -271,21 +310,8 @@ function importFile(){
 
         reader.readAsText(file);
     };
+
     input.click();
-}
-
-/* 图表 */
-let chart;
-function drawChart(){
-    const labels=data.map(d=>d.time);
-    const sys=data.map(d=>parseInt(d.bp));
-
-    if(chart) chart.destroy();
-
-    chart=new Chart(chartCanvas,{
-        type:"line",
-        data:{labels,datasets:[{label:"血压趋势",data:sys}]}
-    });
 }
 
 loadConfig();
