@@ -9,26 +9,37 @@
 
 <style>
 body{
-    font-family: "Segoe UI";
-    background: linear-gradient(135deg,#eef2ff,#f8fafc);
+    font-family:"Segoe UI";
+    background:linear-gradient(135deg,#eef2ff,#f8fafc);
     padding:20px;
 }
+
+/* 状态提示 */
+#status{
+    position:fixed;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 20px;
+    border-radius:8px;
+    color:white;
+    display:none;
+}
+
+.success{background:#4CAF50;}
+.error{background:#f44336;}
 
 .card{
     background:white;
     padding:20px;
     border-radius:15px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
     margin-bottom:20px;
-}
-
-input{
-    padding:8px;
-    margin:5px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
 button{
     padding:8px 12px;
+    margin:5px;
     border:none;
     border-radius:6px;
     background:#4CAF50;
@@ -36,34 +47,27 @@ button{
     cursor:pointer;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-}
+input{padding:6px;margin:5px;}
 
-td,th{
-    padding:10px;
-    text-align:center;
-}
+table{width:100%;border-collapse:collapse;}
+td,th{padding:10px;text-align:center;}
+tr:nth-child(even){background:#f9fafb;}
 
-tr:nth-child(even){
-    background:#f9fafb;
-}
-
-.abnormal{
-    color:red;
-    font-weight:bold;
-}
+.abnormal{color:red;font-weight:bold;}
 </style>
 </head>
 
 <body>
 
+<div id="status"></div>
+
 <div class="card">
-<h2>🔐 GitHub 同步</h2>
+<h3>🔐 GitHub 同步</h3>
 Token: <input id="token"><br>
 Gist ID: <input id="gist"><br>
+
 <button onclick="saveConfig()">保存配置</button>
+<button onclick="testConnection()">测试连接</button>
 <button onclick="loadFromGist()">⬇️ 下载</button>
 <button onclick="sync()">⬆️ 上传</button>
 </div>
@@ -76,24 +80,18 @@ Gist ID: <input id="gist"><br>
 </div>
 
 <div class="card">
-<table id="table">
+<table>
 <thead>
 <tr>
-<th>时间</th>
-<th>血压</th>
-<th>心率</th>
-<th>备注</th>
-<th>操作</th>
+<th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="tbody"></tbody>
 </table>
 </div>
 
 <div class="card">
-<h3>统计</h3>
-正常: <span id="ok">0</span> |
-异常: <span id="bad">0</span>
+正常:<span id="ok">0</span> | 异常:<span id="bad">0</span>
 </div>
 
 <div class="card">
@@ -103,16 +101,45 @@ Gist ID: <input id="gist"><br>
 <script>
 let data=[];
 
+/* 状态提示 */
+function show(msg,type="success"){
+    const el=document.getElementById("status");
+    el.innerText=msg;
+    el.className=type;
+    el.style.display="block";
+    setTimeout(()=>el.style.display="none",2000);
+}
+
+/* 配置 */
 function saveConfig(){
-    localStorage.token = token.value;
-    localStorage.gist = gist.value;
+    localStorage.token=token.value;
+    localStorage.gist=gist.value;
+    show("已保存配置");
 }
 
 function loadConfig(){
-    token.value = localStorage.token||"";
-    gist.value = localStorage.gist||"";
+    token.value=localStorage.token||"";
+    gist.value=localStorage.gist||"";
 }
 
+/* 测试连接 */
+async function testConnection(){
+    try{
+        const res=await fetch(`https://api.github.com/gists/${gist.value}`,{
+            headers:{Authorization:"token "+token.value}
+        });
+
+        if(res.status===200){
+            show("✅ 连接成功");
+        }else{
+            show("❌ 连接失败","error");
+        }
+    }catch(e){
+        show("❌ 网络错误","error");
+    }
+}
+
+/* 添加 */
 function addRow(){
     data.push({
         time:new Date().toLocaleString(),
@@ -123,21 +150,20 @@ function addRow(){
     render();
 }
 
+/* 渲染 */
 function render(){
-    const tbody=document.querySelector("tbody");
+    const tbody=document.getElementById("tbody");
     tbody.innerHTML="";
 
     let ok=0,bad=0;
 
     data.forEach((r,i)=>{
-
         const [s,d]=r.bp.split("/").map(Number);
         const isBad=s>130||d>90;
 
         if(isBad) bad++; else ok++;
 
         const tr=document.createElement("tr");
-
         tr.innerHTML=`
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
 <td contenteditable class="${isBad?'abnormal':''}" onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
@@ -145,71 +171,82 @@ function render(){
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
 <td><button onclick="del(${i})">❌</button></td>
 `;
-
         tbody.appendChild(tr);
     });
 
-    okSpan.innerText=ok;
-    badSpan.innerText=bad;
+    ok.innerText=ok;
+    bad.innerText=bad;
 
     drawChart();
 }
 
+/* 编辑 */
 function edit(i,k,v){
     data[i][k]=v.trim();
     sync();
 }
 
+/* 删除 */
 function del(i){
     data.splice(i,1);
     render();
     sync();
 }
 
+/* 上传 */
 async function sync(){
-    if(!token.value||!gist.value) return;
-
-    await fetch(`https://api.github.com/gists/${gist.value}`,{
-        method:"PATCH",
-        headers:{Authorization:"token "+token.value},
-        body:JSON.stringify({
-            files:{
-                "data.json":{
-                    content:JSON.stringify(data)
+    try{
+        await fetch(`https://api.github.com/gists/${gist.value}`,{
+            method:"PATCH",
+            headers:{Authorization:"token "+token.value},
+            body:JSON.stringify({
+                files:{
+                    "data.json":{
+                        content:JSON.stringify(data)
+                    }
                 }
-            }
-        })
-    });
+            })
+        });
+        show("⬆️ 更新完成");
+    }catch(e){
+        show("❌ 上传失败","error");
+    }
 }
 
+/* 下载 */
 async function loadFromGist(){
-    const res=await fetch(`https://api.github.com/gists/${gist.value}`);
-    const j=await res.json();
-    data=JSON.parse(j.files["data.json"].content);
-    render();
+    try{
+        const res=await fetch(`https://api.github.com/gists/${gist.value}`);
+        const j=await res.json();
+        data=JSON.parse(j.files["data.json"].content);
+        render();
+        show("⬇️ 更新完成");
+    }catch(e){
+        show("❌ 下载失败","error");
+    }
 }
 
+/* 导出 */
 function exportCSV(){
     let csv="time,bp,hr,note\n";
-    data.forEach(r=>{
-        csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
-    });
-
+    data.forEach(r=>csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`);
     download(csv,"data.csv");
+    show("已导出CSV");
 }
 
 function exportJSON(){
     download(JSON.stringify(data,null,2),"data.json");
+    show("已导出JSON");
 }
 
-function download(content,name){
-    const blob=new Blob([content]);
+function download(c,n){
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download=name;
+    a.href=URL.createObjectURL(new Blob([c]));
+    a.download=n;
     a.click();
 }
 
+/* 导入 */
 function importFile(){
     const input=document.createElement("input");
     input.type="file";
@@ -229,32 +266,25 @@ function importFile(){
                 });
             }
             render();
+            show("导入完成");
         };
 
         reader.readAsText(file);
     };
-
     input.click();
 }
 
 /* 图表 */
 let chart;
-
 function drawChart(){
     const labels=data.map(d=>d.time);
-    const sys=data.map(d=>parseInt(d.bp.split("/")[0]));
+    const sys=data.map(d=>parseInt(d.bp));
 
     if(chart) chart.destroy();
 
-    chart=new Chart(document.getElementById("chart"),{
+    chart=new Chart(chartCanvas,{
         type:"line",
-        data:{
-            labels:labels,
-            datasets:[{
-                label:"收缩压",
-                data:sys
-            }]
-        }
+        data:{labels,datasets:[{label:"血压趋势",data:sys}]}
     });
 }
 
