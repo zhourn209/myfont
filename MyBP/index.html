@@ -35,23 +35,43 @@ body{
 }
 
 input{
-    width:100%;
-    padding:8px;
-    margin:5px 0;
+    padding:6px;
+    margin:3px;
     border-radius:6px;
     border:none;
 }
 
 button{
-    padding:8px;
-    margin:4px 2px;
+    padding:6px 10px;
+    margin:3px;
     border:none;
     border-radius:6px;
     background:#22c55e;
     color:#fff;
+    font-size:13px;
 }
 
-/* 表格桌面 */
+/* 标红 */
+.mark-red{
+    color:#ef4444;
+    font-weight:bold;
+}
+
+/* 工具栏紧凑 */
+.toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+}
+
+/* 血压参考 */
+.ref{
+    font-size:12px;
+    color:#94a3b8;
+}
+
+/* 表格 */
 table{
     width:100%;
     border-collapse:collapse;
@@ -63,12 +83,10 @@ td,th{
     text-align:center;
 }
 
-/* 手机卡片模式 */
+/* 手机卡片 */
 @media (max-width:600px){
 
-    table thead{
-        display:none;
-    }
+    table thead{display:none;}
 
     table,tbody,tr,td{
         display:block;
@@ -103,20 +121,31 @@ td,th{
 
 <div class="card">
 <h3>GitHub 同步</h3>
-<input id="token" placeholder="输入 Token">
-<input id="gist" placeholder="输入 Gist ID">
-
+<input id="token" placeholder="Token">
+<input id="gist" placeholder="Gist ID">
+<br>
 <button onclick="saveConfig()">保存</button>
 <button onclick="testConnection()">测试连接</button>
 <button onclick="loadFromGist()">⬇️ 下载</button>
 <button onclick="sync()">⬆️ 上传</button>
 </div>
 
-<div class="card">
+<div class="card toolbar">
+
 <button onclick="addRow()">➕ 添加</button>
-<button onclick="exportCSV()">导出CSV</button>
-<button onclick="exportJSON()">导出JSON</button>
+<button onclick="exportCSV()">CSV</button>
+<button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
+
+<!-- 手动标红 -->
+<input id="markInput" placeholder="标红: 1,bp">
+<button onclick="markCell()">标红</button>
+
+<!-- 血压参考 -->
+<div class="ref">
+正常 <120/<80 ｜ 正常高值 120-139/80-89 ｜ 1级 140-159/90-99 ｜ 2级 ≥160/≥100
+</div>
+
 </div>
 
 <div class="card">
@@ -136,6 +165,7 @@ td,th{
 
 <script>
 let data=[];
+let marked={};
 
 /* 提示 */
 function show(msg,type="success"){
@@ -164,14 +194,9 @@ async function testConnection(){
         const res=await fetch(`https://api.github.com/gists/${gist.value}`,{
             headers:{Authorization:"token "+token.value}
         });
-
-        if(res.ok){
-            show("✅ 连接成功");
-        }else{
-            show("❌ 连接失败","error");
-        }
-    }catch(e){
-        show("❌ 网络错误","error");
+        res.ok?show("连接成功"):show("连接失败","error");
+    }catch{
+        show("网络错误","error");
     }
 }
 
@@ -186,6 +211,18 @@ function addRow(){
     render();
 }
 
+/* 标红 */
+function markCell(){
+    const input=markInput.value.trim();
+    if(!input) return;
+
+    const [row,col]=input.split(",");
+    const key=row+"_"+col;
+
+    marked[key]=true;
+    render();
+}
+
 /* 渲染 */
 function render(){
     const tbody=document.getElementById("tbody");
@@ -194,11 +231,15 @@ function render(){
     data.forEach((r,i)=>{
         const tr=document.createElement("tr");
 
+        function cls(col){
+            return marked[i+"_"+col]?"mark-red":"";
+        }
+
         tr.innerHTML=`
-<td data-label="时间" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td data-label="血压" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td data-label="心率" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
-<td data-label="备注" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td data-label="时间" class="${cls('time')}" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td data-label="血压" class="${cls('bp')}" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td data-label="心率" class="${cls('hr')}" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td data-label="备注" class="${cls('note')}" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
 <td data-label="操作"><button onclick="del(${i})">删除</button></td>
 `;
         tbody.appendChild(tr);
@@ -225,40 +266,34 @@ async function sync(){
             body:JSON.stringify({
                 files:{
                     "data.json":{
-                        content:JSON.stringify(data,null,2)
+                        content:JSON.stringify({data,marked},null,2)
                     }
                 }
             })
         });
-        show("⬆️ 更新完成");
-    }catch(e){
-        show("❌ 上传失败","error");
+        show("更新完成");
+    }catch{
+        show("上传失败","error");
     }
 }
 
-/* 下载（已修复） */
+/* 下载 */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
-
-        if(!res.ok){
-            show("❌ 下载失败","error");
-            return;
-        }
+        if(!res.ok){show("下载失败","error");return;}
 
         const j=await res.json();
+        const content=j.files["data.json"]?.content;
 
-        if(!j.files || !j.files["data.json"]){
-            show("❌ 无数据文件","error");
-            return;
-        }
-
-        data=JSON.parse(j.files["data.json"].content||"[]");
+        const parsed=JSON.parse(content||"{}");
+        data=parsed.data||[];
+        marked=parsed.marked||{};
 
         render();
-        show("⬇️ 更新完成");
-    }catch(e){
-        show("❌ 下载失败","error");
+        show("更新完成");
+    }catch{
+        show("下载失败","error");
     }
 }
 
@@ -268,20 +303,17 @@ function exportCSV(){
     data.forEach(r=>{
         csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
     });
-
     download(csv,"data.csv");
-    show("已导出CSV");
 }
 
 function exportJSON(){
-    download(JSON.stringify(data,null,2),"data.json");
-    show("已导出JSON");
+    download(JSON.stringify({data,marked},null,2),"data.json");
 }
 
-function download(content,name){
+function download(c,n){
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([content]));
-    a.download=name;
+    a.href=URL.createObjectURL(new Blob([c]));
+    a.download=n;
     a.click();
 }
 
@@ -296,7 +328,9 @@ function importFile(){
 
         reader.onload=()=>{
             if(file.name.endsWith(".json")){
-                data=JSON.parse(reader.result);
+                const parsed=JSON.parse(reader.result);
+                data=parsed.data||[];
+                marked=parsed.marked||{};
             }else{
                 const lines=reader.result.split("\n").slice(1);
                 data=lines.map(l=>{
