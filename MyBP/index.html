@@ -5,20 +5,10 @@
 <title>血压记录</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
-
 <style>
 body{
     margin:0;
-
-    /* ✅ 字体设置（已优化） */
-    font-family:
-    "Trebuchet MS",
-    "Microsoft YaHei",
-    "PingFang SC",
-    "Segoe UI",
-    sans-serif;
-
+    font-family:"Nunito","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
     background:#0f172a;
     color:#fff;
     padding:12px;
@@ -44,6 +34,7 @@ body{
     margin-bottom:14px;
 }
 
+/* 输入框 */
 input{
     width:100%;
     padding:10px;
@@ -52,6 +43,7 @@ input{
     border:none;
 }
 
+/* 按钮 */
 button{
     padding:8px 14px;
     margin:4px;
@@ -61,7 +53,15 @@ button{
     color:#fff;
 }
 
-/* 分级 */
+/* 工具栏 */
+.toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+}
+
+/* 分级（单行 + 放大） */
 .ref{
     font-size:16px;
     font-weight:800;
@@ -69,10 +69,18 @@ button{
     margin-top:6px;
 }
 
+/* 记录总数 */
+.count{
+    font-size:16px;
+    color:#94a3b8;
+    font-weight:700;
+}
+
 /* 表格 */
 table{
     width:100%;
     border-collapse:collapse;
+    font-size:15px;
 }
 
 td,th{
@@ -80,13 +88,32 @@ td,th{
     text-align:center;
 }
 
-/* 手机 */
+/* 手机卡片 */
 @media (max-width:600px){
     table thead{display:none;}
-    table,tbody,tr,td{display:block;width:100%;}
-    tr{background:#334155;margin-bottom:12px;border-radius:14px;padding:12px;}
-    td{text-align:left;}
-    td::before{content:attr(data-label);font-size:12px;color:#94a3b8;}
+
+    table,tbody,tr,td{
+        display:block;
+        width:100%;
+    }
+
+    tr{
+        background:#334155;
+        margin-bottom:12px;
+        border-radius:14px;
+        padding:12px;
+    }
+
+    td{
+        text-align:left;
+    }
+
+    td::before{
+        content:attr(data-label);
+        font-size:12px;
+        color:#94a3b8;
+        display:block;
+    }
 }
 </style>
 </head>
@@ -106,7 +133,7 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
-<div class="card">
+<div class="card toolbar">
 <button onclick="addRow()">添加</button>
 <button onclick="exportCSV()">CSV</button>
 <button onclick="exportJSON()">JSON</button>
@@ -115,13 +142,21 @@ td,th{
 <div class="ref">
 正常<120/<80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100
 </div>
+
+<!-- 记录总数计数栏 -->
+<div class="count">记录总数: <span id="recordCount">0</span></div>
+
 </div>
 
 <div class="card">
 <table>
 <thead>
 <tr>
-<th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th>
+<th>时间</th>
+<th>血压</th>
+<th>心率</th>
+<th>备注</th>
+<th>操作</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -141,12 +176,12 @@ function show(msg,type="success"){
     setTimeout(()=>el.style.display="none",2000);
 }
 
-/* 自动上传（核心） */
+/* 自动上传 */
 function autoSync(){
     clearTimeout(timer);
     timer=setTimeout(()=>{
         sync();
-    },60000); // 60秒
+    },60000);
 }
 
 /* 配置 */
@@ -202,6 +237,9 @@ function render(){
 `;
         tbody.appendChild(tr);
     });
+
+    // 更新记录总数
+    document.getElementById("recordCount").innerText = data.length;
 }
 
 /* 编辑 */
@@ -237,15 +275,14 @@ async function sync(){
     }
 }
 
-/* 下载（自动+兼容） */
+/* 下载（兼容所有格式） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
-        if(!res.ok){return;}
+        if(!res.ok) return;
 
         const j=await res.json();
         const content=j.files["data.json"]?.content;
-
         if(!content) return;
 
         const parsed=JSON.parse(content);
@@ -312,7 +349,7 @@ function importFile(){
 
 /* 初始化 */
 loadConfig();
-loadFromGist(); // ✅ 自动下载
+loadFromGist(); // 自动下载
 </script>
 
 </body>
