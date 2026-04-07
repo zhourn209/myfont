@@ -8,7 +8,12 @@
 <style>
 body{
     margin:0;
-    font-family:"Nunito","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    font-family:
+    "Trebuchet MS",
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Segoe UI",
+    sans-serif;
     background:#0f172a;
     color:#fff;
     padding:12px;
@@ -43,37 +48,46 @@ input{
     border:none;
 }
 
-/* 按钮 */
+/* ✅ 按钮优化（更清晰） */
 button{
     padding:8px 14px;
     margin:4px;
     border:none;
     border-radius:999px;
     background:#22c55e;
-    color:#fff;
+    color:#ffffff;
+    font-weight:700; /* 加粗 */
+    letter-spacing:0.5px;
+}
+
+/* 第一行布局 */
+.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+}
+
+/* 记录总数 */
+.count{
+    font-size:15px;
+    font-weight:700;
+    color:#cbd5f5;
 }
 
 /* 工具栏 */
 .toolbar{
     display:flex;
     flex-wrap:wrap;
-    align-items:center;
-    gap:6px;
 }
 
-/* 分级（单行 + 放大） */
+/* 分级（两行） */
 .ref{
-    font-size:16px;
-    font-weight:800;
-    color:#facc15;
-    margin-top:6px;
-}
-
-/* 记录总数 */
-.count{
-    font-size:16px;
-    color:#94a3b8;
+    margin-top:8px;
+    font-size:13px;
     font-weight:700;
+    color:#facc15;
+    line-height:1.6;
 }
 
 /* 表格 */
@@ -91,23 +105,14 @@ td,th{
 /* 手机卡片 */
 @media (max-width:600px){
     table thead{display:none;}
-
-    table,tbody,tr,td{
-        display:block;
-        width:100%;
-    }
-
+    table,tbody,tr,td{display:block;width:100%;}
     tr{
         background:#334155;
         margin-bottom:12px;
         border-radius:14px;
         padding:12px;
     }
-
-    td{
-        text-align:left;
-    }
-
+    td{text-align:left;}
     td::before{
         content:attr(data-label);
         font-size:12px;
@@ -123,7 +128,10 @@ td,th{
 <div id="status"></div>
 
 <div class="card">
-<h3>GitHub 同步</h3>
+
+<div class="topbar">
+
+<div>
 <input id="token" placeholder="Token">
 <input id="gist" placeholder="Gist ID">
 
@@ -133,19 +141,26 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
+<!-- ✅ 记录总数（右侧） -->
+<div class="count">
+记录总数：<span id="recordCount">0</span>
+</div>
+
+</div>
+
+</div>
+
 <div class="card toolbar">
 <button onclick="addRow()">添加</button>
 <button onclick="exportCSV()">CSV</button>
 <button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
 
+<!-- ✅ 分级两行 -->
 <div class="ref">
-正常<120/<80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100
+正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
+56岁男性建议：收缩压110-135 / 舒张压70-85 ｜ 正常心率60-100次/分
 </div>
-
-<!-- 记录总数计数栏 -->
-<div class="count">记录总数: <span id="recordCount">0</span></div>
-
 </div>
 
 <div class="card">
@@ -179,9 +194,7 @@ function show(msg,type="success"){
 /* 自动上传 */
 function autoSync(){
     clearTimeout(timer);
-    timer=setTimeout(()=>{
-        sync();
-    },60000);
+    timer=setTimeout(()=>{ sync(); },60000);
 }
 
 /* 配置 */
@@ -238,8 +251,8 @@ function render(){
         tbody.appendChild(tr);
     });
 
-    // 更新记录总数
-    document.getElementById("recordCount").innerText = data.length;
+    /* 更新计数 */
+    document.getElementById("recordCount").innerText=data.length;
 }
 
 /* 编辑 */
@@ -275,7 +288,7 @@ async function sync(){
     }
 }
 
-/* 下载（兼容所有格式） */
+/* 下载 */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -349,7 +362,7 @@ function importFile(){
 
 /* 初始化 */
 loadConfig();
-loadFromGist(); // 自动下载
+loadFromGist();
 </script>
 
 </body>
