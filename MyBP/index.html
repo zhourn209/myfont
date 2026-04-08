@@ -94,6 +94,11 @@ td,th{
 }
 
 /* 标签页 */
+#tabs{
+    display:flex;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+}
 #tabs button{
     cursor:pointer;
 }
@@ -135,9 +140,11 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
+<!-- ✅ 双计数 -->
 <div class="count">
-记录总数：<span id="recordCount">0</span>
+总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
 </div>
+
 </div>
 </div>
 
@@ -154,7 +161,7 @@ td,th{
 </div>
 </div>
 
-<!-- ✅ 标签页 -->
+<!-- 标签页 -->
 <div id="tabs"></div>
 
 <div class="card">
@@ -180,6 +187,29 @@ let timer=null;
 /* 日期key */
 function getDateKey(){
     return new Date().toISOString().split("T")[0];
+}
+
+/* 血压颜色 */
+function getBPColor(bp){
+    if(!bp || !bp.includes("/")) return "#fff";
+
+    const [sys,dia] = bp.split("/").map(Number);
+
+    if(sys>=140 || dia>=90 || sys<90 || dia<60){
+        return "#ef4444";
+    }
+    return "#22c55e";
+}
+
+/* 心率颜色 */
+function getHRColor(hr){
+    const v = Number(hr);
+    if(!v) return "#fff";
+
+    if(v<60 || v>100){
+        return "#ef4444";
+    }
+    return "#22c55e";
 }
 
 /* 提示 */
@@ -212,7 +242,6 @@ function loadConfig(){
 /* 添加 */
 function addRow(){
     const key = getDateKey();
-
     if(!data[key]) data[key]=[];
 
     currentDate = key;
@@ -232,23 +261,23 @@ function addRow(){
 /* 标签页 */
 function renderTabs(){
     const tabs = document.getElementById("tabs");
-    tabs.innerHTML = "";
+    tabs.innerHTML="";
 
     const keys = Object.keys(data).sort().reverse();
 
     keys.forEach((k,i)=>{
-        const btn = document.createElement("button");
+        const btn=document.createElement("button");
 
-        btn.innerText = k;
+        btn.innerText=k;
 
-        if(k === currentDate){
+        if(k===currentDate){
             btn.style.background="#38bdf8";
         }else{
             btn.style.background = i%2 ? "#22c55e" : "#16a34a";
         }
 
-        btn.onclick = ()=>{
-            currentDate = k;
+        btn.onclick=()=>{
+            currentDate=k;
             renderTabs();
             render();
         };
@@ -269,8 +298,19 @@ function render(){
 
         tr.innerHTML=`
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+
+<td contenteditable 
+    style="color:${getBPColor(r.bp)}"
+    onblur="edit(${i},'bp',this.innerText)">
+    ${r.bp}
+</td>
+
+<td contenteditable 
+    style="color:${getHRColor(r.hr)}"
+    onblur="edit(${i},'hr',this.innerText)">
+    ${r.hr}
+</td>
+
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
 <td><button onclick="del(${i})">删除</button></td>
 `;
@@ -278,12 +318,17 @@ function render(){
         tbody.appendChild(tr);
     });
 
-    document.getElementById("recordCount").innerText = list.length;
+    // 当天
+    document.getElementById("dayCount").innerText = list.length;
+
+    // 总数
+    const total = Object.values(data).reduce((s,a)=>s+a.length,0);
+    document.getElementById("totalCount").innerText = total;
 }
 
 /* 编辑 */
 function edit(i,k,v){
-    data[currentDate][i][k] = v.trim();
+    data[currentDate][i][k]=v.trim();
     autoSync();
 }
 
@@ -314,7 +359,7 @@ async function sync(){
     }
 }
 
-/* 下载 + 兼容旧数据 */
+/* 下载（兼容旧数据） */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -327,14 +372,14 @@ async function loadFromGist(){
         const parsed=JSON.parse(content);
 
         if(Array.isArray(parsed)){
-            data = {};
+            data={};
             parsed.forEach(r=>{
                 const key = r.time ? r.time.split(" ")[0] : getDateKey();
                 if(!data[key]) data[key]=[];
                 data[key].push(r);
             });
         }else{
-            data = parsed;
+            data=parsed;
         }
 
         currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
@@ -347,11 +392,9 @@ async function loadFromGist(){
 /* 导出 */
 function exportCSV(){
     let csv="time,bp,hr,note\n";
-
     Object.values(data).flat().forEach(r=>{
         csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
     });
-
     download(csv,"data.csv");
 }
 
@@ -372,20 +415,15 @@ function importFile(){
     input.type="file";
 
     input.onchange=e=>{
-        const file=e.target.files[0];
         const reader=new FileReader();
-
         reader.onload=()=>{
-            const parsed = JSON.parse(reader.result);
-            data = parsed;
+            data=JSON.parse(reader.result);
             renderTabs();
             render();
             autoSync();
         };
-
-        reader.readAsText(file);
+        reader.readAsText(e.target.files[0]);
     };
-
     input.click();
 }
 
