@@ -93,7 +93,6 @@ td,th{
     text-align:center;
 }
 
-/* 标签页 */
 #tabs{
     display:flex;
     flex-wrap:wrap;
@@ -114,12 +113,6 @@ td,th{
         padding:12px;
     }
     td{text-align:left;}
-    td::before{
-        content:attr(data-label);
-        font-size:12px;
-        color:#94a3b8;
-        display:block;
-    }
 }
 </style>
 </head>
@@ -140,11 +133,9 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
-<!-- ✅ 双计数 -->
 <div class="count">
 总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
 </div>
-
 </div>
 </div>
 
@@ -156,12 +147,11 @@ td,th{
 
 <div class="ref">
 正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
-56岁男性建议：收缩压110-135 / 舒张压70-85 ｜ 心率60-100次/分<br>
-双臂差&lt;10mmHg正常 ｜ 10-15轻度差异 ｜ ≥15需关注
+56–60岁建议：收缩压110-135 / 舒张压70-85 ｜ 心率60-100<br>
+双臂差&lt;10正常 ｜ 10-15轻度 ｜ ≥15需关注
 </div>
 </div>
 
-<!-- 标签页 -->
 <div id="tabs"></div>
 
 <div class="card">
@@ -184,32 +174,29 @@ let data = {};
 let currentDate = getDateKey();
 let timer=null;
 
-/* 日期key */
 function getDateKey(){
     return new Date().toISOString().split("T")[0];
 }
 
-/* 血压颜色 */
-function getBPColor(bp){
-    if(!bp || !bp.includes("/")) return "#fff";
+/* ===== 血压（分开标红）===== */
+function getBPColorParts(bp){
+    if(!bp || !bp.includes("/")){
+        return {sys:"#fff", dia:"#fff"};
+    }
 
     const [sys,dia] = bp.split("/").map(Number);
 
-    if(sys>=140 || dia>=90 || sys<90 || dia<60){
-        return "#ef4444";
-    }
-    return "#22c55e";
+    return {
+        sys: (sys<110 || sys>135) ? "#ef4444" : "#22c55e",
+        dia: (dia<70 || dia>85) ? "#ef4444" : "#22c55e"
+    };
 }
 
-/* 心率颜色 */
+/* ===== 心率 ===== */
 function getHRColor(hr){
     const v = Number(hr);
     if(!v) return "#fff";
-
-    if(v<60 || v>100){
-        return "#ef4444";
-    }
-    return "#22c55e";
+    return (v<60 || v>100) ? "#ef4444" : "#22c55e";
 }
 
 /* 提示 */
@@ -233,7 +220,6 @@ function saveConfig(){
     localStorage.gist=gist.value;
     show("已保存");
 }
-
 function loadConfig(){
     token.value=localStorage.token||"";
     gist.value=localStorage.gist||"";
@@ -241,10 +227,9 @@ function loadConfig(){
 
 /* 添加 */
 function addRow(){
-    const key = getDateKey();
+    const key=getDateKey();
     if(!data[key]) data[key]=[];
-
-    currentDate = key;
+    currentDate=key;
 
     data[key].push({
         time:new Date().toLocaleString(),
@@ -258,22 +243,24 @@ function addRow(){
     autoSync();
 }
 
-/* 标签页 */
+/* 标签页（高对比颜色） */
 function renderTabs(){
-    const tabs = document.getElementById("tabs");
+    const tabs=document.getElementById("tabs");
     tabs.innerHTML="";
 
-    const keys = Object.keys(data).sort().reverse();
+    const keys=Object.keys(data).sort().reverse();
+
+    const colors=["#22c55e","#3b82f6","#f59e0b","#ef4444","#a855f7","#14b8a6"];
 
     keys.forEach((k,i)=>{
         const btn=document.createElement("button");
-
         btn.innerText=k;
 
         if(k===currentDate){
-            btn.style.background="#38bdf8";
+            btn.style.background="#ffffff";
+            btn.style.color="#000";
         }else{
-            btn.style.background = i%2 ? "#22c55e" : "#16a34a";
+            btn.style.background=colors[i%colors.length];
         }
 
         btn.onclick=()=>{
@@ -291,24 +278,30 @@ function render(){
     const tbody=document.getElementById("tbody");
     tbody.innerHTML="";
 
-    const list = data[currentDate] || [];
+    const list=data[currentDate]||[];
 
     list.forEach((r,i)=>{
         const tr=document.createElement("tr");
 
+        /* 血压拆分颜色 */
+        let bpHtml=r.bp;
+        if(r.bp && r.bp.includes("/")){
+            const [sys,dia]=r.bp.split("/");
+            const c=getBPColorParts(r.bp);
+
+            bpHtml=`<span style="color:${c.sys}">${sys}</span>/<span style="color:${c.dia}">${dia}</span>`;
+        }
+
         tr.innerHTML=`
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
 
-<td contenteditable 
-    style="color:${getBPColor(r.bp)}"
-    onblur="edit(${i},'bp',this.innerText)">
-    ${r.bp}
+<td contenteditable onblur="edit(${i},'bp',this.innerText)">
+${bpHtml}
 </td>
 
-<td contenteditable 
-    style="color:${getHRColor(r.hr)}"
-    onblur="edit(${i},'hr',this.innerText)">
-    ${r.hr}
+<td contenteditable style="color:${getHRColor(r.hr)}"
+onblur="edit(${i},'hr',this.innerText)">
+${r.hr}
 </td>
 
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
@@ -318,12 +311,10 @@ function render(){
         tbody.appendChild(tr);
     });
 
-    // 当天
-    document.getElementById("dayCount").innerText = list.length;
+    document.getElementById("dayCount").innerText=list.length;
 
-    // 总数
-    const total = Object.values(data).reduce((s,a)=>s+a.length,0);
-    document.getElementById("totalCount").innerText = total;
+    const total=Object.values(data).reduce((s,a)=>s+a.length,0);
+    document.getElementById("totalCount").innerText=total;
 }
 
 /* 编辑 */
@@ -374,7 +365,7 @@ async function loadFromGist(){
         if(Array.isArray(parsed)){
             data={};
             parsed.forEach(r=>{
-                const key = r.time ? r.time.split(" ")[0] : getDateKey();
+                const key=r.time?r.time.split(" ")[0]:getDateKey();
                 if(!data[key]) data[key]=[];
                 data[key].push(r);
             });
@@ -382,49 +373,11 @@ async function loadFromGist(){
             data=parsed;
         }
 
-        currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
+        currentDate=Object.keys(data).sort().reverse()[0]||getDateKey();
 
         renderTabs();
         render();
     }catch{}
-}
-
-/* 导出 */
-function exportCSV(){
-    let csv="time,bp,hr,note\n";
-    Object.values(data).flat().forEach(r=>{
-        csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
-    });
-    download(csv,"data.csv");
-}
-
-function exportJSON(){
-    download(JSON.stringify(data,null,2),"data.json");
-}
-
-function download(c,n){
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([c]));
-    a.download=n;
-    a.click();
-}
-
-/* 导入 */
-function importFile(){
-    const input=document.createElement("input");
-    input.type="file";
-
-    input.onchange=e=>{
-        const reader=new FileReader();
-        reader.onload=()=>{
-            data=JSON.parse(reader.result);
-            renderTabs();
-            render();
-            autoSync();
-        };
-        reader.readAsText(e.target.files[0]);
-    };
-    input.click();
 }
 
 /* 初始化 */
