@@ -6,270 +6,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-    margin:0;
-    font-family:
-    "Trebuchet MS",
-    "Microsoft YaHei",
-    "PingFang SC",
-    "Segoe UI",
-    sans-serif;
-    background:#0f172a;
-    color:#fff;
-    padding:12px;
-}
-
-#status{
-    position:fixed;
-    top:12px;
-    left:50%;
-    transform:translateX(-50%);
-    padding:8px 16px;
-    border-radius:999px;
-    display:none;
-}
-.success{background:#22c55e;}
-.error{background:#ef4444;}
-
-.card{
-    background:#1e293b;
-    padding:14px;
-    border-radius:16px;
-    margin-bottom:14px;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    margin:6px 0;
-    border-radius:10px;
-    border:none;
-}
-
-button{
-    padding:8px 14px;
-    margin:4px;
-    border:none;
-    border-radius:999px;
-    background:#22c55e;
-    color:#fff;
-    font-weight:700;
-}
-
-.topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;
-}
-
-.count{
-    font-size:15px;
-    font-weight:700;
-    color:#cbd5f5;
-}
-
-.toolbar{
-    display:flex;
-    flex-wrap:wrap;
-}
-
-.ref{
-    margin-top:8px;
-    font-size:13px;
-    font-weight:700;
-    color:#facc15;
-    line-height:1.6;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:15px;
-}
-
-td,th{
-    padding:10px;
-    text-align:center;
-}
-
-#tabs{
-    display:flex;
-    flex-wrap:wrap;
-    margin-bottom:10px;
-}
-#tabs button{
-    cursor:pointer;
-}
-
-/* 手机适配 */
-@media (max-width:600px){
-    table thead{display:none;}
-    table,tbody,tr,td{display:block;width:100%;}
-    tr{
-        background:#334155;
-        margin-bottom:12px;
-        border-radius:14px;
-        padding:12px;
-    }
-    td{text-align:left;}
-}
+body{margin:0;font-family:"Microsoft YaHei";background:#0f172a;color:#fff;padding:12px;}
+.card{background:#1e293b;padding:14px;border-radius:16px;margin-bottom:14px;}
+button{padding:6px 12px;margin:4px;border:none;border-radius:999px;font-weight:700;cursor:pointer;}
+.count{font-size:15px;font-weight:700;color:#cbd5f5;}
+#tabs{display:flex;flex-wrap:wrap;margin-bottom:10px;}
+#tabs button{display:flex;align-items:center;gap:6px;}
+.delTab{background:#ef4444;color:#fff;border-radius:50%;padding:0 6px;font-size:12px;}
 </style>
 </head>
 
 <body>
 
-<div id="status"></div>
-
 <div class="card">
-<div class="topbar">
-<div>
-<input id="token" placeholder="Token">
-<input id="gist" placeholder="Gist ID">
-
-<button onclick="saveConfig()">保存</button>
-<button onclick="testConnection()">测试连接</button>
-<button onclick="loadFromGist()">下载</button>
-<button onclick="sync()">上传</button>
-</div>
-
-<div class="count">
 总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
 </div>
-</div>
-</div>
 
-<div class="card toolbar">
+<div class="card">
 <button onclick="addRow()">添加</button>
-<button onclick="exportCSV()">CSV</button>
-<button onclick="exportJSON()">JSON</button>
-<button onclick="importFile()">导入</button>
-
-<div class="ref">
-正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
-56–60岁建议：收缩压110-135 / 舒张压70-85 ｜ 心率60-100<br>
-双臂差&lt;10正常 ｜ 10-15轻度 ｜ ≥15需关注
-</div>
 </div>
 
 <div id="tabs"></div>
 
 <div class="card">
-<table>
-<thead>
-<tr>
-<th>时间</th>
-<th>血压</th>
-<th>心率</th>
-<th>备注</th>
-<th>操作</th>
-</tr>
-</thead>
+<table border="1" width="100%">
+<thead><tr><th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th></tr></thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
 <script>
-let data = {};
-let currentDate = getDateKey();
-let timer=null;
+let data={};
+let currentDate=getDateKey();
+
+/* ===== 日期统一格式 ===== */
+function formatDate(str){
+    if(!str) return getDateKey();
+
+    const d=new Date(str.replace(/-/g,"/"));
+    if(isNaN(d)) return getDateKey();
+
+    return d.toISOString().split("T")[0];
+}
 
 function getDateKey(){
     return new Date().toISOString().split("T")[0];
 }
 
-/* 血压判断（56–60岁建议） */
-function getBPColorParts(bp){
-    if(!bp || !bp.includes("/")){
-        return {sys:"#fff", dia:"#fff"};
-    }
-
-    const [sys,dia] = bp.split("/").map(Number);
-
-    return {
-        sys: (sys < 110 || sys > 135) ? "#ef4444" : "#22c55e",
-        dia: (dia < 70 || dia > 85) ? "#ef4444" : "#22c55e"
-    };
-}
-
-/* 心率判断 */
-function getHRColor(hr){
-    const v = Number(hr);
-    if(!v) return "#fff";
-    return (v < 60 || v > 100) ? "#ef4444" : "#22c55e";
-}
-
-/* 提示信息 */
-function show(msg, type = "success") {
-    const el = document.getElementById("status");
-    el.innerText = msg;
-    el.className = type;
-    el.style.display = "block";
-    setTimeout(() => el.style.display = "none", 2000);
-}
-
-/* 自动上传 */
-function autoSync() {
-    clearTimeout(timer);
-    timer = setTimeout(() => { sync(); }, 60000);
-}
-
-/* 配置保存 */
-function saveConfig() {
-    localStorage.token = token.value;
-    localStorage.gist = gist.value;
-    show("已保存");
-}
-
-function loadConfig() {
-    token.value = localStorage.token || "";
-    gist.value = localStorage.gist || "";
-}
-
-/* 添加记录 */
-function addRow() {
-    const key = getDateKey();
-
-    if (!data[key]) {
-        data[key] = [];
-    }
-
-    currentDate = key;
+/* ===== 添加 ===== */
+function addRow(){
+    const key=getDateKey();
+    if(!data[key]) data[key]=[];
+    currentDate=key;
 
     data[key].push({
-        time: new Date().toLocaleString(),
-        bp: "",
-        hr: "",
-        note: ""
+        time:new Date().toLocaleString(),
+        bp:"",
+        hr:"",
+        note:""
     });
 
     renderTabs();
     render();
-    autoSync();
 }
 
-/* 标签页渲染 */
-function renderTabs() {
-    const tabs = document.getElementById("tabs");
-    tabs.innerHTML = "";
+/* ===== 标签 ===== */
+function renderTabs(){
+    const tabs=document.getElementById("tabs");
+    tabs.innerHTML="";
 
-    const keys = Object.keys(data).sort().reverse();
+    const keys=Object.keys(data).sort().reverse();
+    const colors=["#22c55e","#3b82f6","#f59e0b","#ef4444","#a855f7","#14b8a6"];
 
-    const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#14b8a6"];
+    keys.forEach((k,i)=>{
+        const btn=document.createElement("button");
 
-    keys.forEach((k, i) => {
-        const btn = document.createElement("button");
-        btn.innerText = k;
+        const span=document.createElement("span");
+        span.innerText=k;
 
-        if (k === currentDate) {
-            btn.style.background = "#ffffff";
-            btn.style.color = "#000";
-        } else {
-            btn.style.background = colors[i % colors.length];
+        const del=document.createElement("span");
+        del.innerText="×";
+        del.className="delTab";
+
+        del.onclick=(e)=>{
+            e.stopPropagation();
+            if(confirm("删除这一天所有记录？")){
+                delete data[k];
+                currentDate=Object.keys(data)[0]||getDateKey();
+                renderTabs();
+                render();
+            }
+        };
+
+        btn.appendChild(span);
+        btn.appendChild(del);
+
+        if(k===currentDate){
+            btn.style.background="#fff";
+            btn.style.color="#000";
+        }else{
+            btn.style.background=colors[i%colors.length];
         }
 
-        btn.onclick = () => {
-            currentDate = k;
+        btn.onclick=()=>{
+            currentDate=k;
             renderTabs();
             render();
         };
@@ -278,119 +118,90 @@ function renderTabs() {
     });
 }
 
-/* 渲染记录 */
-function render() {
-    const tbody = document.getElementById("tbody");
-    tbody.innerHTML = "";
+/* ===== 血压颜色 ===== */
+function getBPColorParts(bp){
+    if(!bp.includes("/")) return {sys:"#fff",dia:"#fff"};
+    const [s,d]=bp.split("/").map(Number);
 
-    const list = data[currentDate] || [];
+    return {
+        sys:(s<110||s>135)?"#ef4444":"#22c55e",
+        dia:(d<70||d>85)?"#ef4444":"#22c55e"
+    };
+}
 
-    list.forEach((r, i) => {
-        const tr = document.createElement("tr");
+/* ===== 心率 ===== */
+function getHRColor(hr){
+    const v=Number(hr);
+    if(!v) return "#fff";
+    return (v<60||v>100)?"#ef4444":"#22c55e";
+}
 
-        /* 血压拆分显示 */
-        let bpHtml = r.bp;
-        if (r.bp && r.bp.includes("/")) {
-            const [sys, dia] = r.bp.split("/");
-            const c = getBPColorParts(r.bp);
+/* ===== 渲染 ===== */
+function render(){
+    const tbody=document.getElementById("tbody");
+    tbody.innerHTML="";
 
-            bpHtml = `<span style="color:${c.sys}">${sys}</span>/<span style="color:${c.dia}">${dia}</span>`;
+    const list=data[currentDate]||[];
+
+    list.forEach((r,i)=>{
+        const tr=document.createElement("tr");
+
+        let bp=r.bp;
+        if(bp.includes("/")){
+            const [s,d]=bp.split("/");
+            const c=getBPColorParts(bp);
+            bp=`<span style="color:${c.sys}">${s}</span>/<span style="color:${c.dia}">${d}</span>`;
         }
 
-        tr.innerHTML = `
+        tr.innerHTML=`
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-
-<td contenteditable onblur="edit(${i},'bp',this.innerText)">
-${bpHtml}
-</td>
-
-<td contenteditable style="color:${getHRColor(r.hr)}"
-onblur="edit(${i},'hr',this.innerText)">
-${r.hr}
-</td>
-
+<td contenteditable onblur="edit(${i},'bp',this.innerText)">${bp}</td>
+<td contenteditable style="color:${getHRColor(r.hr)}" onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td><button onclick="del(${i})">删除</button></td>
+<td><button onclick="del(${i})">删</button></td>
 `;
 
         tbody.appendChild(tr);
     });
 
-    document.getElementById("dayCount").innerText = list.length;
-
-    const total = Object.values(data).reduce((s, a) => s + a.length, 0);
-    document.getElementById("totalCount").innerText = total;
+    document.getElementById("dayCount").innerText=list.length;
+    document.getElementById("totalCount").innerText=
+        Object.values(data).reduce((s,a)=>s+a.length,0);
 }
 
-/* 编辑记录 */
-function edit(i, k, v) {
-    data[currentDate][i][k] = v.trim();
-    autoSync();
+/* ===== 编辑 ===== */
+function edit(i,k,v){
+    data[currentDate][i][k]=v.trim();
 }
 
-/* 删除记录 */
-function del(i) {
-    data[currentDate].splice(i, 1);
+/* ===== 删除行 ===== */
+function del(i){
+    data[currentDate].splice(i,1);
     render();
-    autoSync();
 }
 
-/* 上传数据 */
-async function sync() {
-    try {
-        await fetch(`https://api.github.com/gists/${gist.value}`, {
-            method: "PATCH",
-            headers: { Authorization: "token " + token.value },
-            body: JSON.stringify({
-                files: {
-                    "data.json": {
-                        content: JSON.stringify(data, null, 2)
-                    }
-                }
-            })
-        });
-        show("自动已同步");
-    } catch {
-        show("上传失败", "error");
-    }
-}
+/* ===== 关键：加载数据时统一日期 ===== */
+function loadMock(){ // 模拟旧数据
+    const old=[
+        {time:"2026/4/8 10:00",bp:"120/80",hr:"70",note:""},
+        {time:"2026-04-08 12:00",bp:"140/90",hr:"80",note:""}
+    ];
 
-/* 下载数据（兼容旧数据） */
-async function loadFromGist() {
-    try {
-        const res = await fetch(`https://api.github.com/gists/${gist.value}`);
-        if (!res.ok) return;
+    data={};
 
-        const j = await res.json();
-        const content = j.files["data.json"]?.content;
-        if (!content) return;
+    old.forEach(r=>{
+        const key=formatDate(r.time); // ⭐关键
+        if(!data[key]) data[key]=[];
+        data[key].push(r);
+    });
 
-        const parsed = JSON.parse(content);
-
-        if (Array.isArray(parsed)) {
-            data = {};
-            parsed.forEach(r => {
-                const key = r.time ? r.time.split(" ")[0] : getDateKey();
-                if (!data[key]) data[key] = [];
-                data[key].push(r);
-            });
-        } else {
-            data = parsed;
-        }
-
-        currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
-
-        renderTabs();
-        render();
-    } catch {}
+    currentDate=Object.keys(data)[0];
 }
 
 /* 初始化 */
-loadConfig();
-loadFromGist();
+loadMock(); // 👉 实际用你原来的 loadFromGist
 renderTabs();
 render();
-
 </script>
 
 </body>
