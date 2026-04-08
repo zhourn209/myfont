@@ -19,7 +19,6 @@ body{
     padding:12px;
 }
 
-/* 状态提示 */
 #status{
     position:fixed;
     top:12px;
@@ -39,7 +38,6 @@ body{
     margin-bottom:14px;
 }
 
-/* 输入框 */
 input{
     width:100%;
     padding:10px;
@@ -48,19 +46,16 @@ input{
     border:none;
 }
 
-/* ✅ 按钮优化（更清晰） */
 button{
     padding:8px 14px;
     margin:4px;
     border:none;
     border-radius:999px;
     background:#22c55e;
-    color:#ffffff;
-    font-weight:700; /* 加粗 */
-    letter-spacing:0.5px;
+    color:#fff;
+    font-weight:700;
 }
 
-/* 第一行布局 */
 .topbar{
     display:flex;
     align-items:center;
@@ -68,20 +63,17 @@ button{
     flex-wrap:wrap;
 }
 
-/* 记录总数 */
 .count{
     font-size:15px;
     font-weight:700;
     color:#cbd5f5;
 }
 
-/* 工具栏 */
 .toolbar{
     display:flex;
     flex-wrap:wrap;
 }
 
-/* 分级（两行） */
 .ref{
     margin-top:8px;
     font-size:13px;
@@ -90,7 +82,6 @@ button{
     line-height:1.6;
 }
 
-/* 表格 */
 table{
     width:100%;
     border-collapse:collapse;
@@ -102,7 +93,12 @@ td,th{
     text-align:center;
 }
 
-/* 手机卡片 */
+/* 标签页 */
+#tabs button{
+    cursor:pointer;
+}
+
+/* 手机适配 */
 @media (max-width:600px){
     table thead{display:none;}
     table,tbody,tr,td{display:block;width:100%;}
@@ -128,9 +124,7 @@ td,th{
 <div id="status"></div>
 
 <div class="card">
-
 <div class="topbar">
-
 <div>
 <input id="token" placeholder="Token">
 <input id="gist" placeholder="Gist ID">
@@ -141,13 +135,10 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
-<!-- ✅ 记录总数（右侧） -->
 <div class="count">
 记录总数：<span id="recordCount">0</span>
 </div>
-
 </div>
-
 </div>
 
 <div class="card toolbar">
@@ -156,13 +147,15 @@ td,th{
 <button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
 
-<!-- ✅ 分级两行 -->
 <div class="ref">
 正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
 56岁男性建议：收缩压110-135 / 舒张压70-85 ｜ 心率60-100次/分<br>
 双臂差&lt;10mmHg正常 ｜ 10-15轻度差异 ｜ ≥15需关注
 </div>
 </div>
+
+<!-- ✅ 标签页 -->
+<div id="tabs"></div>
 
 <div class="card">
 <table>
@@ -180,8 +173,14 @@ td,th{
 </div>
 
 <script>
-let data=[];
+let data = {};
+let currentDate = getDateKey();
 let timer=null;
+
+/* 日期key */
+function getDateKey(){
+    return new Date().toISOString().split("T")[0];
+}
 
 /* 提示 */
 function show(msg,type="success"){
@@ -210,28 +209,52 @@ function loadConfig(){
     gist.value=localStorage.gist||"";
 }
 
-/* 测试连接 */
-async function testConnection(){
-    try{
-        const res=await fetch(`https://api.github.com/gists/${gist.value}`,{
-            headers:{Authorization:"token "+token.value}
-        });
-        res.ok?show("连接成功"):show("连接失败","error");
-    }catch{
-        show("网络错误","error");
-    }
-}
-
 /* 添加 */
 function addRow(){
-    data.push({
+    const key = getDateKey();
+
+    if(!data[key]) data[key]=[];
+
+    currentDate = key;
+
+    data[key].push({
         time:new Date().toLocaleString(),
         bp:"",
         hr:"",
         note:""
     });
+
+    renderTabs();
     render();
     autoSync();
+}
+
+/* 标签页 */
+function renderTabs(){
+    const tabs = document.getElementById("tabs");
+    tabs.innerHTML = "";
+
+    const keys = Object.keys(data).sort().reverse();
+
+    keys.forEach((k,i)=>{
+        const btn = document.createElement("button");
+
+        btn.innerText = k;
+
+        if(k === currentDate){
+            btn.style.background="#38bdf8";
+        }else{
+            btn.style.background = i%2 ? "#22c55e" : "#16a34a";
+        }
+
+        btn.onclick = ()=>{
+            currentDate = k;
+            renderTabs();
+            render();
+        };
+
+        tabs.appendChild(btn);
+    });
 }
 
 /* 渲染 */
@@ -239,32 +262,34 @@ function render(){
     const tbody=document.getElementById("tbody");
     tbody.innerHTML="";
 
-    data.forEach((r,i)=>{
+    const list = data[currentDate] || [];
+
+    list.forEach((r,i)=>{
         const tr=document.createElement("tr");
 
         tr.innerHTML=`
-<td data-label="时间" contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td data-label="血压" contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
-<td data-label="心率" contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
-<td data-label="备注" contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td data-label="操作"><button onclick="del(${i})">删除</button></td>
+<td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
+<td contenteditable onblur="edit(${i},'bp',this.innerText)">${r.bp}</td>
+<td contenteditable onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
+<td><button onclick="del(${i})">删除</button></td>
 `;
+
         tbody.appendChild(tr);
     });
 
-    /* 更新计数 */
-    document.getElementById("recordCount").innerText=data.length;
+    document.getElementById("recordCount").innerText = list.length;
 }
 
 /* 编辑 */
 function edit(i,k,v){
-    data[i][k]=v.trim();
+    data[currentDate][i][k] = v.trim();
     autoSync();
 }
 
 /* 删除 */
 function del(i){
-    data.splice(i,1);
+    data[currentDate].splice(i,1);
     render();
     autoSync();
 }
@@ -289,7 +314,7 @@ async function sync(){
     }
 }
 
-/* 下载 */
+/* 下载 + 兼容旧数据 */
 async function loadFromGist(){
     try{
         const res=await fetch(`https://api.github.com/gists/${gist.value}`);
@@ -302,11 +327,19 @@ async function loadFromGist(){
         const parsed=JSON.parse(content);
 
         if(Array.isArray(parsed)){
-            data=parsed;
-        }else if(parsed.data){
-            data=parsed.data;
+            data = {};
+            parsed.forEach(r=>{
+                const key = r.time ? r.time.split(" ")[0] : getDateKey();
+                if(!data[key]) data[key]=[];
+                data[key].push(r);
+            });
+        }else{
+            data = parsed;
         }
 
+        currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
+
+        renderTabs();
         render();
     }catch{}
 }
@@ -314,9 +347,11 @@ async function loadFromGist(){
 /* 导出 */
 function exportCSV(){
     let csv="time,bp,hr,note\n";
-    data.forEach(r=>{
+
+    Object.values(data).flat().forEach(r=>{
         csv+=`${r.time},${r.bp},${r.hr},${r.note}\n`;
     });
+
     download(csv,"data.csv");
 }
 
@@ -341,18 +376,11 @@ function importFile(){
         const reader=new FileReader();
 
         reader.onload=()=>{
-            if(file.name.endsWith(".json")){
-                data=JSON.parse(reader.result);
-            }else{
-                const lines=reader.result.split("\n").slice(1);
-                data=lines.map(l=>{
-                    const [t,bp,hr,n]=l.split(",");
-                    return {time:t,bp,hr,note:n};
-                });
-            }
+            const parsed = JSON.parse(reader.result);
+            data = parsed;
+            renderTabs();
             render();
             autoSync();
-            show("导入完成");
         };
 
         reader.readAsText(file);
@@ -364,6 +392,9 @@ function importFile(){
 /* 初始化 */
 loadConfig();
 loadFromGist();
+renderTabs();
+render();
+
 </script>
 
 </body>
