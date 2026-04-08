@@ -178,7 +178,7 @@ function getDateKey(){
     return new Date().toISOString().split("T")[0];
 }
 
-/* ===== 血压（分开标红）===== */
+/* 血压判断（56–60岁建议） */
 function getBPColorParts(bp){
     if(!bp || !bp.includes("/")){
         return {sys:"#fff", dia:"#fff"};
@@ -187,55 +187,60 @@ function getBPColorParts(bp){
     const [sys,dia] = bp.split("/").map(Number);
 
     return {
-        sys: (sys<110 || sys>135) ? "#ef4444" : "#22c55e",
-        dia: (dia<70 || dia>85) ? "#ef4444" : "#22c55e"
+        sys: (sys < 110 || sys > 135) ? "#ef4444" : "#22c55e",
+        dia: (dia < 70 || dia > 85) ? "#ef4444" : "#22c55e"
     };
 }
 
-/* ===== 心率 ===== */
+/* 心率判断 */
 function getHRColor(hr){
     const v = Number(hr);
     if(!v) return "#fff";
-    return (v<60 || v>100) ? "#ef4444" : "#22c55e";
+    return (v < 60 || v > 100) ? "#ef4444" : "#22c55e";
 }
 
-/* 提示 */
-function show(msg,type="success"){
-    const el=document.getElementById("status");
-    el.innerText=msg;
-    el.className=type;
-    el.style.display="block";
-    setTimeout(()=>el.style.display="none",2000);
+/* 提示信息 */
+function show(msg, type = "success") {
+    const el = document.getElementById("status");
+    el.innerText = msg;
+    el.className = type;
+    el.style.display = "block";
+    setTimeout(() => el.style.display = "none", 2000);
 }
 
 /* 自动上传 */
-function autoSync(){
+function autoSync() {
     clearTimeout(timer);
-    timer=setTimeout(()=>{ sync(); },60000);
+    timer = setTimeout(() => { sync(); }, 60000);
 }
 
-/* 配置 */
-function saveConfig(){
-    localStorage.token=token.value;
-    localStorage.gist=gist.value;
+/* 配置保存 */
+function saveConfig() {
+    localStorage.token = token.value;
+    localStorage.gist = gist.value;
     show("已保存");
 }
-function loadConfig(){
-    token.value=localStorage.token||"";
-    gist.value=localStorage.gist||"";
+
+function loadConfig() {
+    token.value = localStorage.token || "";
+    gist.value = localStorage.gist || "";
 }
 
-/* 添加 */
-function addRow(){
-    const key=getDateKey();
-    if(!data[key]) data[key]=[];
-    currentDate=key;
+/* 添加记录 */
+function addRow() {
+    const key = getDateKey();
+
+    if (!data[key]) {
+        data[key] = [];
+    }
+
+    currentDate = key;
 
     data[key].push({
-        time:new Date().toLocaleString(),
-        bp:"",
-        hr:"",
-        note:""
+        time: new Date().toLocaleString(),
+        bp: "",
+        hr: "",
+        note: ""
     });
 
     renderTabs();
@@ -243,28 +248,28 @@ function addRow(){
     autoSync();
 }
 
-/* 标签页（高对比颜色） */
-function renderTabs(){
-    const tabs=document.getElementById("tabs");
-    tabs.innerHTML="";
+/* 标签页渲染 */
+function renderTabs() {
+    const tabs = document.getElementById("tabs");
+    tabs.innerHTML = "";
 
-    const keys=Object.keys(data).sort().reverse();
+    const keys = Object.keys(data).sort().reverse();
 
-    const colors=["#22c55e","#3b82f6","#f59e0b","#ef4444","#a855f7","#14b8a6"];
+    const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#14b8a6"];
 
-    keys.forEach((k,i)=>{
-        const btn=document.createElement("button");
-        btn.innerText=k;
+    keys.forEach((k, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = k;
 
-        if(k===currentDate){
-            btn.style.background="#ffffff";
-            btn.style.color="#000";
-        }else{
-            btn.style.background=colors[i%colors.length];
+        if (k === currentDate) {
+            btn.style.background = "#ffffff";
+            btn.style.color = "#000";
+        } else {
+            btn.style.background = colors[i % colors.length];
         }
 
-        btn.onclick=()=>{
-            currentDate=k;
+        btn.onclick = () => {
+            currentDate = k;
             renderTabs();
             render();
         };
@@ -273,26 +278,26 @@ function renderTabs(){
     });
 }
 
-/* 渲染 */
-function render(){
-    const tbody=document.getElementById("tbody");
-    tbody.innerHTML="";
+/* 渲染记录 */
+function render() {
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
 
-    const list=data[currentDate]||[];
+    const list = data[currentDate] || [];
 
-    list.forEach((r,i)=>{
-        const tr=document.createElement("tr");
+    list.forEach((r, i) => {
+        const tr = document.createElement("tr");
 
-        /* 血压拆分颜色 */
-        let bpHtml=r.bp;
-        if(r.bp && r.bp.includes("/")){
-            const [sys,dia]=r.bp.split("/");
-            const c=getBPColorParts(r.bp);
+        /* 血压拆分显示 */
+        let bpHtml = r.bp;
+        if (r.bp && r.bp.includes("/")) {
+            const [sys, dia] = r.bp.split("/");
+            const c = getBPColorParts(r.bp);
 
-            bpHtml=`<span style="color:${c.sys}">${sys}</span>/<span style="color:${c.dia}">${dia}</span>`;
+            bpHtml = `<span style="color:${c.sys}">${sys}</span>/<span style="color:${c.dia}">${dia}</span>`;
         }
 
-        tr.innerHTML=`
+        tr.innerHTML = `
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
 
 <td contenteditable onblur="edit(${i},'bp',this.innerText)">
@@ -311,73 +316,73 @@ ${r.hr}
         tbody.appendChild(tr);
     });
 
-    document.getElementById("dayCount").innerText=list.length;
+    document.getElementById("dayCount").innerText = list.length;
 
-    const total=Object.values(data).reduce((s,a)=>s+a.length,0);
-    document.getElementById("totalCount").innerText=total;
+    const total = Object.values(data).reduce((s, a) => s + a.length, 0);
+    document.getElementById("totalCount").innerText = total;
 }
 
-/* 编辑 */
-function edit(i,k,v){
-    data[currentDate][i][k]=v.trim();
+/* 编辑记录 */
+function edit(i, k, v) {
+    data[currentDate][i][k] = v.trim();
     autoSync();
 }
 
-/* 删除 */
-function del(i){
-    data[currentDate].splice(i,1);
+/* 删除记录 */
+function del(i) {
+    data[currentDate].splice(i, 1);
     render();
     autoSync();
 }
 
-/* 上传 */
-async function sync(){
-    try{
-        await fetch(`https://api.github.com/gists/${gist.value}`,{
-            method:"PATCH",
-            headers:{Authorization:"token "+token.value},
-            body:JSON.stringify({
-                files:{
-                    "data.json":{
-                        content:JSON.stringify(data,null,2)
+/* 上传数据 */
+async function sync() {
+    try {
+        await fetch(`https://api.github.com/gists/${gist.value}`, {
+            method: "PATCH",
+            headers: { Authorization: "token " + token.value },
+            body: JSON.stringify({
+                files: {
+                    "data.json": {
+                        content: JSON.stringify(data, null, 2)
                     }
                 }
             })
         });
         show("自动已同步");
-    }catch{
-        show("上传失败","error");
+    } catch {
+        show("上传失败", "error");
     }
 }
 
-/* 下载（兼容旧数据） */
-async function loadFromGist(){
-    try{
-        const res=await fetch(`https://api.github.com/gists/${gist.value}`);
-        if(!res.ok) return;
+/* 下载数据（兼容旧数据） */
+async function loadFromGist() {
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gist.value}`);
+        if (!res.ok) return;
 
-        const j=await res.json();
-        const content=j.files["data.json"]?.content;
-        if(!content) return;
+        const j = await res.json();
+        const content = j.files["data.json"]?.content;
+        if (!content) return;
 
-        const parsed=JSON.parse(content);
+        const parsed = JSON.parse(content);
 
-        if(Array.isArray(parsed)){
-            data={};
-            parsed.forEach(r=>{
-                const key=r.time?r.time.split(" ")[0]:getDateKey();
-                if(!data[key]) data[key]=[];
+        if (Array.isArray(parsed)) {
+            data = {};
+            parsed.forEach(r => {
+                const key = r.time ? r.time.split(" ")[0] : getDateKey();
+                if (!data[key]) data[key] = [];
                 data[key].push(r);
             });
-        }else{
-            data=parsed;
+        } else {
+            data = parsed;
         }
 
-        currentDate=Object.keys(data).sort().reverse()[0]||getDateKey();
+        currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
 
         renderTabs();
         render();
-    }catch{}
+    } catch {}
 }
 
 /* 初始化 */
