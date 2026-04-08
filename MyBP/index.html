@@ -8,11 +8,28 @@
 <style>
 body{
     margin:0;
-    font-family:"Microsoft YaHei";
+    font-family:
+    "Trebuchet MS",
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Segoe UI",
+    sans-serif;
     background:#0f172a;
     color:#fff;
     padding:12px;
 }
+
+#status{
+    position:fixed;
+    top:12px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:8px 16px;
+    border-radius:999px;
+    display:none;
+}
+.success{background:#22c55e;}
+.error{background:#ef4444;}
 
 .card{
     background:#1e293b;
@@ -21,13 +38,29 @@ body{
     margin-bottom:14px;
 }
 
+input{
+    width:100%;
+    padding:10px;
+    margin:6px 0;
+    border-radius:10px;
+    border:none;
+}
+
 button{
-    padding:6px 12px;
+    padding:8px 14px;
     margin:4px;
     border:none;
     border-radius:999px;
+    background:#22c55e;
+    color:#fff;
     font-weight:700;
-    cursor:pointer;
+}
+
+.topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
 }
 
 .count{
@@ -36,48 +69,87 @@ button{
     color:#cbd5f5;
 }
 
-#tabs{
+.toolbar{
     display:flex;
     flex-wrap:wrap;
-    margin-bottom:10px;
 }
 
-#tabs button{
-    display:flex;
-    align-items:center;
-    gap:6px;
-}
-
-.delTab{
-    background:#ef4444;
-    color:#fff;
-    border-radius:50%;
-    padding:0 6px;
-    font-size:12px;
+.ref{
+    margin-top:8px;
+    font-size:13px;
+    font-weight:700;
+    color:#facc15;
+    line-height:1.6;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
+    font-size:15px;
 }
 
 td,th{
-    padding:8px;
+    padding:10px;
     text-align:center;
+}
+
+#tabs{
+    display:flex;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+}
+#tabs button{
+    cursor:pointer;
+}
+
+/* 手机适配 */
+@media (max-width:600px){
+    table thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tr{
+        background:#334155;
+        margin-bottom:12px;
+        border-radius:14px;
+        padding:12px;
+    }
+    td{text-align:left;}
 }
 </style>
 </head>
 
 <body>
 
-<div class="card count">
-总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
-</div>
+<div id="status"></div>
 
 <div class="card">
+<div class="topbar">
+<div>
+<input id="token" placeholder="Token">
+<input id="gist" placeholder="Gist ID">
+
+<button onclick="saveConfig()">保存</button>
+<button onclick="testConnection()">测试连接</button>
+<button onclick="loadFromGist()">下载</button>
+<button onclick="sync()">上传</button>
+</div>
+
+<div class="count">
+总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
+</div>
+</div>
+</div>
+
+<div class="card toolbar">
 <button onclick="addRow()">添加</button>
-<button onclick="exportJSON()">导出JSON</button>
+<button onclick="exportCSV()">CSV</button>
+<button onclick="exportJSON()">JSON</button>
 <button onclick="importFile()">导入</button>
+
+<div class="ref">
+正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
+56–60岁建议：收缩压110-135 / 舒张压70-85 ｜ 心率60-100<br>
+双臂差&lt;10正常 ｜ 10-15轻度 ｜ ≥15需关注
+</div>
 </div>
 
 <div id="tabs"></div>
@@ -98,79 +170,104 @@ td,th{
 </div>
 
 <script>
-let data={};
-let currentDate=getDateKey();
-
-/* ===== 日期统一 ===== */
-function formatDate(str){
-    if(!str) return getDateKey();
-    const d=new Date(str.replace(/-/g,"/"));
-    if(isNaN(d)) return getDateKey();
-    return d.toISOString().split("T")[0];
-}
+let data = {};
+let currentDate = getDateKey();
+let timer=null;
 
 function getDateKey(){
     return new Date().toISOString().split("T")[0];
 }
 
-/* ===== 添加 ===== */
-function addRow(){
-    const key=getDateKey();
-    if(!data[key]) data[key]=[];
+/* 血压判断（56–60岁建议） */
+function getBPColorParts(bp){
+    if(!bp || !bp.includes("/")){
+        return {sys:"#fff", dia:"#fff"};
+    }
+    const [sys,dia] = bp.split("/").map(Number);
+    return {
+        sys: (sys < 110 || sys > 135) ? "#ef4444" : "#22c55e",
+        dia: (dia < 70 || dia > 85) ? "#ef4444" : "#22c55e"
+    };
+}
 
-    currentDate=key;
+/* 心率判断 */
+function getHRColor(hr){
+    const v = Number(hr);
+    if(!v) return "#fff";
+    return (v < 60 || v > 100) ? "#ef4444" : "#22c55e";
+}
+
+/* 提示信息 */
+function show(msg, type = "success") {
+    const el = document.getElementById("status");
+    el.innerText = msg;
+    el.className = type;
+    el.style.display = "block";
+    setTimeout(() => el.style.display = "none", 2000);
+}
+
+/* 自动上传 */
+function autoSync() {
+    clearTimeout(timer);
+    timer = setTimeout(() => { sync(); }, 60000);
+}
+
+/* 配置保存 */
+function saveConfig() {
+    localStorage.token = token.value;
+    localStorage.gist = gist.value;
+    show("已保存");
+}
+
+function loadConfig() {
+    token.value = localStorage.token || "";
+    gist.value = localStorage.gist || "";
+}
+
+/* 添加记录 */
+function addRow() {
+    const key = getDateKey();
+
+    if (!data[key]) {
+        data[key] = [];
+    }
+
+    currentDate = key;
 
     data[key].push({
-        time:new Date().toLocaleString(),
-        bp:"",
-        hr:"",
-        note:""
+        time: new Date().toLocaleString(),
+        bp: "",
+        hr: "",
+        note: ""
     });
 
     renderTabs();
     render();
+    autoSync();
 }
 
-/* ===== 标签 ===== */
-function renderTabs(){
-    const tabs=document.getElementById("tabs");
-    tabs.innerHTML="";
+/* 标签页渲染 */
+function renderTabs() {
+    const tabs = document.getElementById("tabs");
+    tabs.innerHTML = "";
 
-    const keys=Object.keys(data).sort().reverse();
-    const colors=["#22c55e","#3b82f6","#f59e0b","#ef4444","#a855f7","#14b8a6"];
+    const keys = Object.keys(data).sort().reverse();
+    const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#14b8a6"];
 
-    keys.forEach((k,i)=>{
-        const btn=document.createElement("button");
-
-        const text=document.createElement("span");
-        text.innerText=k;
-
-        const del=document.createElement("span");
-        del.innerText="×";
-        del.className="delTab";
-
-        del.onclick=(e)=>{
-            e.stopPropagation();
-            if(confirm("删除这一天所有记录？")){
-                delete data[k];
-                currentDate=Object.keys(data)[0]||getDateKey();
-                renderTabs();
-                render();
-            }
-        };
-
-        btn.appendChild(text);
-        btn.appendChild(del);
-
-        if(k===currentDate){
-            btn.style.background="#fff";
-            btn.style.color="#000";
-        }else{
-            btn.style.background=colors[i%colors.length];
+    keys.forEach((k, i) => {
+        const btn = document.createElement("button");
+        btn.style.marginRight="6px";
+        btn.innerHTML = k + ' <span style="color:red;cursor:pointer" onclick="deleteDate(event,\''+k+'\')">×</span>';
+        if (k === currentDate) {
+            btn.style.background = "#ffffff";
+            btn.style.color = "#000";
+        } else {
+            btn.style.background = colors[i % colors.length];
         }
 
-        btn.onclick=()=>{
-            currentDate=k;
+        btn.onclick = (e) => {
+            if (e.target.tagName.toLowerCase() === 'span') return;
+            currentDate = k;
             renderTabs();
             render();
         };
@@ -179,121 +276,123 @@ function renderTabs(){
     });
 }
 
-/* ===== 血压判断 ===== */
-function getBPColorParts(bp){
-    if(!bp || !bp.includes("/")) return {sys:"#fff",dia:"#fff"};
-
-    const [s,d]=bp.split("/").map(Number);
-
-    return {
-        sys:(s<110||s>135)?"#ef4444":"#22c55e",
-        dia:(d<70||d>85)?"#ef4444":"#22c55e"
-    };
+/* 删除日期 */
+function deleteDate(e,date){
+    e.stopPropagation();
+    if(confirm(`删除 ${date} 的所有记录？`)){
+        delete data[date];
+        const keys = Object.keys(data).sort().reverse();
+        currentDate = keys[0] || getDateKey();
+        renderTabs();
+        render();
+        autoSync();
+    }
 }
 
-/* ===== 心率 ===== */
-function getHRColor(hr){
-    const v=Number(hr);
-    if(!v) return "#fff";
-    return (v<60||v>100)?"#ef4444":"#22c55e";
-}
+/* 渲染记录 */
+function render() {
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
 
-/* ===== 渲染 ===== */
-function render(){
-    const tbody=document.getElementById("tbody");
-    tbody.innerHTML="";
+    const list = data[currentDate] || [];
 
-    const list=data[currentDate]||[];
+    list.forEach((r, i) => {
+        const tr = document.createElement("tr");
 
-    list.forEach((r,i)=>{
-        const tr=document.createElement("tr");
-
-        let bp=r.bp;
-        if(bp && bp.includes("/")){
-            const [s,d]=bp.split("/");
-            const c=getBPColorParts(bp);
-            bp=`<span style="color:${c.sys}">${s}</span>/<span style="color:${c.dia}">${d}</span>`;
+        let bpHtml = r.bp;
+        if (r.bp && r.bp.includes("/")) {
+            const [sys, dia] = r.bp.split("/");
+            const c = getBPColorParts(r.bp);
+            bpHtml = `<span style="color:${c.sys}">${sys}</span>/<span style="color:${c.dia}">${dia}</span>`;
         }
 
-        tr.innerHTML=`
+        tr.innerHTML = `
 <td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td contenteditable onblur="edit(${i},'bp',this.innerText)">${bp}</td>
-<td contenteditable style="color:${getHRColor(r.hr)}" onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
+<td contenteditable onblur="edit(${i},'bp',this.innerText)">${bpHtml}</td>
+<td contenteditable style="color:${getHRColor(r.hr)}"
+onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td><button onclick="delRow(${i})">删</button></td>
+<td><button onclick="del(${i})">删除</button></td>
 `;
 
         tbody.appendChild(tr);
     });
 
-    document.getElementById("dayCount").innerText=list.length;
-
-    document.getElementById("totalCount").innerText=
-        Object.values(data).reduce((s,a)=>s+a.length,0);
+    document.getElementById("dayCount").innerText = list.length;
+    const total = Object.values(data).reduce((s, a) => s + a.length, 0);
+    document.getElementById("totalCount").innerText = total;
 }
 
-/* ===== 编辑 ===== */
-function edit(i,k,v){
-    data[currentDate][i][k]=v.trim();
+/* 编辑记录 */
+function edit(i, k, v) {
+    data[currentDate][i][k] = v.trim();
+    autoSync();
 }
 
-/* ===== 删除行 ===== */
-function delRow(i){
-    data[currentDate].splice(i,1);
+/* 删除记录 */
+function del(i) {
+    data[currentDate].splice(i, 1);
     render();
+    autoSync();
 }
 
-/* ===== 导出 ===== */
-function exportJSON(){
-    const blob=new Blob([JSON.stringify(data,null,2)]);
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="data.json";
-    a.click();
+/* 上传数据 */
+async function sync() {
+    try {
+        await fetch(`https://api.github.com/gists/${gist.value}`, {
+            method: "PATCH",
+            headers: { Authorization: "token " + token.value },
+            body: JSON.stringify({
+                files: {
+                    "data.json": {
+                        content: JSON.stringify(data, null, 2)
+                    }
+                }
+            })
+        });
+        show("自动已同步");
+    } catch {
+        show("上传失败", "error");
+    }
 }
 
-/* ===== 导入 ===== */
-function importFile(){
-    const input=document.createElement("input");
-    input.type="file";
+/* 下载数据（合并同一天记录） */
+async function loadFromGist() {
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gist.value}`);
+        if (!res.ok) return;
 
-    input.onchange=e=>{
-        const reader=new FileReader();
-        reader.onload=()=>{
-            const parsed=JSON.parse(reader.result);
+        const j = await res.json();
+        const content = j.files["data.json"]?.content;
+        if (!content) return;
 
-            data={};
+        const parsed = JSON.parse(content);
 
-            // ⭐关键：统一日期
-            if(Array.isArray(parsed)){
-                parsed.forEach(r=>{
-                    const key=formatDate(r.time);
-                    if(!data[key]) data[key]=[];
-                    data[key].push(r);
-                });
-            }else{
-                Object.keys(parsed).forEach(k=>{
-                    const newKey=formatDate(k);
-                    data[newKey]=parsed[k];
-                });
+        if (Array.isArray(parsed)) {
+            parsed.forEach(r => {
+                const key = r.time ? r.time.split(" ")[0] : getDateKey();
+                if (!data[key]) data[key] = [];
+                data[key].push(r);
+            });
+        } else {
+            for (const key in parsed) {
+                if (!data[key]) data[key] = [];
+                data[key] = data[key].concat(parsed[key]);
             }
+        }
 
-            currentDate=Object.keys(data)[0]||getDateKey();
+        currentDate = Object.keys(data).sort().reverse()[0] || getDateKey();
 
-            renderTabs();
-            render();
-        };
-
-        reader.readAsText(e.target.files[0]);
-    };
-
-    input.click();
+        renderTabs();
+        render();
+    } catch {}
 }
 
-/* ===== 初始化 ===== */
+/* 初始化 */
+loadConfig();
+loadFromGist();
 renderTabs();
 render();
-
 </script>
 
 </body>
