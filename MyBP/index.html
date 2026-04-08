@@ -6,31 +6,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:"Microsoft YaHei";background:#0f172a;color:#fff;padding:12px;}
-.card{background:#1e293b;padding:14px;border-radius:16px;margin-bottom:14px;}
-button{padding:6px 12px;margin:4px;border:none;border-radius:999px;font-weight:700;cursor:pointer;}
-.count{font-size:15px;font-weight:700;color:#cbd5f5;}
-#tabs{display:flex;flex-wrap:wrap;margin-bottom:10px;}
-#tabs button{display:flex;align-items:center;gap:6px;}
-.delTab{background:#ef4444;color:#fff;border-radius:50%;padding:0 6px;font-size:12px;}
+body{
+    margin:0;
+    font-family:"Microsoft YaHei";
+    background:#0f172a;
+    color:#fff;
+    padding:12px;
+}
+
+.card{
+    background:#1e293b;
+    padding:14px;
+    border-radius:16px;
+    margin-bottom:14px;
+}
+
+button{
+    padding:6px 12px;
+    margin:4px;
+    border:none;
+    border-radius:999px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.count{
+    font-size:15px;
+    font-weight:700;
+    color:#cbd5f5;
+}
+
+#tabs{
+    display:flex;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+}
+
+#tabs button{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.delTab{
+    background:#ef4444;
+    color:#fff;
+    border-radius:50%;
+    padding:0 6px;
+    font-size:12px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+td,th{
+    padding:8px;
+    text-align:center;
+}
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="card count">
 总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
 </div>
 
 <div class="card">
 <button onclick="addRow()">添加</button>
+<button onclick="exportJSON()">导出JSON</button>
+<button onclick="importFile()">导入</button>
 </div>
 
 <div id="tabs"></div>
 
 <div class="card">
-<table border="1" width="100%">
-<thead><tr><th>时间</th><th>血压</th><th>心率</th><th>备注</th><th>操作</th></tr></thead>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>血压</th>
+<th>心率</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
@@ -39,13 +101,11 @@ button{padding:6px 12px;margin:4px;border:none;border-radius:999px;font-weight:7
 let data={};
 let currentDate=getDateKey();
 
-/* ===== 日期统一格式 ===== */
+/* ===== 日期统一 ===== */
 function formatDate(str){
     if(!str) return getDateKey();
-
     const d=new Date(str.replace(/-/g,"/"));
     if(isNaN(d)) return getDateKey();
-
     return d.toISOString().split("T")[0];
 }
 
@@ -57,6 +117,7 @@ function getDateKey(){
 function addRow(){
     const key=getDateKey();
     if(!data[key]) data[key]=[];
+
     currentDate=key;
 
     data[key].push({
@@ -81,8 +142,8 @@ function renderTabs(){
     keys.forEach((k,i)=>{
         const btn=document.createElement("button");
 
-        const span=document.createElement("span");
-        span.innerText=k;
+        const text=document.createElement("span");
+        text.innerText=k;
 
         const del=document.createElement("span");
         del.innerText="×";
@@ -98,7 +159,7 @@ function renderTabs(){
             }
         };
 
-        btn.appendChild(span);
+        btn.appendChild(text);
         btn.appendChild(del);
 
         if(k===currentDate){
@@ -118,9 +179,10 @@ function renderTabs(){
     });
 }
 
-/* ===== 血压颜色 ===== */
+/* ===== 血压判断 ===== */
 function getBPColorParts(bp){
-    if(!bp.includes("/")) return {sys:"#fff",dia:"#fff"};
+    if(!bp || !bp.includes("/")) return {sys:"#fff",dia:"#fff"};
+
     const [s,d]=bp.split("/").map(Number);
 
     return {
@@ -147,7 +209,7 @@ function render(){
         const tr=document.createElement("tr");
 
         let bp=r.bp;
-        if(bp.includes("/")){
+        if(bp && bp.includes("/")){
             const [s,d]=bp.split("/");
             const c=getBPColorParts(bp);
             bp=`<span style="color:${c.sys}">${s}</span>/<span style="color:${c.dia}">${d}</span>`;
@@ -158,13 +220,14 @@ function render(){
 <td contenteditable onblur="edit(${i},'bp',this.innerText)">${bp}</td>
 <td contenteditable style="color:${getHRColor(r.hr)}" onblur="edit(${i},'hr',this.innerText)">${r.hr}</td>
 <td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td><button onclick="del(${i})">删</button></td>
+<td><button onclick="delRow(${i})">删</button></td>
 `;
 
         tbody.appendChild(tr);
     });
 
     document.getElementById("dayCount").innerText=list.length;
+
     document.getElementById("totalCount").innerText=
         Object.values(data).reduce((s,a)=>s+a.length,0);
 }
@@ -175,33 +238,62 @@ function edit(i,k,v){
 }
 
 /* ===== 删除行 ===== */
-function del(i){
+function delRow(i){
     data[currentDate].splice(i,1);
     render();
 }
 
-/* ===== 关键：加载数据时统一日期 ===== */
-function loadMock(){ // 模拟旧数据
-    const old=[
-        {time:"2026/4/8 10:00",bp:"120/80",hr:"70",note:""},
-        {time:"2026-04-08 12:00",bp:"140/90",hr:"80",note:""}
-    ];
-
-    data={};
-
-    old.forEach(r=>{
-        const key=formatDate(r.time); // ⭐关键
-        if(!data[key]) data[key]=[];
-        data[key].push(r);
-    });
-
-    currentDate=Object.keys(data)[0];
+/* ===== 导出 ===== */
+function exportJSON(){
+    const blob=new Blob([JSON.stringify(data,null,2)]);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="data.json";
+    a.click();
 }
 
-/* 初始化 */
-loadMock(); // 👉 实际用你原来的 loadFromGist
+/* ===== 导入 ===== */
+function importFile(){
+    const input=document.createElement("input");
+    input.type="file";
+
+    input.onchange=e=>{
+        const reader=new FileReader();
+        reader.onload=()=>{
+            const parsed=JSON.parse(reader.result);
+
+            data={};
+
+            // ⭐关键：统一日期
+            if(Array.isArray(parsed)){
+                parsed.forEach(r=>{
+                    const key=formatDate(r.time);
+                    if(!data[key]) data[key]=[];
+                    data[key].push(r);
+                });
+            }else{
+                Object.keys(parsed).forEach(k=>{
+                    const newKey=formatDate(k);
+                    data[newKey]=parsed[k];
+                });
+            }
+
+            currentDate=Object.keys(data)[0]||getDateKey();
+
+            renderTabs();
+            render();
+        };
+
+        reader.readAsText(e.target.files[0]);
+    };
+
+    input.click();
+}
+
+/* ===== 初始化 ===== */
 renderTabs();
 render();
+
 </script>
 
 </body>
