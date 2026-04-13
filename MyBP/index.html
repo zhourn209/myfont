@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能血压记录仪 - 增强导入版</title>
+    <title>智能血压记录仪 - 全功能版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -18,6 +18,7 @@
             max-width: 1400px;
             margin: 0 auto;
         }
+        /* 顶部工具栏 */
         .toolbar {
             background: white;
             border-radius: 24px;
@@ -70,6 +71,34 @@
             font-size: 14px;
         }
         .main-panel { display: flex; flex-direction: column; gap: 20px; }
+        
+        /* 参考标准栏 - 固定在页面上端第二行 */
+        .standard-bar {
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef9e3 100%);
+            border-radius: 24px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .standard-item {
+            background: rgba(255,255,240,0.8);
+            padding: 6px 14px;
+            border-radius: 40px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .standard-item strong {
+            color: #1e3a5f;
+        }
+        .badge-normal { color: #15803d; }
+        .badge-warning { color: #b45309; }
+        .badge-danger { color: #b91c1c; }
+        
         .tabs-header {
             display: flex;
             flex-wrap: wrap;
@@ -128,7 +157,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 500px;
+            max-height: 480px;
             overflow-y: auto;
         }
         .record-item {
@@ -180,17 +209,6 @@
             font-size: 12px;
             cursor: pointer;
         }
-        .standard-ref {
-            background: #fef9e3;
-            border-radius: 20px;
-            padding: 12px 16px;
-            margin-top: 20px;
-            font-size: 13px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            justify-content: space-between;
-        }
         .status-toast {
             position: fixed;
             bottom: 20px;
@@ -204,20 +222,24 @@
             transition: 0.2s;
         }
         .export-group { display: flex; gap: 8px; }
+        .gist-download-btn { background: #2c6e2f; }
         @media (max-width: 680px) {
             .add-form input, .add-form textarea { width: 100%; }
             .record-details { flex-direction: column; align-items: flex-start; }
+            .standard-bar { flex-direction: column; gap: 8px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- 第一行工具栏 -->
     <div class="toolbar">
         <div class="gist-config">
             <input type="text" id="tokenInput" placeholder="GitHub Token" style="width:220px">
             <input type="text" id="gistIdInput" placeholder="Gist ID (可选)">
             <button id="testConnBtn">🔌 测试连接</button>
             <button id="saveGistBtn" class="primary">💾 保存到Gist</button>
+            <button id="downloadGistBtn" class="gist-download-btn">⬇️ 从Gist下载</button>
         </div>
         <div class="export-group">
             <button id="exportCsvBtn" class="warning">📎 导出CSV</button>
@@ -226,6 +248,14 @@
             <input type="file" id="importFileInput" accept=".json,.csv" style="display:none">
         </div>
         <div class="stats" id="statsPanel">📊 总记录:0 | 今日:0</div>
+    </div>
+
+    <!-- 第二行：统一的参考标准栏 (所有标准集中展示) -->
+    <div class="standard-bar" id="standardBar">
+        <div class="standard-item"><strong>🩺 血压标准</strong> 正常 &lt;120/80 | 1级高血压 130-139/80-89 | 2级高血压 ≥140/90</div>
+        <div class="standard-item"><strong>❤️ 心率标准</strong> 正常静息 60-100 bpm | 56岁以上男性 60-90 bpm</div>
+        <div class="standard-item"><strong>📉 脉压差</strong> 正常 30-50 mmHg | &lt;30偏低 | &gt;50偏高</div>
+        <div class="standard-item"><strong>🔄 双臂差&lt;10正常 ｜ 10-15轻度 ｜ ≥15需关注</div>
     </div>
 
     <div class="main-panel">
@@ -240,7 +270,6 @@
                 <button id="addRecordBtn" class="success">➕ 添加记录</button>
             </div>
             <div class="records-list" id="recordsList"></div>
-            <div class="standard-ref" id="standardInfo"></div>
         </div>
     </div>
 </div>
@@ -252,6 +281,7 @@
     let activeDate = null;
     let gistToken = "", gistId = "";
     let autoSaveTimer = null;
+    let lastDataChangeTime = 0;
     const AUTO_SAVE_DELAY = 30000;
 
     // DOM 元素
@@ -259,6 +289,7 @@
     const gistIdInput = document.getElementById('gistIdInput');
     const testConnBtn = document.getElementById('testConnBtn');
     const saveGistBtn = document.getElementById('saveGistBtn');
+    const downloadGistBtn = document.getElementById('downloadGistBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     const exportJsonBtn = document.getElementById('exportJsonBtn');
     const uploadDataBtn = document.getElementById('uploadDataBtn');
@@ -271,7 +302,6 @@
     const diaInput = document.getElementById('diaInput');
     const hrInput = document.getElementById('hrInput');
     const remarkInput = document.getElementById('remarkInput');
-    const standardInfoDiv = document.getElementById('standardInfo');
     const statusMsgDiv = document.getElementById('statusMsg');
 
     // 辅助函数
@@ -295,11 +325,23 @@
         }
     }
 
+    // 触发数据变更，重置自动上传定时器（30秒无动作自动上传）
+    function markDataChanged() {
+        lastDataChangeTime = Date.now();
+        resetAutoUploadTimer();
+    }
+
     function resetAutoUploadTimer() {
         if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        if (gistToken && gistToken.trim().length > 0) {
+        // 仅当配置了有效的token时，自动上传才有意义
+        const token = gistToken || tokenInput.value.trim();
+        if (token && token.length > 0) {
             autoSaveTimer = setTimeout(() => {
-                if (gistToken) uploadToGistCore(false).catch(e=>console.warn);
+                // 再次检查是否有token，并且有gistId（或允许新建）
+                const currentToken = gistToken || tokenInput.value.trim();
+                if (currentToken) {
+                    withProgress("自动上传Gist", () => uploadToGistCore(false)).catch(e => console.warn("自动上传失败:", e));
+                }
             }, AUTO_SAVE_DELAY);
         }
     }
@@ -308,7 +350,6 @@
     function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`; }
     function generateId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 8); }
 
-    // 解析时间字符串: "2026/4/6 20:01:59" 或 "2026-04-06 20:01" 转成 "20:01:59"
     function normalizeTime(timeStr) {
         if (!timeStr) return "00:00:00";
         let parts = timeStr.split(' ');
@@ -324,10 +365,9 @@
         return "00:00:00";
     }
 
-    // 核心: 将外部JSON (bp字段 "125/82" 或 "132/83/80") 转换为标准记录
+    // 转换旧格式记录
     function convertLegacyRecord(rec, dateKey) {
         let sys = null, dia = null, hr = null;
-        // 1. 处理血压字段 bp 或 直接 sys/dia
         if (rec.bp && typeof rec.bp === 'string') {
             let bpStr = rec.bp.trim();
             let match = bpStr.match(/(\d+)\/(\d+)/);
@@ -341,33 +381,26 @@
                     dia = parseInt(nums[1]);
                 }
             }
-            // 处理异常格式 "132/83/80" 第三个数字是心率?
-            if (rec.bp.includes('/') && rec.bp.split('/').length === 3 && (hr === null || hr === undefined)) {
+            if (rec.bp.includes('/') && rec.bp.split('/').length === 3 && (!rec.hr || rec.hr === "")) {
                 let parts = rec.bp.split('/');
-                if (parts.length === 3 && !rec.hr) {
+                if (parts.length === 3) {
                     let maybeHr = parseInt(parts[2]);
                     if (!isNaN(maybeHr) && maybeHr > 30 && maybeHr < 200) hr = maybeHr;
                 }
             }
         }
-        // 兼容直接 sys/dia 字段
         if (rec.sys !== undefined && !isNaN(parseInt(rec.sys))) sys = parseInt(rec.sys);
         if (rec.dia !== undefined && !isNaN(parseInt(rec.dia))) dia = parseInt(rec.dia);
         if (rec.hr !== undefined && rec.hr !== "") hr = parseInt(rec.hr);
-        // 如果 hr 仍然无效，尝试从 note 或 其他字段提取
         if ((hr === null || isNaN(hr)) && rec.note) {
             let noteHr = rec.note.match(/心率[：:]?\s*(\d+)/);
             if (!noteHr) noteHr = rec.note.match(/(\d{2,3})\s*bpm/i);
             if (noteHr && noteHr[1]) hr = parseInt(noteHr[1]);
         }
-        if (hr === null || isNaN(hr)) hr = 0; // 后续过滤
-        
-        // 时间处理
+        if (hr === null || isNaN(hr)) hr = 0;
         let rawTime = rec.time || rec.timestamp || "";
         let timeStr = normalizeTime(rawTime);
         let remark = rec.note || rec.remark || "";
-        if (rec.note && rec.note !== remark) remark = rec.note;
-        
         if (sys && dia && sys > 0 && dia > 0 && hr > 0) {
             return {
                 id: generateId(),
@@ -382,7 +415,6 @@
         return null;
     }
 
-    // 彻底修复导入JSON (兼容用户提供的混合格式)
     function importAndFixJson(jsonObj) {
         let newMaster = {};
         for (let dateKey in jsonObj) {
@@ -391,7 +423,6 @@
             let fixedRecords = [];
             for (let rec of records) {
                 let standardRec = null;
-                // 情况1: 已有标准格式 sys, dia, hr
                 if (rec.sys !== undefined && rec.dia !== undefined && rec.hr !== undefined && !isNaN(rec.sys) && !isNaN(rec.dia) && !isNaN(rec.hr) && rec.sys>0 && rec.dia>0 && rec.hr>0) {
                     standardRec = {
                         id: rec.id || generateId(),
@@ -403,28 +434,10 @@
                         remark: rec.remark || rec.note || ""
                     };
                 } else {
-                    // 尝试用转换器
                     standardRec = convertLegacyRecord(rec, dateKey);
-                }
-                // 额外兜底: 某些记录 hr 为字符串
-                if (standardRec && (!standardRec.hr || standardRec.hr <= 0) && rec.hr) {
-                    let tmpHr = parseInt(rec.hr);
-                    if (!isNaN(tmpHr) && tmpHr > 0) standardRec.hr = tmpHr;
                 }
                 if (standardRec && standardRec.sys > 0 && standardRec.dia > 0 && standardRec.hr > 0) {
                     fixedRecords.push(standardRec);
-                } else if (rec.sys && rec.dia && (rec.hr || rec.hr === 0)) {
-                    // 最后尝试
-                    let s = parseInt(rec.sys), d = parseInt(rec.dia), h = parseInt(rec.hr);
-                    if (!isNaN(s) && !isNaN(d) && !isNaN(h) && s>0 && d>0 && h>0) {
-                        fixedRecords.push({
-                            id: rec.id || generateId(),
-                            time: rec.time ? normalizeTime(rec.time) : "00:00:00",
-                            sys: s, dia: d, hr: h,
-                            pulsePressure: calcPulsePressure(s,d),
-                            remark: rec.remark || rec.note || ""
-                        });
-                    }
                 }
             }
             if (fixedRecords.length > 0) {
@@ -435,7 +448,7 @@
         return newMaster;
     }
 
-    // 添加记录核心
+    // 添加记录
     function addRecordToCurrentTab() {
         if (!activeDate) {
             const todayStr = getTodayStr();
@@ -469,7 +482,7 @@
         sysInput.value = "120";
         diaInput.value = "80";
         hrInput.value = "72";
-        resetAutoUploadTimer();
+        markDataChanged();  // 触发自动上传计时
         showStatus("记录已添加");
     }
 
@@ -488,7 +501,7 @@
         records[idx] = updated;
         renderCurrentTabRecords();
         updateStats();
-        resetAutoUploadTimer();
+        markDataChanged();
         showStatus("已更新");
     }
 
@@ -504,7 +517,7 @@
                 renderCurrentTabRecords();
             }
             updateStats();
-            resetAutoUploadTimer();
+            markDataChanged();
             showStatus("已删除记录");
         }
     }
@@ -516,7 +529,7 @@
             activeDate = dates.length ? dates[0] : null;
             renderTabs();
             updateStats();
-            resetAutoUploadTimer();
+            markDataChanged();
             showStatus(`已删除 ${dateKey}`);
         }
     }
@@ -562,7 +575,6 @@
     function renderCurrentTabRecords() {
         if (!activeDate || !masterData[activeDate] || masterData[activeDate].length === 0) {
             recordsListDiv.innerHTML = '<div style="padding:20px;text-align:center">暂无记录，请添加记录</div>';
-            standardInfoDiv.innerHTML = getStandardReferenceHtml(null);
             return;
         }
         const records = masterData[activeDate];
@@ -597,23 +609,9 @@
             delBtn.addEventListener('click', () => deleteRecord(activeDate, rec.id));
             recordsListDiv.appendChild(itemDiv);
         });
-        const latest = records.length ? records[records.length-1] : null;
-        standardInfoDiv.innerHTML = getStandardReferenceHtml(latest);
     }
 
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    
-    function getStandardReferenceHtml(record) {
-        let dynamic = "";
-        if (record) {
-            const { sys, dia, hr, pulsePressure } = record;
-            let bpStatus = sys<120 && dia<80 ? "理想血压" : (sys>=130 || dia>=80 ? "偏高注意" : "正常高值");
-            let hrStatus = hr>=60 && hr<=100 ? "心率正常" : (hr<60 ? "心率偏慢" : "心率偏快");
-            let ppStatus = pulsePressure<30 ? "脉压差偏低" : (pulsePressure>50 ? "脉压差偏高" : "脉压差正常");
-            dynamic = `<div><strong>📈 最新:</strong> ${bpStatus} | ${hrStatus} | ${ppStatus}</div>`;
-        }
-        return `<div><strong>🩺 标准</strong> 理想<120/80 | 高血压≥130/80 &nbsp; 心率60-100 &nbsp; 脉压差30-50</div>${dynamic}`;
-    }
 
     function updateStats() {
         let total = 0, todayCount = 0, today = getTodayStr();
@@ -623,35 +621,48 @@
 
     // ---------- Gist 操作 ----------
     async function uploadToGistCore(showMsg=true) {
-        if (!gistToken.trim()) throw new Error("Token缺失");
+        const token = gistToken || tokenInput.value.trim();
+        if (!token) throw new Error("Token缺失");
         const content = JSON.stringify(masterData, null, 2);
         const filename = "bp_records.json";
         let url = "https://api.github.com/gists", method = "POST";
-        if (gistId.trim()) { url = `https://api.github.com/gists/${gistId}`; method = "PATCH"; }
+        const currentGistId = gistId || gistIdInput.value.trim();
+        if (currentGistId) { url = `https://api.github.com/gists/${currentGistId}`; method = "PATCH"; }
         const resp = await fetch(url, {
-            method, headers: { "Authorization": `token ${gistToken}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
-            body: JSON.stringify({ description: "血压记录", public: false, files: { [filename]: { content } } })
+            method, headers: { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+            body: JSON.stringify({ description: "血压记录数据", public: false, files: { [filename]: { content } } })
         });
-        if (!resp.ok) throw new Error(`Gist ${resp.status}`);
+        if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(`Gist ${resp.status}: ${errText}`);
+        }
         const result = await resp.json();
-        if (!gistId && result.id) { gistId = result.id; gistIdInput.value = result.id; localStorage.setItem("bp_gist_id", gistId); }
+        if (!currentGistId && result.id) {
+            gistId = result.id;
+            gistIdInput.value = result.id;
+            localStorage.setItem("bp_gist_id", gistId);
+        }
         if(showMsg) showStatus("已同步到Gist");
         return result;
     }
 
     async function downloadFromGist() {
-        if (!gistToken.trim() || !gistId.trim()) throw new Error("请填写Token和Gist ID");
-        const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { "Authorization": `token ${gistToken}` } });
-        if (!resp.ok) throw new Error("获取失败");
+        const token = gistToken || tokenInput.value.trim();
+        if (!token) throw new Error("请填写Token");
+        const currentGistId = gistId || gistIdInput.value.trim();
+        if (!currentGistId) throw new Error("请填写Gist ID");
+        const resp = await fetch(`https://api.github.com/gists/${currentGistId}`, { headers: { "Authorization": `token ${token}` } });
+        if (!resp.ok) throw new Error(`获取失败 ${resp.status}`);
         const data = await resp.json();
         const file = data.files["bp_records.json"];
-        if (!file || !file.content) throw new Error("无数据文件");
+        if (!file || !file.content) throw new Error("Gist中无bp_records.json");
         const remote = JSON.parse(file.content);
         masterData = remote;
         ensureTodayTabExists();
         renderTabs();
         updateStats();
         showStatus("从Gist下载完成");
+        markDataChanged(); // 下载后重置计时器
     }
 
     async function testConnection() {
@@ -663,7 +674,7 @@
         return true;
     }
 
-    // ---------- 导出 CSV (包含单位展示) ----------
+    // ---------- 导出导入 ----------
     function exportToCSV() {
         let rows = [];
         for (let date in masterData) {
@@ -688,7 +699,6 @@
         showStatus("导出JSON成功");
     }
 
-    // 导入主函数 (同时处理JSON和CSV)
     function importFile(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -697,7 +707,7 @@
                 if (file.name.endsWith('.json')) {
                     const parsed = JSON.parse(content);
                     const fixed = importAndFixJson(parsed);
-                    if (Object.keys(fixed).length === 0) throw new Error("JSON无有效血压记录(需包含sys/dia或bp字段)");
+                    if (Object.keys(fixed).length === 0) throw new Error("JSON无有效记录");
                     masterData = fixed;
                 } else if (file.name.endsWith('.csv')) {
                     const imported = parseCSVToMaster(content);
@@ -707,7 +717,7 @@
                 ensureTodayTabExists();
                 renderTabs();
                 updateStats();
-                resetAutoUploadTimer();
+                markDataChanged();
                 showStatus(`导入成功，共 ${Object.keys(masterData).length} 天数据`);
             } catch(err) { showStatus("导入失败: "+err.message, true); }
         };
@@ -746,12 +756,24 @@
         return newMaster;
     }
 
-    function saveConfigLocal() { localStorage.setItem("bp_token", tokenInput.value.trim()); localStorage.setItem("bp_gist_id", gistIdInput.value.trim()); gistToken = tokenInput.value.trim(); gistId = gistIdInput.value.trim(); }
-    function loadConfigLocal() { let t = localStorage.getItem("bp_token"), g = localStorage.getItem("bp_gist_id"); if(t) tokenInput.value = t; if(g) { gistIdInput.value = g; gistId = g; } gistToken = t || ""; }
+    function saveConfigLocal() { 
+        const token = tokenInput.value.trim();
+        const gid = gistIdInput.value.trim();
+        localStorage.setItem("bp_token", token);
+        localStorage.setItem("bp_gist_id", gid);
+        gistToken = token;
+        gistId = gid;
+    }
+    function loadConfigLocal() { 
+        let t = localStorage.getItem("bp_token"), g = localStorage.getItem("bp_gist_id"); 
+        if(t) { tokenInput.value = t; gistToken = t; }
+        if(g) { gistIdInput.value = g; gistId = g; }
+    }
 
     // 事件绑定
     testConnBtn.onclick = () => withProgress("测试连接", async()=>{ await testConnection(); saveConfigLocal(); });
     saveGistBtn.onclick = () => withProgress("保存到Gist", async()=>{ saveConfigLocal(); await uploadToGistCore(true); });
+    downloadGistBtn.onclick = () => withProgress("从Gist下载", async()=>{ saveConfigLocal(); await downloadFromGist(); });
     exportCsvBtn.onclick = () => exportToCSV();
     exportJsonBtn.onclick = () => exportToJSON();
     uploadDataBtn.onclick = () => importFileInput.click();
@@ -760,11 +782,15 @@
 
     window.onload = async () => {
         loadConfigLocal();
-        if (gistToken && gistId) { try { await withProgress("自动下载Gist", ()=> downloadFromGist()); } catch(e) { console.warn(e); } }
+        if (gistToken && gistId) { 
+            try { await withProgress("自动下载Gist", ()=> downloadFromGist()); } 
+            catch(e) { console.warn(e); } 
+        }
         if (Object.keys(masterData).length === 0) ensureTodayTabExists();
         renderTabs();
         updateStats();
-        [sysInput, diaInput, hrInput, remarkInput].forEach(inp => inp.addEventListener('input', ()=> resetAutoUploadTimer()));
+        // 监听输入框变化重置计时器
+        [sysInput, diaInput, hrInput, remarkInput].forEach(inp => inp.addEventListener('input', ()=> markDataChanged()));
     };
 </script>
 </body>
