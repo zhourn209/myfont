@@ -8,31 +8,17 @@
 <style>
 body{
     margin:0;
-    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
-    background:#020617; /* 更深背景 */
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI";
+    background:#020617;
     color:#fff;
     padding:12px;
 }
-
-#status{
-    position:fixed;
-    top:12px;
-    left:50%;
-    transform:translateX(-50%);
-    padding:8px 16px;
-    border-radius:999px;
-    display:none;
-}
-.success{background:#22c55e;}
-.error{background:#ef4444;}
-
 .card{
-    background:#111827; /* 更亮卡片 */
+    background:#111827;
     padding:14px;
     border-radius:16px;
     margin-bottom:14px;
 }
-
 input{
     width:100%;
     padding:10px;
@@ -40,7 +26,6 @@ input{
     border-radius:10px;
     border:none;
 }
-
 button{
     padding:8px 14px;
     margin:4px;
@@ -50,62 +35,17 @@ button{
     color:#fff;
     font-weight:700;
 }
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
+#status{
+    position:fixed;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:8px 16px;
+    border-radius:999px;
+    display:none;
 }
-
-.count{
-    font-size:15px;
-    font-weight:700;
-    color:#cbd5f5;
-}
-
-.toolbar{
-    display:flex;
-    flex-wrap:wrap;
-}
-
-.ref{
-    margin-top:8px;
-    font-size:13px;
-    font-weight:700;
-    color:#fde047;
-    line-height:1.6;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:18px; /* 放大 */
-}
-
-td,th{
-    padding:12px;
-    text-align:center;
-    font-weight:700; /* 加粗 */
-}
-
-#tabs{
-    display:flex;
-    flex-wrap:wrap;
-    margin-bottom:10px;
-}
-
-/* 手机优化 */
-@media (max-width:600px){
-    table thead{display:none;}
-    table,tbody,tr,td{display:block;width:100%;}
-    tr{
-        background:#1f2937; /* 更清晰卡片 */
-        margin-bottom:12px;
-        border-radius:14px;
-        padding:12px;
-    }
-    td{text-align:left;}
-}
+.success{background:#22c55e;}
+.error{background:#ef4444;}
 </style>
 </head>
 
@@ -114,8 +54,6 @@ td,th{
 <div id="status"></div>
 
 <div class="card">
-<div class="topbar">
-<div>
 <input id="token" placeholder="Token">
 <input id="gist" placeholder="Gist ID">
 
@@ -125,81 +63,7 @@ td,th{
 <button onclick="sync()">上传</button>
 </div>
 
-<div class="count">
-总记录：<span id="totalCount">0</span> ｜ 当天：<span id="dayCount">0</span>
-</div>
-</div>
-</div>
-
-<div class="card toolbar">
-<button onclick="addRow()">添加</button>
-<button onclick="exportCSV()">CSV</button>
-<button onclick="exportJSON()">JSON</button>
-<button onclick="importFile()">导入</button>
-
-<div class="ref">
-正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
-56–60岁建议：110-135 / 70-85 ｜ 心率60-100 ｜ 脉压差30-50
-</div>
-</div>
-
-<div id="tabs"></div>
-
-<div class="card">
-<table>
-<thead>
-<tr>
-<th>时间</th>
-<th>血压</th>
-<th>心率/脉压差</th>
-<th>备注</th>
-<th>操作</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-
 <script>
-let data={};
-let currentDate=getDateKey();
-
-/* 日期 */
-function getDateKey(){
-    const d=new Date();
-    return d.toISOString().split("T")[0];
-}
-function formatDateKey(s){
-    const d=new Date(s.replace(/\//g,'-'));
-    return isNaN(d)?getDateKey():d.toISOString().split("T")[0];
-}
-
-/* 血压 */
-function getBPColorParts(bp){
-    if(!bp.includes("/")) return {sys:"#fff",dia:"#fff"};
-    const [s,d]=bp.split("/").map(Number);
-    return {
-        sys:(s<110||s>135)?"#ff4d4f":"#22c55e",
-        dia:(d<70||d>85)?"#ff4d4f":"#22c55e"
-    };
-}
-
-/* 心率 */
-function getHRColor(v){
-    v=Number(v);
-    return (v<60||v>100)?"#ff4d4f":"#22c55e";
-}
-
-/* 脉压差 */
-function getPP(bp){
-    if(!bp.includes("/")) return "";
-    const [s,d]=bp.split("/").map(Number);
-    return s-d;
-}
-function getPPColor(pp){
-    if(!pp) return "#fff";
-    return (pp<30||pp>50)?"#ff4d4f":"#22c55e";
-}
 
 function show(msg,type="success"){
     const el=document.getElementById("status");
@@ -209,63 +73,80 @@ function show(msg,type="success"){
     setTimeout(()=>el.style.display="none",2000);
 }
 
-/* 添加 */
-function addRow(){
-    const key=getDateKey();
-    if(!data[key]) data[key]=[];
-    currentDate=key;
-    data[key].push({time:new Date().toLocaleString(),bp:"",hr:"",note:""});
-    renderTabs(); render();
+/* 正确读取 */
+function getToken(){
+    return document.getElementById("token").value.trim();
+}
+function getGist(){
+    return document.getElementById("gist").value.trim();
 }
 
-/* 标签 */
-function renderTabs(){
-    const tabs=document.getElementById("tabs");
-    tabs.innerHTML="";
-    Object.keys(data).sort().reverse().forEach(k=>{
-        const b=document.createElement("button");
-        b.innerText=k;
-        b.onclick=()=>{currentDate=k;renderTabs();render();};
-        tabs.appendChild(b);
-    });
+/* 保存配置 */
+function saveConfig(){
+    localStorage.setItem("token", getToken());
+    localStorage.setItem("gist", getGist());
+    show("已保存");
 }
 
-/* 渲染 */
-function render(){
-    const tbody=document.getElementById("tbody");
-    tbody.innerHTML="";
-    const list=data[currentDate]||[];
-
-    list.forEach((r,i)=>{
-        const c=getBPColorParts(r.bp);
-        const pp=getPP(r.bp);
-
-        tbody.innerHTML+=`
-<tr>
-<td contenteditable onblur="edit(${i},'time',this.innerText)">${r.time}</td>
-<td contenteditable onblur="edit(${i},'bp',this.innerText)">
-<span style="color:${c.sys}">${r.bp.split('/')[0]||''}</span> /
-<span style="color:${c.dia}">${r.bp.split('/')[1]||''}</span>
-</td>
-<td contenteditable onblur="edit(${i},'hr',this.innerText)">
-<span style="color:${getHRColor(r.hr)}">${r.hr||''}</span> /
-<span style="color:${getPPColor(pp)}">${pp||''}</span>
-</td>
-<td contenteditable onblur="edit(${i},'note',this.innerText)">${r.note}</td>
-<td><button onclick="del(${i})">删</button></td>
-</tr>`;
-    });
-
-    document.getElementById("dayCount").innerText=list.length;
-    document.getElementById("totalCount").innerText=Object.values(data).reduce((s,a)=>s+a.length,0);
+/* 加载配置（关键修复） */
+function loadConfig(){
+    document.getElementById("token").value = localStorage.getItem("token") || "";
+    document.getElementById("gist").value = localStorage.getItem("gist") || "";
 }
 
-function edit(i,k,v){data[currentDate][i][k]=v.trim();}
-function del(i){data[currentDate].splice(i,1);render();}
+/* 测试连接 */
+async function testConnection(){
+    show("正在测试连接…");
+    try{
+        const res = await fetch(`https://api.github.com/gists/${getGist()}`,{
+            headers:{Authorization:"token "+getToken()}
+        });
+        if(res.ok) show("连接成功");
+        else show("连接失败","error");
+    }catch(e){
+        console.error(e);
+        show("连接失败","error");
+    }
+}
 
-/* 初始化 */
-renderTabs();
-render();
+/* 下载 */
+async function loadFromGist(){
+    show("正在下载…");
+    try{
+        const res = await fetch(`https://api.github.com/gists/${getGist()}`,{
+            headers:{Authorization:"token "+getToken()}
+        });
+        if(res.ok) show("下载成功");
+        else show("下载失败","error");
+    }catch{
+        show("下载失败","error");
+    }
+}
+
+/* 上传 */
+async function sync(){
+    show("正在上传…");
+    try{
+        await fetch(`https://api.github.com/gists/${getGist()}`,{
+            method:"PATCH",
+            headers:{Authorization:"token "+getToken()},
+            body:JSON.stringify({
+                files:{
+                    "data.json":{
+                        content:"{}"
+                    }
+                }
+            })
+        });
+        show("上传成功");
+    }catch{
+        show("上传失败","error");
+    }
+}
+
+/* 初始化（关键） */
+loadConfig();
+
 </script>
 
 </body>
