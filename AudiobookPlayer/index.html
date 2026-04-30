@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能音频伴侣 | 云端同步播放器</title>
+    <title>智能音频伴侣 | 云端同步播放器 (自动Token)</title>
     <!-- 优雅字体与现代化样式 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -229,6 +229,31 @@
             background: white;
             font-family: monospace;
         }
+        .token-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .token-input {
+            flex: 2;
+            padding: 8px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.7rem;
+            background: #fffef5;
+            font-family: monospace;
+        }
+        .tiny-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
         .status-msg {
             font-size: 0.7rem;
             color: #2c5a2e;
@@ -267,7 +292,7 @@
 
 <div class="player-card" id="app">
     <h1><i class="fas fa-headphones"></i> 灵韵·云笺</h1>
-    <div class="sub">支持 MP3 / M4A / OPUS · 智能断点回溯 · Gist 云端同步</div>
+    <div class="sub">支持 MP3 / M4A / OPUS · 智能断点回溯 · 自动Token保存</div>
 
     <!-- 音频上传 -->
     <div class="upload-area">
@@ -316,13 +341,18 @@
         <div class="bookmark-list" id="bookmarkList"></div>
     </div>
 
-    <!-- GIST 同步区 -->
+    <!-- GIST 同步区 + Token保存 -->
     <div class="gist-area">
         <div class="gist-header">
             <span style="font-size:0.75rem; font-weight:500;"><i class="fab fa-github"></i> GitHub Gist 同步</span>
             <input type="text" id="gistIdInput" class="gist-url-input" placeholder="输入 Gist ID 或完整 URL ...">
         </div>
-        <div id="gistStatus" class="status-msg">⚡ 保存进度将自动备份: 当前曲目base64? 不, 仅存储音频元数据(文件名/当前秒/书签) 限制文件大小无存储原始音频。</div>
+        <div class="token-row">
+            <input type="password" id="githubTokenInput" class="token-input" placeholder="GitHub Token (仅存于本机，不会上传其他地方)" autocomplete="off">
+            <button id="saveTokenBtn" class="tiny-btn"><i class="fas fa-save"></i> 记住Token</button>
+            <button id="clearTokenBtn" class="tiny-btn"><i class="fas fa-trash-alt"></i> 清除</button>
+        </div>
+        <div id="gistStatus" class="status-msg">⚡ 首次使用请在下框粘贴Token并点击“记住Token”，之后自动使用。Token仅存储在此设备。</div>
     </div>
 </div>
 
@@ -345,73 +375,115 @@
     const saveProgressGistBtn = document.getElementById('saveProgressGistBtn');
     const loadFromGistBtn = document.getElementById('loadFromGistBtn');
     const gistIdInput = document.getElementById('gistIdInput');
+    const githubTokenInput = document.getElementById('githubTokenInput');
+    const saveTokenBtn = document.getElementById('saveTokenBtn');
+    const clearTokenBtn = document.getElementById('clearTokenBtn');
+    const gistStatusDiv = document.getElementById('gistStatus');
 
     // 状态变量
-    let currentFile = null;          // 存储选中的File对象或blob
-    let currentBookmarks = [];       // 存储书签 [{time:秒, label:"mm:ss"}]
+    let currentFile = null;          
+    let currentBookmarks = [];       
     let isPlaying = false;
-    let wasPlayingBeforeSeek = false;
-    let lastPlayInterruption = null;  // 用于停顿重播后退5秒逻辑: 记录上次播放被打断(自然结束或暂停)时的时间点？
+    let pendingRewindOnPlay = false;  
+    let skipNextRewindMark = false;   
 
-    /* 规则说明: "每次停顿再重播自动后退5秒"
-       释义: 当音频因任何原因停止(暂停/自然播放结束)后，用户再次点击播放时，自动将当前时间后退5秒（但不低于0）
-       实现: 监听 pause 事件记录 "停顿标记"， 在 play 事件之前检查标记并调整currentTime
-    */
-    let pendingRewindOnPlay = false;  // 停顿后重播需要后退5秒标志
-    let playbackHasStopped = false;   // 辅助确保 pause/ended 时激活标志，拒绝连续触发
+    // Token 存储
+    function saveTokenToLocal(token) {
+        if(token && token.trim()) {
+            localStorage.setItem('gh_gist_token', token.trim());
+            return true;
+        }
+        return false;
+    }
+    function getStoredToken() {
+        return localStorage.getItem('gh_gist_token') || '';
+    }
+    function clearStoredToken() {
+        localStorage.removeItem('gh_gist_token');
+        githubTokenInput.value = '';
+        gistStatusDiv.innerHTML = '✅ Token已清除，如需使用请重新输入并保存。';
+        setTimeout(()=>{
+            if(gistStatusDiv.innerHTML.includes('清除')) 
+                gistStatusDiv.innerHTML = '⚡ Token已清空，gist同步需要Token。';
+        }, 2000);
+    }
 
-    // 监听pause/ended设置自动后退标记 (停顿)
+    // 界面加载时填充已有的token
+    function loadTokenToInput() {
+        const stored = getStoredToken();
+        if(stored) {
+            githubTokenInput.value = stored;
+            gistStatusDiv.innerHTML = '🔑 Token已加载（隐藏），可正常使用Gist同步。';
+        } else {
+            gistStatusDiv.innerHTML = '📌 未存储Token，请在下框粘贴GitHub Token并点击“记住Token”后再使用同步。';
+        }
+    }
+    saveTokenBtn.addEventListener('click', () => {
+        const token = githubTokenInput.value.trim();
+        if(!token) {
+            alert('请输入Token');
+            return;
+        }
+        saveTokenToLocal(token);
+        gistStatusDiv.innerHTML = '✅ Token已保存至本设备，之后保存/恢复将自动使用。';
+        setTimeout(()=>{
+            if(gistStatusDiv.innerHTML.includes('已保存')) gistStatusDiv.innerHTML = '🔐 Token已就绪，可点击保存或恢复。';
+        }, 2000);
+    });
+    clearTokenBtn.addEventListener('click', () => {
+        clearStoredToken();
+    });
+
+    // 获取有效token（优先使用存储的，否则使用输入框当前值, 但输入框当前值不自动记忆）
+    function getActiveToken() {
+        let token = getStoredToken();
+        if(!token) {
+            token = githubTokenInput.value.trim();
+            if(token) {
+                // 可以提示一次性使用
+                gistStatusDiv.innerHTML = '⚠️ 当前Token未保存，建议点击“记住Token”避免重复输入。';
+            }
+        }
+        return token;
+    }
+
+    // 标记停顿后退5秒逻辑
     function markStoppedForRewind() {
-        // 只在音频非seeking人工操作？ 但只要播放停止（非手动跳过进度）就设置，避免过于激进? 但产品需求: "停顿再重播自动后退5秒"
-        // 排除主动seek? 一般seek也会触发pause? seek过程中也会短暂pause, 为了避免seek后立即播放后退，需要额外忽略
-        // 但更合理的：只在自然暂停/用户暂停或播放结束时标记，而不是seek引起的短暂pause。
-        // 增加一个标志skipRewindFlag 在手动跳转进度时屏蔽一次。
         if (!skipNextRewindMark) {
             pendingRewindOnPlay = true;
         }
         skipNextRewindMark = false;
     }
-    let skipNextRewindMark = false;  // 用于手动跳进度条、书签跳转等避免触发后退
-
-    // 播放前回调：如果有pendingRewindOnPlay 则后退5秒
     function applyRewindBeforePlay() {
         if (pendingRewindOnPlay && !isNaN(audio.duration) && isFinite(audio.duration)) {
             let newTime = Math.max(0, audio.currentTime - 5);
             if (Math.abs(audio.currentTime - newTime) > 0.1) {
                 audio.currentTime = newTime;
-                // 更新显示
                 updateProgressAndTime();
             }
-            pendingRewindOnPlay = false; // 已应用
+            pendingRewindOnPlay = false;
         }
     }
-
-    // 监听音频结束
-    audio.addEventListener('ended', () => {
-        isPlaying = false;
-        updatePlayPauseIcon();
-        markStoppedForRewind();   // 结束时停顿标记
-        playbackHasStopped = true;
-    });
-    audio.addEventListener('pause', (e) => {
-        // 如果是因为 ended 事件也会触发pause, 但不重复标记, ended已经标记过。但为确保逻辑
-        if (!audio.ended) {
-            markStoppedForRewind();
-        }
-        isPlaying = false;
-        updatePlayPauseIcon();
-    });
-    audio.addEventListener('play', () => {
-        // 播放时先应用倒退逻辑 (停顿后退5s)
-        applyRewindBeforePlay();
-        isPlaying = true;
-        updatePlayPauseIcon();
-    });
-    // 主动跳转进度时 取消待处理的倒退标记 & 避免停顿后退影响
     function clearPendingRewindAndSkip() {
         skipNextRewindMark = true;
         pendingRewindOnPlay = false;
     }
+
+    audio.addEventListener('ended', () => {
+        isPlaying = false;
+        updatePlayPauseIcon();
+        markStoppedForRewind();
+    });
+    audio.addEventListener('pause', () => {
+        if (!audio.ended) markStoppedForRewind();
+        isPlaying = false;
+        updatePlayPauseIcon();
+    });
+    audio.addEventListener('play', () => {
+        applyRewindBeforePlay();
+        isPlaying = true;
+        updatePlayPauseIcon();
+    });
 
     // 格式化时间
     function formatTime(seconds) {
@@ -443,10 +515,8 @@
         }
     });
 
-    // 播放暂停逻辑
     function togglePlayPause() {
         if (!audio.src || audio.src === '') {
-            // 无音频时，提示上传
             alert("请先上传音频文件");
             return;
         }
@@ -459,79 +529,60 @@
 
     function updatePlayPauseIcon() {
         const icon = playPauseBtn.querySelector('i');
-        if (audio.paused) {
-            icon.className = 'fas fa-play';
-        } else {
-            icon.className = 'fas fa-pause';
-        }
+        icon.className = audio.paused ? 'fas fa-play' : 'fas fa-pause';
     }
 
-    // 后退 / 前进 (不触发停顿标记，手动控制)
     function seekRelative(offsetSec) {
         if (!audio.duration || isNaN(audio.duration)) return;
-        clearPendingRewindAndSkip(); // 手动跳转时, 取消下次重播倒退
+        clearPendingRewindAndSkip();
         let newTime = audio.currentTime + offsetSec;
         newTime = Math.min(Math.max(0, newTime), audio.duration);
         audio.currentTime = newTime;
         updateProgressAndTime();
-        // 如果当前是暂停状态, 用户可能会再按播放，但没关系，不应自动后退（因为已跳过）
     }
 
     rewindBtn.addEventListener('click', () => seekRelative(-5));
     forwardBtn.addEventListener('click', () => seekRelative(5));
     playPauseBtn.addEventListener('click', togglePlayPause);
 
-    // 进度条拖动
     progressBg.addEventListener('click', (e) => {
         if (!audio.duration || isNaN(audio.duration)) return;
-        clearPendingRewindAndSkip();   // 用户拖动进度，避免下次播放后退
+        clearPendingRewindAndSkip();
         const rect = progressBg.getBoundingClientRect();
         const percent = (e.clientX - rect.left) / rect.width;
         audio.currentTime = percent * audio.duration;
         updateProgressAndTime();
     });
 
-    // 音频文件上传
     function loadAudioFromFile(file) {
         if (!file) return;
         if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|opus|ogg|wav)$/i.test(file.name)) {
-            alert("请选择有效的音频文件 (mp3, m4a, opus等)");
+            alert("请选择有效的音频文件");
             return;
         }
         currentFile = file;
         fileNameSpan.innerText = file.name;
         trackTitleEl.innerText = file.name;
         const url = URL.createObjectURL(file);
-        // 重置状态
-        const wasPaused = audio.paused;
         audio.src = url;
         audio.load();
-        // 重置书签，进度等（新文件丢失之前书签）
         currentBookmarks = [];
         renderBookmarks();
-        // 清空待重置标志
         pendingRewindOnPlay = false;
         skipNextRewindMark = false;
-        if (!wasPaused) {
-            audio.play().catch(e=>console.log);
-        }
-        // 保存本地 localStorage 记录当前文件 metadata (用作可选自动恢复，但不做强求,简单保存文件名hash)
+        if(window.oldUrl) URL.revokeObjectURL(window.oldUrl);
+        window.oldUrl = url;
         audio.addEventListener('loadedmetadata', function onMeta() {
             audio.removeEventListener('loadedmetadata', onMeta);
             updateProgressAndTime();
+            loadBookmarksFromLocal();
         }, { once: true });
-        // 释放旧URL 
-        if (window.oldUrl) URL.revokeObjectURL(window.oldUrl);
-        window.oldUrl = url;
     }
 
     fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) {
-            loadAudioFromFile(e.target.files[0]);
-        }
+        if (e.target.files.length) loadAudioFromFile(e.target.files[0]);
     });
 
-    // 书签功能
     function addBookmark() {
         if (!audio.src || isNaN(audio.duration)) {
             alert("请先加载音频文件");
@@ -539,15 +590,13 @@
         }
         const currentPos = audio.currentTime;
         const label = formatTime(currentPos);
-        const existing = currentBookmarks.find(b => Math.abs(b.time - currentPos) < 0.5);
-        if (existing) {
-            alert("该位置已有书签，无需重复添加");
+        if(currentBookmarks.find(b => Math.abs(b.time - currentPos) < 0.5)) {
+            alert("该位置已有书签");
             return;
         }
         currentBookmarks.push({ time: currentPos, label });
         currentBookmarks.sort((a,b) => a.time - b.time);
         renderBookmarks();
-        // 可额外保存至本地
         saveBookmarksToLocal();
     }
 
@@ -557,18 +606,14 @@
             bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签，点击上方添加</span>';
             return;
         }
-        currentBookmarks.forEach((bm, idx) => {
+        currentBookmarks.forEach((bm) => {
             const chip = document.createElement('div');
             chip.className = 'bookmark-chip';
             chip.innerHTML = `<i class="fas fa-bookmark"></i> ${bm.label}`;
-            chip.addEventListener('click', (e) => {
-                e.stopPropagation();
-                clearPendingRewindAndSkip(); // 跳转书签时为手动跳转, 不要触发后退
+            chip.addEventListener('click', () => {
+                clearPendingRewindAndSkip();
                 audio.currentTime = bm.time;
                 updateProgressAndTime();
-                if (audio.paused) {
-                    // 不自动播放，但可以静默，体验友好
-                }
             });
             bookmarkListDiv.appendChild(chip);
         });
@@ -576,40 +621,26 @@
 
     function saveBookmarksToLocal() {
         if (currentFile && currentFile.name) {
-            const key = `bm_${currentFile.name}`;
-            localStorage.setItem(key, JSON.stringify(currentBookmarks));
+            localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
         }
     }
-
     function loadBookmarksFromLocal() {
         if (currentFile && currentFile.name) {
-            const key = `bm_${currentFile.name}`;
-            const stored = localStorage.getItem(key);
+            const stored = localStorage.getItem(`bm_${currentFile.name}`);
             if (stored) {
-                try {
-                    currentBookmarks = JSON.parse(stored);
-                    renderBookmarks();
-                } catch(e) {}
-            } else {
-                currentBookmarks = [];
-                renderBookmarks();
-            }
+                try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {}
+            } else { currentBookmarks = []; renderBookmarks(); }
         }
     }
 
-    // 每次加载新文件后尝试加载本地书签
-    audio.addEventListener('loadedmetadata', () => {
-        if (currentFile) loadBookmarksFromLocal();
-    });
-
-    // 保存当前播放进度 + 书签到 Gist (Github)
-    // 结构: 存储当前文件名, 当前进度时间(秒), 书签数组, 音频文件名称
+    // Gist 操作使用存储的token
     async function saveToGist() {
-        if (!currentFile) {
-            alert("没有正在播放的音频，请先上传文件");
+        const token = getActiveToken();
+        if (!token) {
+            alert("请先填写并保存GitHub Token (点击“记住Token”)");
             return;
         }
-        // 构建payload
+        if (!currentFile) { alert("没有正在播放的音频"); return; }
         const progressData = {
             audioFileName: currentFile.name,
             currentTime: audio.currentTime,
@@ -618,113 +649,62 @@
         };
         const content = JSON.stringify(progressData, null, 2);
         const gistId = extractGistId(gistIdInput.value);
-        const token = prompt("【GitHub授权】由于浏览器限制，写入公共 Gist 需 Personal Access Token (需 gist 权限)\n如果不想输入，取消即可，仅本地保存。\n输入token(留空则只本地展示)");
-        if (!token) {
-            alert("未提供 Token，无法保存到 Gist。可自行复制内容手动备份");
-            return;
-        }
         try {
             let url = 'https://api.github.com/gists';
             let method = 'POST';
-            let body = {
-                description: `Audio Player Progress: ${currentFile.name}`,
-                public: false,
-                files: {
-                    "audio_progress.json": { content: content }
-                }
-            };
+            let body = { description: `Audio Progress: ${currentFile.name}`, public: false, files: { "audio_progress.json": { content } } };
             if (gistId) {
-                // 更新已有gist
                 url = `https://api.github.com/gists/${gistId}`;
                 method = 'PATCH';
-                body = {
-                    files: {
-                        "audio_progress.json": { content: content }
-                    }
-                };
+                body = { files: { "audio_progress.json": { content } } };
             }
             const resp = await fetch(url, {
-                method: method,
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `token ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                method, headers: { 'Accept': 'application/vnd.github.v3+json', 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
-            if (!resp.ok) {
-                const err = await resp.text();
-                throw new Error(`GitHub API 错误: ${resp.status} ${err}`);
-            }
+            if (!resp.ok) throw new Error(`API错误 ${resp.status}`);
             const result = await resp.json();
-            const newGistId = result.id;
-            gistIdInput.value = newGistId;
-            document.getElementById('gistStatus').innerHTML = `✅ 保存成功！ Gist ID: ${newGistId} <i class="fab fa-github"></i>`;
-            setTimeout(()=>{
-                document.getElementById('gistStatus').innerHTML = `⚡ 已同步至云端，可使用相同 Gist ID 恢复。`;
-            },3000);
-        } catch(err) {
-            console.error(err);
-            alert("保存失败: " + err.message);
-        }
+            gistIdInput.value = result.id;
+            gistStatusDiv.innerHTML = `✅ 保存成功！ Gist ID: ${result.id}`;
+        } catch(err) { alert("保存失败: "+err.message); gistStatusDiv.innerHTML = `❌ 保存失败`; }
     }
 
-    // 从Gist恢复进度
     async function loadFromGist() {
+        const token = getActiveToken();
+        if (!token) { alert("请先保存Token后再恢复"); return; }
         const gistId = extractGistId(gistIdInput.value);
-        if (!gistId) {
-            alert("请输入有效的 Gist ID");
-            return;
-        }
-        const token = prompt("输入 GitHub Token (读取公共 gist 可留空，私有则需 token)");
-        const headers = token ? { 'Authorization': `token ${token}` } : {};
+        if (!gistId) { alert("请输入Gist ID"); return; }
         try {
-            const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
+            const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } });
             if (!resp.ok) throw new Error("获取失败");
             const gist = await resp.json();
             const fileContent = gist.files['audio_progress.json']?.content;
-            if (!fileContent) throw new Error("未找到 audio_progress.json 文件");
+            if (!fileContent) throw new Error("未找到进度文件");
             const data = JSON.parse(fileContent);
-            // 恢复数据: 需注意当前文件是否匹配
-            if (data.audioFileName && currentFile && data.audioFileName !== currentFile.name) {
-                if (!confirm(`当前音频文件不同 (${currentFile.name})，恢复进度可能导致错位，是否继续?`)) return;
-            }
-            if (data.currentTime !== undefined && !isNaN(data.currentTime) && audio.duration) {
+            if (data.currentTime !== undefined && audio.duration) {
                 clearPendingRewindAndSkip();
                 audio.currentTime = Math.min(data.currentTime, audio.duration-0.1);
                 updateProgressAndTime();
             }
-            if (data.bookmarks && Array.isArray(data.bookmarks)) {
-                currentBookmarks = data.bookmarks;
-                renderBookmarks();
-                if (currentFile && currentFile.name) saveBookmarksToLocal();
-            }
-            document.getElementById('gistStatus').innerHTML = `✅ 从 Gist ${gistId} 恢复成功！ 进度与书签已加载。`;
-        } catch(e) {
-            alert("恢复失败 "+e.message);
-        }
+            if (data.bookmarks) { currentBookmarks = data.bookmarks; renderBookmarks(); if(currentFile) saveBookmarksToLocal(); }
+            gistStatusDiv.innerHTML = `✅ 从 Gist ${gistId} 恢复成功`;
+        } catch(e) { alert("恢复失败 "+e.message); }
     }
 
     function extractGistId(input) {
-        let trimmed = input.trim();
-        if (!trimmed) return null;
-        const match = trimmed.match(/([a-fA-F0-9]{32})$/);
-        if (match) return match[1];
-        const parts = trimmed.split('/');
+        if(!input) return null;
+        const match = input.match(/([a-fA-F0-9]{32})$/);
+        if(match) return match[1];
+        const parts = input.split('/');
         let last = parts[parts.length-1];
-        if (last.includes('.')) last = last.split('.')[0];
-        if (last.length === 32) return last;
-        return null;
+        if(last.includes('.')) last = last.split('.')[0];
+        return last.length === 32 ? last : null;
     }
 
     addBookmarkBtn.addEventListener('click', addBookmark);
     saveProgressGistBtn.addEventListener('click', saveToGist);
     loadFromGistBtn.addEventListener('click', loadFromGist);
-
-    // 初始化一次: 加载可能的 localStorage 旧文件信息
-    window.addEventListener('load', () => {
-        console.log("Ready");
-    });
+    loadTokenToInput();
 </script>
 </body>
 </html>
