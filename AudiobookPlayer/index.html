@@ -3,18 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能音频伴侣 | 自动续播·时间跳转·云端同步</title>
-    <!-- 优雅字体与现代化样式 -->
+    <title>智能音频伴侣 | 自动记忆Gist · 跨端同步</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             background: linear-gradient(145deg, #f0f4fc 0%, #e6edf7 100%);
             min-height: 100vh;
@@ -24,325 +17,83 @@
             font-family: 'Inter', sans-serif;
             padding: 1.5rem;
         }
-
         .player-card {
             max-width: 580px;
             width: 100%;
             background: rgba(255,255,255,0.85);
             backdrop-filter: blur(16px);
             border-radius: 3rem;
-            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
             padding: 1.8rem 2rem 2.2rem;
-            transition: all 0.2s ease;
             border: 1px solid rgba(255,255,255,0.6);
         }
-
-        h1 {
-            font-size: 1.7rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            background: linear-gradient(135deg, #1A2A3F, #2C4A6E);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .sub {
-            color: #4a627a;
-            font-size: 0.8rem;
-            font-weight: 450;
-            border-left: 3px solid #3b82f6;
-            padding-left: 0.7rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .upload-area {
-            background: #f9fafc;
-            border-radius: 2rem;
-            border: 1.5px dashed #cbd5e1;
-            padding: 0.8rem 1rem;
-            transition: all 0.2s;
-            margin-bottom: 1.3rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .file-label {
-            background: #1f2a3e;
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 2.5rem;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
+        h1 { font-size: 1.7rem; font-weight: 600; background: linear-gradient(135deg, #1A2A3F, #2C4A6E); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .sub { color: #4a627a; font-size: 0.8rem; font-weight: 450; border-left: 3px solid #3b82f6; padding-left: 0.7rem; margin-bottom: 1.5rem; }
+        .upload-area { background: #f9fafc; border-radius: 2rem; border: 1.5px dashed #cbd5e1; padding: 0.8rem 1rem; margin-bottom: 1.3rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .file-label { background: #1f2a3e; color: white; padding: 0.6rem 1.2rem; border-radius: 2.5rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .file-label:hover { background: #2c3e50; transform: scale(0.97);}
         #file-input { display: none; }
-        .file-name {
-            font-size: 0.8rem;
-            color: #2c3e50;
-            background: white;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            max-width: 210px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .track-info {
-            text-align: center;
-            margin: 0.5rem 0 0.8rem;
-        }
-        .track-title {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: #0f172a;
-        }
-        .track-duration {
-            font-size: 0.75rem;
-            color: #5f6c84;
-            margin-top: 5px;
-        }
-
-        .player-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 2rem;
-            margin: 1.5rem 0;
-        }
-        .ctrl-btn {
-            background: white;
-            border: none;
-            width: 52px;
-            height: 52px;
-            border-radius: 60px;
-            cursor: pointer;
-            font-size: 1.4rem;
-            color: #1f2a3e;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.02);
-            transition: 0.15s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .ctrl-btn:active { transform: scale(0.96); background: #f0f2f5; }
-        .play-btn {
-            background: #1f2a3e;
-            color: white;
-            width: 68px;
-            height: 68px;
-            font-size: 1.7rem;
-            box-shadow: 0 12px 20px -8px rgba(0,0,0,0.2);
-        }
-        .play-btn:hover { background: #2c3e50; }
-
-        .progress-section {
-            margin: 0.5rem 0 1rem;
-        }
-        .time-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: #2c3e50;
-            margin-bottom: 6px;
-        }
-        .progress-bar-bg {
-            background: #e2e8f0;
-            border-radius: 50px;
-            height: 6px;
-            width: 100%;
-            cursor: pointer;
-            position: relative;
-        }
-        .progress-fill {
-            background: #3b82f6;
-            width: 0%;
-            height: 6px;
-            border-radius: 50px;
-            transition: width 0.05s linear;
-        }
-
-        .goto-section {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 12px 0 8px;
-            flex-wrap: wrap;
-            background: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 60px;
-        }
-        .goto-input {
-            flex: 2;
-            background: white;
-            border: 1px solid #cbd5e1;
-            border-radius: 40px;
-            padding: 8px 12px;
-            font-size: 0.8rem;
-            font-family: monospace;
-            text-align: center;
-        }
-        .goto-btn {
-            background: #eef2ff;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 14px;
-            font-weight: 500;
-            font-size: 0.75rem;
-            cursor: pointer;
-            color: #1e40af;
-        }
-
-        .action-bar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 1rem 0 0.8rem;
-        }
-        .secondary-btn {
-            background: rgba(255,255,255,0.7);
-            border: 1px solid #cddfe7;
-            padding: 8px 15px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            color: #1e293b;
-            transition: 0.1s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .secondary-btn i { font-size: 0.8rem; }
+        .file-name { font-size: 0.8rem; color: #2c3e50; background: white; padding: 0.3rem 1rem; border-radius: 40px; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .track-info { text-align: center; margin: 0.5rem 0 0.8rem; }
+        .track-title { font-weight: 700; font-size: 1.2rem; color: #0f172a; }
+        .track-duration { font-size: 0.75rem; color: #5f6c84; margin-top: 5px; }
+        .player-controls { display: flex; justify-content: center; align-items: center; gap: 2rem; margin: 1.5rem 0; }
+        .ctrl-btn { background: white; border: none; width: 52px; height: 52px; border-radius: 60px; cursor: pointer; font-size: 1.4rem; color: #1f2a3e; box-shadow: 0 8px 18px rgba(0,0,0,0.05); transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; }
+        .ctrl-btn:active { transform: scale(0.96); }
+        .play-btn { background: #1f2a3e; color: white; width: 68px; height: 68px; font-size: 1.7rem; box-shadow: 0 12px 20px -8px rgba(0,0,0,0.2); }
+        .progress-section { margin: 0.5rem 0 1rem; }
+        .time-row { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 500; color: #2c3e50; margin-bottom: 6px; }
+        .progress-bar-bg { background: #e2e8f0; border-radius: 50px; height: 6px; width: 100%; cursor: pointer; }
+        .progress-fill { background: #3b82f6; width: 0%; height: 6px; border-radius: 50px; transition: width 0.05s linear; }
+        .goto-section { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; background: #f8fafc; padding: 8px 12px; border-radius: 60px; }
+        .goto-input { flex: 2; background: white; border: 1px solid #cbd5e1; border-radius: 40px; padding: 8px 12px; font-size: 0.8rem; font-family: monospace; text-align: center; }
+        .goto-btn { background: #eef2ff; border: none; border-radius: 40px; padding: 6px 14px; font-weight: 500; font-size: 0.75rem; cursor: pointer; color: #1e40af; }
+        .action-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin: 1rem 0 0.8rem; }
+        .secondary-btn { background: rgba(255,255,255,0.7); border: 1px solid #cddfe7; padding: 8px 15px; border-radius: 40px; font-size: 0.75rem; font-weight: 500; cursor: pointer; color: #1e293b; display: inline-flex; align-items: center; gap: 8px; }
         .secondary-btn:hover { background: white; border-color: #3b82f6; color: #3b82f6; }
-
-        .gist-area {
-            margin-top: 1rem;
-            background: #f1f5f9;
-            border-radius: 1.8rem;
-            padding: 0.8rem 1rem;
-        }
-        .gist-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .gist-url-input {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 40px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.7rem;
-            background: white;
-            font-family: monospace;
-        }
-        .token-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-        .token-input {
-            flex: 2;
-            padding: 8px 12px;
-            border-radius: 40px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.7rem;
-            background: #fffef5;
-            font-family: monospace;
-        }
-        .tiny-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 60px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .status-msg {
-            font-size: 0.7rem;
-            color: #2c5a2e;
-            margin-top: 6px;
-            word-break: break-all;
-        }
-        .bookmark-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0 8px;
-        }
-        .bookmark-chip {
-            background: white;
-            border-radius: 40px;
-            padding: 4px 12px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: all 0.1s;
-            border: 1px solid #e2e8f0;
-        }
+        .gist-area { margin-top: 1rem; background: #f1f5f9; border-radius: 1.8rem; padding: 0.8rem 1rem; }
+        .gist-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .gist-url-input { flex: 1; padding: 8px 12px; border-radius: 40px; border: 1px solid #cbd5e1; font-size: 0.7rem; background: white; font-family: monospace; }
+        .token-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+        .token-input { flex: 2; padding: 8px 12px; border-radius: 40px; border: 1px solid #cbd5e1; font-size: 0.7rem; background: #fffef5; font-family: monospace; }
+        .tiny-btn { background: #e2e8f0; border: none; padding: 6px 12px; border-radius: 60px; font-size: 0.7rem; font-weight: 500; cursor: pointer; }
+        .status-msg { font-size: 0.7rem; color: #2c5a2e; margin-top: 6px; word-break: break-all; }
+        .bookmark-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
+        .bookmark-chip { background: white; border-radius: 40px; padding: 4px 12px; font-size: 0.7rem; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.1s; border: 1px solid #e2e8f0; }
         .bookmark-chip:hover { background: #eef2ff; border-color: #3b82f6; transform: translateY(-1px);}
-        hr { margin: 0.5rem 0; opacity: 0.3;}
-
+        .autosave-badge { font-size: 0.65rem; background: #dbeafe; border-radius: 20px; padding: 2px 8px; display: inline-block; margin-left: 6px; }
         @media (max-width: 500px) {
             .player-card { padding: 1.3rem; }
             .ctrl-btn { width: 44px; height: 44px; font-size: 1.2rem; }
             .play-btn { width: 56px; height: 56px; }
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     </style>
 </head>
 <body>
 
-<div class="player-card" id="app">
-    <h1><i class="fas fa-headphones"></i> 灵韵·云笺</h1>
-    <div class="sub">自动续播 · 时间跳转 · 书签回溯 · GitHub同步</div>
+<div class="player-card">
+    <h1><i class="fas fa-headphones"></i> 灵韵·云笺 <span class="autosave-badge"><i class="fas fa-memory"></i> 自动记忆Gist</span></h1>
+    <div class="sub">自动续播 · 时间跳转 · Gist ID自动保存 · 跨端同步</div>
 
-    <!-- 音频上传 -->
     <div class="upload-area">
         <label class="file-label" for="file-input"><i class="fas fa-cloud-upload-alt"></i> 选择音频</label>
         <input type="file" id="file-input" accept="audio/*,.mp3,.m4a,.opus,.ogg,.wav">
         <span class="file-name" id="filename-display">未选择文件</span>
     </div>
 
-    <!-- 曲目信息 -->
     <div class="track-info">
         <div class="track-title" id="track-title">🎵 未加载音频</div>
         <div class="track-duration" id="track-duration">--:-- / --:--</div>
     </div>
 
-    <!-- 音频元素 -->
     <audio id="audio-player" preload="metadata" style="display: none;"></audio>
 
-    <!-- 中央控制按钮 -->
     <div class="player-controls">
         <button class="ctrl-btn" id="rewindBtn" title="后退5秒"><i class="fas fa-backward-step"></i> 5s</button>
         <button class="ctrl-btn play-btn" id="playPauseBtn"><i class="fas fa-play"></i></button>
         <button class="ctrl-btn" id="forwardBtn" title="前进5秒"><i class="fas fa-forward-step"></i> 5s</button>
     </div>
 
-    <!-- 进度条 -->
     <div class="progress-section">
         <div class="time-row">
             <span id="current-time">0:00</span>
@@ -353,43 +104,39 @@
         </div>
     </div>
 
-    <!-- Goto 跳转区域 -->
     <div class="goto-section">
         <i class="fas fa-clock" style="color:#3b82f6;"></i>
-        <input type="text" id="gotoTimeInput" class="goto-input" placeholder="例如: 1:30 或 90 (秒) 或 2:15:30" value="">
+        <input type="text" id="gotoTimeInput" class="goto-input" placeholder="例如: 1:30 或 90 (秒) 或 2:15:30">
         <button id="gotoBtn" class="goto-btn"><i class="fas fa-location-dot"></i> 跳转</button>
     </div>
 
-    <!-- 快捷操作栏 -->
     <div class="action-bar">
         <button class="secondary-btn" id="addBookmarkBtn"><i class="fas fa-bookmark"></i> 添加书签</button>
         <button class="secondary-btn" id="saveProgressGistBtn"><i class="fab fa-github"></i> 保存进度到 Gist</button>
         <button class="secondary-btn" id="loadFromGistBtn"><i class="fas fa-sync-alt"></i> 从 Gist 恢复</button>
     </div>
 
-    <!-- 展示已有书签 -->
-    <div id="bookmarkContainer">
+    <div>
         <div style="font-size:0.7rem; font-weight:500; margin-bottom:6px;"><i class="fas fa-tags"></i> 书签列表 (点击跳转)</div>
         <div class="bookmark-list" id="bookmarkList"></div>
     </div>
 
-    <!-- GIST 同步区 + Token保存 -->
     <div class="gist-area">
         <div class="gist-header">
-            <span style="font-size:0.75rem; font-weight:500;"><i class="fab fa-github"></i> GitHub Gist 同步</span>
-            <input type="text" id="gistIdInput" class="gist-url-input" placeholder="输入 Gist ID 或完整 URL ...">
+            <span style="font-size:0.75rem; font-weight:500;"><i class="fab fa-github"></i> GitHub Gist 同步 <span style="color:#2563eb;">(✨ Gist ID 会自动保存)</span></span>
+            <input type="text" id="gistIdInput" class="gist-url-input" placeholder="Gist ID 或完整 URL (自动记忆)">
         </div>
         <div class="token-row">
-            <input type="password" id="githubTokenInput" class="token-input" placeholder="GitHub Token (仅存于本机，不会上传其他地方)" autocomplete="off">
+            <input type="password" id="githubTokenInput" class="token-input" placeholder="GitHub Token (仅存于本机)" autocomplete="off">
             <button id="saveTokenBtn" class="tiny-btn"><i class="fas fa-save"></i> 记住Token</button>
             <button id="clearTokenBtn" class="tiny-btn"><i class="fas fa-trash-alt"></i> 清除</button>
         </div>
-        <div id="gistStatus" class="status-msg">⚡ 首次使用请在下框粘贴Token并点击“记住Token”，之后自动使用。</div>
+        <div id="gistStatus" class="status-msg">⚡ Token与Gist ID都会自动记忆，刷新页面无需重新输入。</div>
     </div>
 </div>
 
 <script>
-    /********** DOM 元素 **********/
+    // ==================== DOM 元素 ====================
     const audio = document.getElementById('audio-player');
     const fileInput = document.getElementById('file-input');
     const fileNameSpan = document.getElementById('filename-display');
@@ -414,34 +161,25 @@
     const gotoTimeInput = document.getElementById('gotoTimeInput');
     const gotoBtn = document.getElementById('gotoBtn');
 
-    /********** 全局变量 **********/
-    let currentFile = null;          // 当前File对象或Blob
-    let currentBookmarks = [];       // [{time:秒, label:"mm:ss"}]
-    let isPlaying = false;
-    let pendingRewindOnPlay = false;  // 停顿重播后退5秒标志
-    let skipNextRewindMark = false;   // 手动跳转屏蔽
+    // ==================== 全局变量 ====================
+    let currentFile = null;
+    let currentBookmarks = [];
+    let pendingRewindOnPlay = false;
+    let skipNextRewindMark = false;
 
-    /********** 本地存储Key前缀 **********/
-    const STORAGE_LAST_FILE_KEY = 'audio_last_file_info';   // 存储 { name, type, lastTime, dataURL? }
+    // ==================== 存储Key ====================
     const STORAGE_TOKEN_KEY = 'gh_gist_token';
-    // 由于 IndexedDB 太复杂，我们采用 localStorage 存储最近一个音频文件的 base64 片段？大文件会超限，改用保存 File 的 Blob URL 不可跨会话。
-    // 改进: 使用 IndexedDB 存储文件内容 (为了自动恢复必须保留文件二进制)。
-    // 为了完全实现「每次打开自动加载上次文件」，需要将文件永久存储到 IndexedDB 中。
-    // 下面实现 IndexedDB 保存最近上传的音频文件，下次启动时读取并恢复播放及进度时间。
-    // 优雅且完整。
-    let db = null;
+    const STORAGE_GIST_ID_KEY = 'last_gist_id';      // 【新增】自动记忆Gist ID
     const DB_NAME = 'AudioPlayerDB';
     const STORE_NAME = 'audioFile';
-    const DB_VERSION = 1;
 
+    // ==================== IndexedDB 文件存储 ====================
+    let db = null;
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            const request = indexedDB.open(DB_NAME, 1);
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                db = request.result;
-                resolve(db);
-            };
+            request.onsuccess = () => { db = request.result; resolve(db); };
             request.onupgradeneeded = (e) => {
                 const dbRef = e.target.result;
                 if (!dbRef.objectStoreNames.contains(STORE_NAME)) {
@@ -451,7 +189,6 @@
         });
     }
 
-    // 保存音频文件到 IndexedDB (仅保存最近一个)
     async function saveAudioFileToIndexedDB(file) {
         if (!db) await initIndexedDB();
         return new Promise((resolve, reject) => {
@@ -460,17 +197,8 @@
                 const arrayBuffer = e.target.result;
                 const tx = db.transaction([STORE_NAME], 'readwrite');
                 const store = tx.objectStore(STORE_NAME);
-                const record = {
-                    id: 'current_audio',
-                    name: file.name,
-                    type: file.type,
-                    lastModified: file.lastModified,
-                    data: arrayBuffer,
-                    savedAt: Date.now()
-                };
-                const putReq = store.put(record);
-                putReq.onsuccess = () => resolve();
-                putReq.onerror = (err) => reject(err);
+                store.put({ id: 'current_audio', name: file.name, type: file.type, data: arrayBuffer, savedAt: Date.now() });
+                tx.oncomplete = () => resolve();
                 tx.onerror = (err) => reject(err);
             };
             reader.onerror = (err) => reject(err);
@@ -478,103 +206,58 @@
         });
     }
 
-    // 从 IndexedDB 加载上次的音频文件，并恢复进度
     async function loadLastAudioFromDB() {
         if (!db) await initIndexedDB();
         return new Promise((resolve) => {
             const tx = db.transaction([STORE_NAME], 'readonly');
             const store = tx.objectStore(STORE_NAME);
             const getReq = store.get('current_audio');
-            getReq.onsuccess = async (e) => {
+            getReq.onsuccess = (e) => {
                 const record = e.target.result;
                 if (record && record.data) {
                     const blob = new Blob([record.data], { type: record.type });
-                    const file = new File([blob], record.name, { type: record.type, lastModified: record.lastModified });
-                    resolve({ file, lastTime: null }); // lastTime单独从localStorage读取
-                } else {
-                    resolve(null);
-                }
+                    const file = new File([blob], record.name, { type: record.type });
+                    resolve(file);
+                } else resolve(null);
             };
             getReq.onerror = () => resolve(null);
         });
     }
 
-    // 保存当前播放进度到 localStorage (单独)
-    function saveCurrentProgressToLocal() {
-        if (currentFile && audio && !isNaN(audio.currentTime)) {
-            const progressKey = `audio_progress_${currentFile.name}`;
-            localStorage.setItem(progressKey, JSON.stringify({
-                time: audio.currentTime,
-                fileName: currentFile.name,
-                updated: Date.now()
-            }));
+    // ==================== 自动记忆 Gist ID ====================
+    function saveGistIdToLocal(gistId) {
+        if (gistId) {
+            localStorage.setItem(STORAGE_GIST_ID_KEY, gistId);
         }
     }
-    // 恢复上次进度
-    async function restoreProgressForFile(fileName) {
-        if (!fileName) return;
-        const progressKey = `audio_progress_${fileName}`;
-        const raw = localStorage.getItem(progressKey);
-        if (raw) {
-            try {
-                const data = JSON.parse(raw);
-                if (data.time && !isNaN(data.time) && isFinite(audio.duration)) {
-                    clearPendingRewindAndSkip();
-                    audio.currentTime = Math.min(data.time, audio.duration - 0.5);
-                    updateProgressAndTime();
-                }
-            } catch(e) {}
+    function loadGistIdFromLocal() {
+        const savedId = localStorage.getItem(STORAGE_GIST_ID_KEY);
+        if (savedId) {
+            gistIdInput.value = savedId;
+            return savedId;
         }
-        // 书签恢复
-        const bmKey = `bm_${fileName}`;
-        const storedBm = localStorage.getItem(bmKey);
-        if (storedBm) {
-            try {
-                currentBookmarks = JSON.parse(storedBm);
-                renderBookmarks();
-            } catch(e) { currentBookmarks = []; renderBookmarks();}
-        } else {
-            currentBookmarks = [];
-            renderBookmarks();
-        }
+        return null;
     }
 
-    // 自动打开上次文件的核心流程
-    async function autoRestoreLastSession() {
-        try {
-            const result = await loadLastAudioFromDB();
-            if (result && result.file) {
-                const restoredFile = result.file;
-                // 加载音频文件
-                await loadAudioFromFileObject(restoredFile, false); // 不重置书签标志
-                // 额外尝试从本地读取进度和书签
-                await restoreProgressForFile(restoredFile.name);
-                // 显示提示
-                gistStatusDiv.innerHTML = `🔄 已自动恢复上次文件: ${restoredFile.name}`;
-                setTimeout(() => {
-                    if(gistStatusDiv.innerHTML.includes('自动恢复')) gistStatusDiv.innerHTML = '📀 就绪，可继续播放';
-                }, 2500);
-            } else {
-                gistStatusDiv.innerHTML = '📂 无历史音频，请选择文件开始';
-            }
-        } catch(err) {
-            console.warn("auto restore session error", err);
-            gistStatusDiv.innerHTML = '⚠️ 自动恢复失败，请手动选择文件';
+    // ==================== Token 存储 ====================
+    function saveTokenToLocal(token) {
+        if (token && token.trim()) {
+            localStorage.setItem(STORAGE_TOKEN_KEY, token.trim());
+            return true;
         }
+        return false;
+    }
+    function getStoredToken() {
+        return localStorage.getItem(STORAGE_TOKEN_KEY) || '';
     }
 
-    // 通用加载文件object (不自动保存书签内容避免重复)
+    // ==================== 音频加载与自动恢复 ====================
     async function loadAudioFromFileObject(file, resetBookmarks = true) {
-        if (!file) return;
-        if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|opus|ogg|wav)$/i.test(file.name)) {
-            alert("不支持的音频格式");
-            return false;
-        }
+        if (!file) return false;
         currentFile = file;
         fileNameSpan.innerText = file.name;
         trackTitleEl.innerText = file.name;
         const url = URL.createObjectURL(file);
-        const wasPlaying = !audio.paused;
         audio.src = url;
         audio.load();
         if (resetBookmarks) {
@@ -585,69 +268,66 @@
         skipNextRewindMark = false;
         if (window.oldUrl) URL.revokeObjectURL(window.oldUrl);
         window.oldUrl = url;
-        if (wasPlaying) {
-            audio.play().catch(e=>console.log);
-        }
-        // 存储到 IndexedDB
-        await saveAudioFileToIndexedDB(file).catch(e=>console.warn("DB save error", e));
-        // 监听元数据加载完毕后自动读取该文件的书签和进度（如果resetBookmarks则已经加载过，这里再尝试读取匹配本地进度）
+        await saveAudioFileToIndexedDB(file).catch(e => console.warn("DB save error", e));
+        
         audio.addEventListener('loadedmetadata', async function onMeta() {
             audio.removeEventListener('loadedmetadata', onMeta);
             updateProgressAndTime();
-            if (!resetBookmarks) {
-                // 仅恢复书签但不重置
-                const bmKey = `bm_${file.name}`;
-                const stored = localStorage.getItem(bmKey);
-                if(stored) {
-                    try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {}
-                }
-            } else {
-                loadBookmarksFromLocal();
+            // 恢复该书签和进度
+            const bmKey = `bm_${file.name}`;
+            const storedBm = localStorage.getItem(bmKey);
+            if (storedBm) {
+                try { currentBookmarks = JSON.parse(storedBm); renderBookmarks(); } catch(e) {}
             }
-            // 保存进度到localStorage的钩子: 每次timeupdate时自动保存当前位置
-        });
+            const progressKey = `audio_progress_${file.name}`;
+            const progressRaw = localStorage.getItem(progressKey);
+            if (progressRaw) {
+                try {
+                    const data = JSON.parse(progressRaw);
+                    if (data.time && !isNaN(data.time) && isFinite(audio.duration)) {
+                        clearPendingRewindAndSkip();
+                        audio.currentTime = Math.min(data.time, audio.duration - 0.5);
+                        updateProgressAndTime();
+                    }
+                } catch(e) {}
+            }
+        }, { once: true });
         return true;
     }
 
-    // 文件选择处理
-    fileInput.addEventListener('change', async (e) => {
-        if (e.target.files.length) {
-            const file = e.target.files[0];
-            await loadAudioFromFileObject(file, true);
-            // 保存即时进度监听器存盘
-        }
-    });
-
-    // 自动保存进度 (每5秒或者timeupdate时保存, 为了续播体验)
-    let lastSaveTime = 0;
-    audio.addEventListener('timeupdate', () => {
-        updateProgressAndTime();
-        if (currentFile && audio.duration && !isNaN(audio.currentTime)) {
-            const now = Date.now();
-            if (now - lastSaveTime > 5000) {
-                saveCurrentProgressToLocal();
-                lastSaveTime = now;
+    async function autoRestoreLastSession() {
+        try {
+            const file = await loadLastAudioFromDB();
+            if (file) {
+                await loadAudioFromFileObject(file, false);
+                gistStatusDiv.innerHTML = `🔄 已自动恢复上次文件: ${file.name} | Gist ID 已自动填入`;
+            } else {
+                gistStatusDiv.innerHTML = '📂 无历史音频，请选择文件开始';
             }
+        } catch(err) {
+            console.warn(err);
         }
-    });
-    // 暂停时也保存一次
-    audio.addEventListener('pause', () => {
-        if (currentFile) saveCurrentProgressToLocal();
-    });
+    }
 
-    /********** 原有功能 (后退5秒逻辑，书签，gist等) **********/
+    function saveCurrentProgressToLocal() {
+        if (currentFile && audio && !isNaN(audio.currentTime)) {
+            localStorage.setItem(`audio_progress_${currentFile.name}`, JSON.stringify({
+                time: audio.currentTime,
+                updated: Date.now()
+            }));
+        }
+    }
+
+    // ==================== 播放控制与后退5秒逻辑 ====================
     function markStoppedForRewind() {
         if (!skipNextRewindMark) pendingRewindOnPlay = true;
         skipNextRewindMark = false;
     }
     function applyRewindBeforePlay() {
         if (pendingRewindOnPlay && !isNaN(audio.duration) && isFinite(audio.duration)) {
-            let newTime = Math.max(0, audio.currentTime - 5);
-            if (Math.abs(audio.currentTime - newTime) > 0.1) {
-                audio.currentTime = newTime;
-                updateProgressAndTime();
-                saveCurrentProgressToLocal();
-            }
+            audio.currentTime = Math.max(0, audio.currentTime - 5);
+            updateProgressAndTime();
+            saveCurrentProgressToLocal();
             pendingRewindOnPlay = false;
         }
     }
@@ -655,39 +335,55 @@
         skipNextRewindMark = true;
         pendingRewindOnPlay = false;
     }
-    audio.addEventListener('ended', () => { isPlaying = false; updatePlayPauseIcon(); markStoppedForRewind(); saveCurrentProgressToLocal(); });
-    audio.addEventListener('pause', () => { if (!audio.ended) markStoppedForRewind(); isPlaying = false; updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
-    audio.addEventListener('play', () => { applyRewindBeforePlay(); isPlaying = true; updatePlayPauseIcon(); });
-
+    audio.addEventListener('ended', () => { markStoppedForRewind(); updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
+    audio.addEventListener('pause', () => { if (!audio.ended) markStoppedForRewind(); updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
+    audio.addEventListener('play', () => { applyRewindBeforePlay(); updatePlayPauseIcon(); });
+    
     function formatTime(seconds) {
         if (isNaN(seconds)) return "0:00";
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
-        if (hrs > 0) return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if (hrs > 0) return `${hrs}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+        return `${mins}:${secs.toString().padStart(2,'0')}`;
     }
     function updateProgressAndTime() {
         if (!isNaN(audio.duration) && isFinite(audio.duration)) {
-            const percent = (audio.currentTime / audio.duration) * 100;
-            progressFill.style.width = `${percent}%`;
+            progressFill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             totalTimeSpan.innerText = formatTime(audio.duration);
             durationDisplay.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-        } else { progressFill.style.width = '0%'; }
+        }
+    }
+    function updatePlayPauseIcon() {
+        const icon = playPauseBtn.querySelector('i');
+        icon.className = audio.paused ? 'fas fa-play' : 'fas fa-pause';
     }
     function togglePlayPause() {
-        if (!audio.src || audio.src === '') { alert("请先上传音频文件"); return; }
+        if (!audio.src) { alert("请先上传音频文件"); return; }
         audio.paused ? audio.play().catch(e=>console.warn) : audio.pause();
     }
-    function updatePlayPauseIcon() { playPauseBtn.querySelector('i').className = audio.paused ? 'fas fa-play' : 'fas fa-pause'; }
-    function seekRelative(offset) { if(!audio.duration) return; clearPendingRewindAndSkip(); audio.currentTime = Math.min(Math.max(0, audio.currentTime+offset), audio.duration); updateProgressAndTime(); saveCurrentProgressToLocal();}
+    function seekRelative(offset) {
+        if (!audio.duration) return;
+        clearPendingRewindAndSkip();
+        audio.currentTime = Math.min(Math.max(0, audio.currentTime + offset), audio.duration);
+        updateProgressAndTime();
+        saveCurrentProgressToLocal();
+    }
     rewindBtn.addEventListener('click', () => seekRelative(-5));
     forwardBtn.addEventListener('click', () => seekRelative(5));
     playPauseBtn.addEventListener('click', togglePlayPause);
-    progressBg.addEventListener('click', (e) => { if(!audio.duration) return; clearPendingRewindAndSkip(); const rect = progressBg.getBoundingClientRect(); const percent = (e.clientX - rect.left)/rect.width; audio.currentTime = percent * audio.duration; updateProgressAndTime(); saveCurrentProgressToLocal();});
+    progressBg.addEventListener('click', (e) => {
+        if (!audio.duration) return;
+        clearPendingRewindAndSkip();
+        const rect = progressBg.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+        updateProgressAndTime();
+        saveCurrentProgressToLocal();
+    });
 
-    // GOTO 时间跳转 (支持 "1:30", "90", "2:15:30")
+    // ==================== 时间跳转 ====================
     function parseTimeString(str) {
         str = str.trim();
         if (/^\d+$/.test(str)) return parseFloat(str);
@@ -701,7 +397,7 @@
         const raw = gotoTimeInput.value;
         if (!raw) { alert("输入时间，例如 1:30 或 120"); return; }
         let seconds = parseTimeString(raw);
-        if (isNaN(seconds)) { alert("时间格式错误，使用 分:秒 或 秒数"); return; }
+        if (isNaN(seconds)) { alert("时间格式错误"); return; }
         seconds = Math.min(Math.max(0, seconds), audio.duration);
         clearPendingRewindAndSkip();
         audio.currentTime = seconds;
@@ -710,47 +406,170 @@
         gotoTimeInput.value = "";
     });
 
-    // 书签逻辑
+    // ==================== 书签 ====================
     function addBookmark() {
         if (!audio.src || isNaN(audio.duration)) { alert("请先加载音频"); return; }
         const pos = audio.currentTime;
         const label = formatTime(pos);
-        if(currentBookmarks.find(b=>Math.abs(b.time-pos)<0.5)) { alert("已有书签"); return; }
+        if (currentBookmarks.find(b => Math.abs(b.time - pos) < 0.5)) { alert("已有书签"); return; }
         currentBookmarks.push({ time: pos, label });
-        currentBookmarks.sort((a,b)=>a.time-b.time);
+        currentBookmarks.sort((a,b) => a.time - b.time);
         renderBookmarks();
-        localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
+        if (currentFile) localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
     }
     function renderBookmarks() {
         bookmarkListDiv.innerHTML = '';
-        if(currentBookmarks.length===0) { bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签</span>'; return; }
+        if (currentBookmarks.length === 0) {
+            bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签</span>';
+            return;
+        }
         currentBookmarks.forEach(bm => {
             const chip = document.createElement('div');
             chip.className = 'bookmark-chip';
             chip.innerHTML = `<i class="fas fa-bookmark"></i> ${bm.label}`;
-            chip.addEventListener('click', () => { clearPendingRewindAndSkip(); audio.currentTime = bm.time; updateProgressAndTime(); saveCurrentProgressToLocal(); });
+            chip.addEventListener('click', () => {
+                clearPendingRewindAndSkip();
+                audio.currentTime = bm.time;
+                updateProgressAndTime();
+                saveCurrentProgressToLocal();
+            });
             bookmarkListDiv.appendChild(chip);
         });
     }
-    function loadBookmarksFromLocal() { if(currentFile) { const stored = localStorage.getItem(`bm_${currentFile.name}`); if(stored) { try{ currentBookmarks = JSON.parse(stored); renderBookmarks(); }catch(e){} } } }
     addBookmarkBtn.addEventListener('click', addBookmark);
 
-    // GIST 功能利用原有的 token 逻辑
-    function getActiveToken() { return localStorage.getItem(STORAGE_TOKEN_KEY) || githubTokenInput.value.trim(); }
-    saveTokenBtn.addEventListener('click', () => { if(githubTokenInput.value.trim()) localStorage.setItem(STORAGE_TOKEN_KEY, githubTokenInput.value.trim()); gistStatusDiv.innerHTML = '✅ Token已保存'; });
-    clearTokenBtn.addEventListener('click', () => { localStorage.removeItem(STORAGE_TOKEN_KEY); githubTokenInput.value = ''; gistStatusDiv.innerHTML = 'Token已清除'; });
-    async function saveToGist() { /* 复用上次逻辑简化核心 */ const token=getActiveToken(); if(!token){alert("无Token");return;} if(!currentFile){alert("无音频");return;} const gistId=extractGistId(gistIdInput.value); const data={audioFileName:currentFile.name,currentTime:audio.currentTime,bookmarks:currentBookmarks,lastUpdated:new Date().toISOString()}; try{ let url='https://api.github.com/gists',method='POST',body={description:`Progress:${currentFile.name}`,public:false,files:{"audio_progress.json":{content:JSON.stringify(data,null,2)}}}; if(gistId){url=`https://api.github.com/gists/${gistId}`;method='PATCH';body={files:{"audio_progress.json":{content:JSON.stringify(data,null,2)}}};} const res=await fetch(url,{method,headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!res.ok)throw new Error(); const result=await res.json(); gistIdInput.value=result.id; gistStatusDiv.innerHTML=`✅ 已同步至 Gist ${result.id}`; }catch(e){alert("保存失败");}}
-    async function loadFromGist(){ const token=getActiveToken(); if(!token){alert("Token缺失");return;} const gistId=extractGistId(gistIdInput.value); if(!gistId){alert("无效Gist ID");return;} try{ const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:{'Authorization':`token ${token}`}}); if(!res.ok)throw new Error(); const gist=await res.json(); const content=gist.files['audio_progress.json']?.content; if(!content)throw new Error(); const data=JSON.parse(content); if(data.currentTime&&audio.duration){clearPendingRewindAndSkip(); audio.currentTime=Math.min(data.currentTime,audio.duration-0.1); updateProgressAndTime(); saveCurrentProgressToLocal();} if(data.bookmarks){currentBookmarks=data.bookmarks;renderBookmarks(); if(currentFile)localStorage.setItem(`bm_${currentFile.name}`,JSON.stringify(currentBookmarks));} gistStatusDiv.innerHTML=`✅ 从 Gist ${gistId} 恢复成功`; }catch(e){alert("恢复失败");}}
-    function extractGistId(input){ if(!input)return null; const m=input.match(/([a-fA-F0-9]{32})$/); if(m)return m[1]; const parts=input.split('/'); let last=parts.pop(); if(last.includes('.'))last=last.split('.')[0]; return last.length===32?last:null; }
+    // ==================== Gist 同步 (自动记忆ID) ====================
+    function extractGistId(input) {
+        if (!input) return null;
+        const match = input.match(/([a-fA-F0-9]{32})$/);
+        if (match) return match[1];
+        const parts = input.split('/');
+        let last = parts.pop();
+        if (last.includes('.')) last = last.split('.')[0];
+        return last.length === 32 ? last : null;
+    }
+
+    async function saveToGist() {
+        let token = getStoredToken();
+        if (!token) {
+            alert("请先输入Token并点击「记住Token」");
+            return;
+        }
+        if (!currentFile) { alert("没有正在播放的音频"); return; }
+        const progressData = {
+            audioFileName: currentFile.name,
+            currentTime: audio.currentTime,
+            bookmarks: currentBookmarks,
+            lastUpdated: new Date().toISOString()
+        };
+        const content = JSON.stringify(progressData, null, 2);
+        let gistId = extractGistId(gistIdInput.value);
+        try {
+            let url = 'https://api.github.com/gists';
+            let method = 'POST';
+            let body = { description: `Audio Progress: ${currentFile.name}`, public: false, files: { "audio_progress.json": { content } } };
+            if (gistId) {
+                url = `https://api.github.com/gists/${gistId}`;
+                method = 'PATCH';
+                body = { files: { "audio_progress.json": { content } } };
+            }
+            const resp = await fetch(url, {
+                method, headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!resp.ok) throw new Error(`API错误 ${resp.status}`);
+            const result = await resp.json();
+            const newGistId = result.id;
+            gistIdInput.value = newGistId;
+            saveGistIdToLocal(newGistId);  // 【自动保存Gist ID】
+            gistStatusDiv.innerHTML = `✅ 保存成功！ Gist ID: ${newGistId} (已自动记忆)`;
+            setTimeout(() => {
+                if (gistStatusDiv.innerHTML.includes('保存成功')) 
+                    gistStatusDiv.innerHTML = '🔐 Gist ID已保存到本机，下次打开自动填入';
+            }, 3000);
+        } catch(err) {
+            alert("保存失败: " + err.message);
+            gistStatusDiv.innerHTML = `❌ 保存失败`;
+        }
+    }
+
+    async function loadFromGist() {
+        let token = getStoredToken();
+        if (!token) { alert("请先保存Token"); return; }
+        const gistId = extractGistId(gistIdInput.value);
+        if (!gistId) { alert("请输入有效的 Gist ID"); return; }
+        try {
+            const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            if (!resp.ok) throw new Error("获取失败");
+            const gist = await resp.json();
+            const fileContent = gist.files['audio_progress.json']?.content;
+            if (!fileContent) throw new Error("未找到进度文件");
+            const data = JSON.parse(fileContent);
+            if (data.currentTime !== undefined && audio.duration) {
+                clearPendingRewindAndSkip();
+                audio.currentTime = Math.min(data.currentTime, audio.duration - 0.1);
+                updateProgressAndTime();
+                saveCurrentProgressToLocal();
+            }
+            if (data.bookmarks) {
+                currentBookmarks = data.bookmarks;
+                renderBookmarks();
+                if (currentFile) localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
+            }
+            // 同时保存这个Gist ID到本地，方便下次
+            saveGistIdToLocal(gistId);
+            gistStatusDiv.innerHTML = `✅ 从 Gist ${gistId} 恢复成功，ID已记忆`;
+        } catch(e) {
+            alert("恢复失败: " + e.message);
+        }
+    }
+
     saveProgressGistBtn.addEventListener('click', saveToGist);
     loadFromGistBtn.addEventListener('click', loadFromGist);
 
-    // 初始化：载入数据库并尝试自动恢复
+    saveTokenBtn.addEventListener('click', () => {
+        const token = githubTokenInput.value.trim();
+        if (token) {
+            saveTokenToLocal(token);
+            gistStatusDiv.innerHTML = '✅ Token已保存到本机';
+        } else { alert("请输入Token"); }
+    });
+    clearTokenBtn.addEventListener('click', () => {
+        localStorage.removeItem(STORAGE_TOKEN_KEY);
+        githubTokenInput.value = '';
+        gistStatusDiv.innerHTML = 'Token已清除';
+    });
+
+    // ==================== 文件上传 ====================
+    fileInput.addEventListener('change', async (e) => {
+        if (e.target.files.length) {
+            await loadAudioFromFileObject(e.target.files[0], true);
+        }
+    });
+
+    // ==================== 自动保存进度 ====================
+    let lastSave = 0;
+    audio.addEventListener('timeupdate', () => {
+        updateProgressAndTime();
+        if (currentFile && Date.now() - lastSave > 5000) {
+            saveCurrentProgressToLocal();
+            lastSave = Date.now();
+        }
+    });
+
+    // ==================== 页面启动 ====================
     window.addEventListener('DOMContentLoaded', async () => {
         await initIndexedDB();
+        // 加载已保存的Token到输入框显示
+        const savedToken = getStoredToken();
+        if (savedToken) githubTokenInput.value = '********';
+        // 加载上次的Gist ID
+        loadGistIdFromLocal();
+        // 自动恢复上次音频
         await autoRestoreLastSession();
-        const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
-        if(storedToken) githubTokenInput.value = storedToken;
+        if (savedToken) gistStatusDiv.innerHTML = '🔑 Token已加载 | Gist ID已自动填入 | 可直接同步';
     });
 </script>
 </body>
