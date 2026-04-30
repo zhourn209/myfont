@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能音频伴侣 | 云端同步播放器 (自动Token)</title>
+    <title>智能音频伴侣 | 自动续播·时间跳转·云端同步</title>
     <!-- 优雅字体与现代化样式 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -25,7 +25,6 @@
             padding: 1.5rem;
         }
 
-        /* 主卡片 */
         .player-card {
             max-width: 580px;
             width: 100%;
@@ -61,7 +60,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* 文件上传区 */
         .upload-area {
             background: #f9fafc;
             border-radius: 2rem;
@@ -103,7 +101,6 @@
             white-space: nowrap;
         }
 
-        /* 元信息 */
         .track-info {
             text-align: center;
             margin: 0.5rem 0 0.8rem;
@@ -119,7 +116,6 @@
             margin-top: 5px;
         }
 
-        /* 播放控件 */
         .player-controls {
             display: flex;
             justify-content: center;
@@ -153,7 +149,6 @@
         }
         .play-btn:hover { background: #2c3e50; }
 
-        /* 进度条 */
         .progress-section {
             margin: 0.5rem 0 1rem;
         }
@@ -181,13 +176,43 @@
             transition: width 0.05s linear;
         }
 
-        /* 其他功能栏: 书签 & gist */
+        .goto-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0 8px;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 60px;
+        }
+        .goto-input {
+            flex: 2;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            text-align: center;
+        }
+        .goto-btn {
+            background: #eef2ff;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: #1e40af;
+        }
+
         .action-bar {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             gap: 12px;
-            margin: 1.4rem 0 1rem;
+            margin: 1rem 0 0.8rem;
         }
         .secondary-btn {
             background: rgba(255,255,255,0.7);
@@ -292,7 +317,7 @@
 
 <div class="player-card" id="app">
     <h1><i class="fas fa-headphones"></i> 灵韵·云笺</h1>
-    <div class="sub">支持 MP3 / M4A / OPUS · 智能断点回溯 · 自动Token保存</div>
+    <div class="sub">自动续播 · 时间跳转 · 书签回溯 · GitHub同步</div>
 
     <!-- 音频上传 -->
     <div class="upload-area">
@@ -307,7 +332,7 @@
         <div class="track-duration" id="track-duration">--:-- / --:--</div>
     </div>
 
-    <!-- 音频元素 (隐藏但控制播放) -->
+    <!-- 音频元素 -->
     <audio id="audio-player" preload="metadata" style="display: none;"></audio>
 
     <!-- 中央控制按钮 -->
@@ -326,6 +351,13 @@
         <div class="progress-bar-bg" id="progressBarBg">
             <div class="progress-fill" id="progressFill"></div>
         </div>
+    </div>
+
+    <!-- Goto 跳转区域 -->
+    <div class="goto-section">
+        <i class="fas fa-clock" style="color:#3b82f6;"></i>
+        <input type="text" id="gotoTimeInput" class="goto-input" placeholder="例如: 1:30 或 90 (秒) 或 2:15:30" value="">
+        <button id="gotoBtn" class="goto-btn"><i class="fas fa-location-dot"></i> 跳转</button>
     </div>
 
     <!-- 快捷操作栏 -->
@@ -352,12 +384,12 @@
             <button id="saveTokenBtn" class="tiny-btn"><i class="fas fa-save"></i> 记住Token</button>
             <button id="clearTokenBtn" class="tiny-btn"><i class="fas fa-trash-alt"></i> 清除</button>
         </div>
-        <div id="gistStatus" class="status-msg">⚡ 首次使用请在下框粘贴Token并点击“记住Token”，之后自动使用。Token仅存储在此设备。</div>
+        <div id="gistStatus" class="status-msg">⚡ 首次使用请在下框粘贴Token并点击“记住Token”，之后自动使用。</div>
     </div>
 </div>
 
 <script>
-    /********** 核心要素 **********/
+    /********** DOM 元素 **********/
     const audio = document.getElementById('audio-player');
     const fileInput = document.getElementById('file-input');
     const fileNameSpan = document.getElementById('filename-display');
@@ -379,79 +411,233 @@
     const saveTokenBtn = document.getElementById('saveTokenBtn');
     const clearTokenBtn = document.getElementById('clearTokenBtn');
     const gistStatusDiv = document.getElementById('gistStatus');
+    const gotoTimeInput = document.getElementById('gotoTimeInput');
+    const gotoBtn = document.getElementById('gotoBtn');
 
-    // 状态变量
-    let currentFile = null;          
-    let currentBookmarks = [];       
+    /********** 全局变量 **********/
+    let currentFile = null;          // 当前File对象或Blob
+    let currentBookmarks = [];       // [{time:秒, label:"mm:ss"}]
     let isPlaying = false;
-    let pendingRewindOnPlay = false;  
-    let skipNextRewindMark = false;   
+    let pendingRewindOnPlay = false;  // 停顿重播后退5秒标志
+    let skipNextRewindMark = false;   // 手动跳转屏蔽
 
-    // Token 存储
-    function saveTokenToLocal(token) {
-        if(token && token.trim()) {
-            localStorage.setItem('gh_gist_token', token.trim());
-            return true;
+    /********** 本地存储Key前缀 **********/
+    const STORAGE_LAST_FILE_KEY = 'audio_last_file_info';   // 存储 { name, type, lastTime, dataURL? }
+    const STORAGE_TOKEN_KEY = 'gh_gist_token';
+    // 由于 IndexedDB 太复杂，我们采用 localStorage 存储最近一个音频文件的 base64 片段？大文件会超限，改用保存 File 的 Blob URL 不可跨会话。
+    // 改进: 使用 IndexedDB 存储文件内容 (为了自动恢复必须保留文件二进制)。
+    // 为了完全实现「每次打开自动加载上次文件」，需要将文件永久存储到 IndexedDB 中。
+    // 下面实现 IndexedDB 保存最近上传的音频文件，下次启动时读取并恢复播放及进度时间。
+    // 优雅且完整。
+    let db = null;
+    const DB_NAME = 'AudioPlayerDB';
+    const STORE_NAME = 'audioFile';
+    const DB_VERSION = 1;
+
+    function initIndexedDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                db = request.result;
+                resolve(db);
+            };
+            request.onupgradeneeded = (e) => {
+                const dbRef = e.target.result;
+                if (!dbRef.objectStoreNames.contains(STORE_NAME)) {
+                    dbRef.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+            };
+        });
+    }
+
+    // 保存音频文件到 IndexedDB (仅保存最近一个)
+    async function saveAudioFileToIndexedDB(file) {
+        if (!db) await initIndexedDB();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                const tx = db.transaction([STORE_NAME], 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const record = {
+                    id: 'current_audio',
+                    name: file.name,
+                    type: file.type,
+                    lastModified: file.lastModified,
+                    data: arrayBuffer,
+                    savedAt: Date.now()
+                };
+                const putReq = store.put(record);
+                putReq.onsuccess = () => resolve();
+                putReq.onerror = (err) => reject(err);
+                tx.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // 从 IndexedDB 加载上次的音频文件，并恢复进度
+    async function loadLastAudioFromDB() {
+        if (!db) await initIndexedDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction([STORE_NAME], 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const getReq = store.get('current_audio');
+            getReq.onsuccess = async (e) => {
+                const record = e.target.result;
+                if (record && record.data) {
+                    const blob = new Blob([record.data], { type: record.type });
+                    const file = new File([blob], record.name, { type: record.type, lastModified: record.lastModified });
+                    resolve({ file, lastTime: null }); // lastTime单独从localStorage读取
+                } else {
+                    resolve(null);
+                }
+            };
+            getReq.onerror = () => resolve(null);
+        });
+    }
+
+    // 保存当前播放进度到 localStorage (单独)
+    function saveCurrentProgressToLocal() {
+        if (currentFile && audio && !isNaN(audio.currentTime)) {
+            const progressKey = `audio_progress_${currentFile.name}`;
+            localStorage.setItem(progressKey, JSON.stringify({
+                time: audio.currentTime,
+                fileName: currentFile.name,
+                updated: Date.now()
+            }));
         }
-        return false;
     }
-    function getStoredToken() {
-        return localStorage.getItem('gh_gist_token') || '';
-    }
-    function clearStoredToken() {
-        localStorage.removeItem('gh_gist_token');
-        githubTokenInput.value = '';
-        gistStatusDiv.innerHTML = '✅ Token已清除，如需使用请重新输入并保存。';
-        setTimeout(()=>{
-            if(gistStatusDiv.innerHTML.includes('清除')) 
-                gistStatusDiv.innerHTML = '⚡ Token已清空，gist同步需要Token。';
-        }, 2000);
-    }
-
-    // 界面加载时填充已有的token
-    function loadTokenToInput() {
-        const stored = getStoredToken();
-        if(stored) {
-            githubTokenInput.value = stored;
-            gistStatusDiv.innerHTML = '🔑 Token已加载（隐藏），可正常使用Gist同步。';
+    // 恢复上次进度
+    async function restoreProgressForFile(fileName) {
+        if (!fileName) return;
+        const progressKey = `audio_progress_${fileName}`;
+        const raw = localStorage.getItem(progressKey);
+        if (raw) {
+            try {
+                const data = JSON.parse(raw);
+                if (data.time && !isNaN(data.time) && isFinite(audio.duration)) {
+                    clearPendingRewindAndSkip();
+                    audio.currentTime = Math.min(data.time, audio.duration - 0.5);
+                    updateProgressAndTime();
+                }
+            } catch(e) {}
+        }
+        // 书签恢复
+        const bmKey = `bm_${fileName}`;
+        const storedBm = localStorage.getItem(bmKey);
+        if (storedBm) {
+            try {
+                currentBookmarks = JSON.parse(storedBm);
+                renderBookmarks();
+            } catch(e) { currentBookmarks = []; renderBookmarks();}
         } else {
-            gistStatusDiv.innerHTML = '📌 未存储Token，请在下框粘贴GitHub Token并点击“记住Token”后再使用同步。';
+            currentBookmarks = [];
+            renderBookmarks();
         }
     }
-    saveTokenBtn.addEventListener('click', () => {
-        const token = githubTokenInput.value.trim();
-        if(!token) {
-            alert('请输入Token');
-            return;
+
+    // 自动打开上次文件的核心流程
+    async function autoRestoreLastSession() {
+        try {
+            const result = await loadLastAudioFromDB();
+            if (result && result.file) {
+                const restoredFile = result.file;
+                // 加载音频文件
+                await loadAudioFromFileObject(restoredFile, false); // 不重置书签标志
+                // 额外尝试从本地读取进度和书签
+                await restoreProgressForFile(restoredFile.name);
+                // 显示提示
+                gistStatusDiv.innerHTML = `🔄 已自动恢复上次文件: ${restoredFile.name}`;
+                setTimeout(() => {
+                    if(gistStatusDiv.innerHTML.includes('自动恢复')) gistStatusDiv.innerHTML = '📀 就绪，可继续播放';
+                }, 2500);
+            } else {
+                gistStatusDiv.innerHTML = '📂 无历史音频，请选择文件开始';
+            }
+        } catch(err) {
+            console.warn("auto restore session error", err);
+            gistStatusDiv.innerHTML = '⚠️ 自动恢复失败，请手动选择文件';
         }
-        saveTokenToLocal(token);
-        gistStatusDiv.innerHTML = '✅ Token已保存至本设备，之后保存/恢复将自动使用。';
-        setTimeout(()=>{
-            if(gistStatusDiv.innerHTML.includes('已保存')) gistStatusDiv.innerHTML = '🔐 Token已就绪，可点击保存或恢复。';
-        }, 2000);
-    });
-    clearTokenBtn.addEventListener('click', () => {
-        clearStoredToken();
+    }
+
+    // 通用加载文件object (不自动保存书签内容避免重复)
+    async function loadAudioFromFileObject(file, resetBookmarks = true) {
+        if (!file) return;
+        if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|opus|ogg|wav)$/i.test(file.name)) {
+            alert("不支持的音频格式");
+            return false;
+        }
+        currentFile = file;
+        fileNameSpan.innerText = file.name;
+        trackTitleEl.innerText = file.name;
+        const url = URL.createObjectURL(file);
+        const wasPlaying = !audio.paused;
+        audio.src = url;
+        audio.load();
+        if (resetBookmarks) {
+            currentBookmarks = [];
+            renderBookmarks();
+        }
+        pendingRewindOnPlay = false;
+        skipNextRewindMark = false;
+        if (window.oldUrl) URL.revokeObjectURL(window.oldUrl);
+        window.oldUrl = url;
+        if (wasPlaying) {
+            audio.play().catch(e=>console.log);
+        }
+        // 存储到 IndexedDB
+        await saveAudioFileToIndexedDB(file).catch(e=>console.warn("DB save error", e));
+        // 监听元数据加载完毕后自动读取该文件的书签和进度（如果resetBookmarks则已经加载过，这里再尝试读取匹配本地进度）
+        audio.addEventListener('loadedmetadata', async function onMeta() {
+            audio.removeEventListener('loadedmetadata', onMeta);
+            updateProgressAndTime();
+            if (!resetBookmarks) {
+                // 仅恢复书签但不重置
+                const bmKey = `bm_${file.name}`;
+                const stored = localStorage.getItem(bmKey);
+                if(stored) {
+                    try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {}
+                }
+            } else {
+                loadBookmarksFromLocal();
+            }
+            // 保存进度到localStorage的钩子: 每次timeupdate时自动保存当前位置
+        });
+        return true;
+    }
+
+    // 文件选择处理
+    fileInput.addEventListener('change', async (e) => {
+        if (e.target.files.length) {
+            const file = e.target.files[0];
+            await loadAudioFromFileObject(file, true);
+            // 保存即时进度监听器存盘
+        }
     });
 
-    // 获取有效token（优先使用存储的，否则使用输入框当前值, 但输入框当前值不自动记忆）
-    function getActiveToken() {
-        let token = getStoredToken();
-        if(!token) {
-            token = githubTokenInput.value.trim();
-            if(token) {
-                // 可以提示一次性使用
-                gistStatusDiv.innerHTML = '⚠️ 当前Token未保存，建议点击“记住Token”避免重复输入。';
+    // 自动保存进度 (每5秒或者timeupdate时保存, 为了续播体验)
+    let lastSaveTime = 0;
+    audio.addEventListener('timeupdate', () => {
+        updateProgressAndTime();
+        if (currentFile && audio.duration && !isNaN(audio.currentTime)) {
+            const now = Date.now();
+            if (now - lastSaveTime > 5000) {
+                saveCurrentProgressToLocal();
+                lastSaveTime = now;
             }
         }
-        return token;
-    }
+    });
+    // 暂停时也保存一次
+    audio.addEventListener('pause', () => {
+        if (currentFile) saveCurrentProgressToLocal();
+    });
 
-    // 标记停顿后退5秒逻辑
+    /********** 原有功能 (后退5秒逻辑，书签，gist等) **********/
     function markStoppedForRewind() {
-        if (!skipNextRewindMark) {
-            pendingRewindOnPlay = true;
-        }
+        if (!skipNextRewindMark) pendingRewindOnPlay = true;
         skipNextRewindMark = false;
     }
     function applyRewindBeforePlay() {
@@ -460,6 +646,7 @@
             if (Math.abs(audio.currentTime - newTime) > 0.1) {
                 audio.currentTime = newTime;
                 updateProgressAndTime();
+                saveCurrentProgressToLocal();
             }
             pendingRewindOnPlay = false;
         }
@@ -468,31 +655,18 @@
         skipNextRewindMark = true;
         pendingRewindOnPlay = false;
     }
+    audio.addEventListener('ended', () => { isPlaying = false; updatePlayPauseIcon(); markStoppedForRewind(); saveCurrentProgressToLocal(); });
+    audio.addEventListener('pause', () => { if (!audio.ended) markStoppedForRewind(); isPlaying = false; updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
+    audio.addEventListener('play', () => { applyRewindBeforePlay(); isPlaying = true; updatePlayPauseIcon(); });
 
-    audio.addEventListener('ended', () => {
-        isPlaying = false;
-        updatePlayPauseIcon();
-        markStoppedForRewind();
-    });
-    audio.addEventListener('pause', () => {
-        if (!audio.ended) markStoppedForRewind();
-        isPlaying = false;
-        updatePlayPauseIcon();
-    });
-    audio.addEventListener('play', () => {
-        applyRewindBeforePlay();
-        isPlaying = true;
-        updatePlayPauseIcon();
-    });
-
-    // 格式化时间
     function formatTime(seconds) {
         if (isNaN(seconds)) return "0:00";
-        const mins = Math.floor(seconds / 60);
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
+        if (hrs > 0) return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
-
     function updateProgressAndTime() {
         if (!isNaN(audio.duration) && isFinite(audio.duration)) {
             const percent = (audio.currentTime / audio.duration) * 100;
@@ -500,211 +674,84 @@
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             totalTimeSpan.innerText = formatTime(audio.duration);
             durationDisplay.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-        } else {
-            progressFill.style.width = '0%';
-        }
+        } else { progressFill.style.width = '0%'; }
     }
-
-    audio.addEventListener('timeupdate', updateProgressAndTime);
-    audio.addEventListener('loadedmetadata', () => {
-        updateProgressAndTime();
-        if (!isNaN(audio.duration)) {
-            totalTimeSpan.innerText = formatTime(audio.duration);
-            durationDisplay.innerText = `0:00 / ${formatTime(audio.duration)}`;
-            trackTitleEl.innerText = currentFile ? currentFile.name : "已加载音频";
-        }
-    });
-
     function togglePlayPause() {
-        if (!audio.src || audio.src === '') {
-            alert("请先上传音频文件");
-            return;
-        }
-        if (audio.paused) {
-            audio.play().catch(e => console.warn("播放失败", e));
-        } else {
-            audio.pause();
-        }
+        if (!audio.src || audio.src === '') { alert("请先上传音频文件"); return; }
+        audio.paused ? audio.play().catch(e=>console.warn) : audio.pause();
     }
-
-    function updatePlayPauseIcon() {
-        const icon = playPauseBtn.querySelector('i');
-        icon.className = audio.paused ? 'fas fa-play' : 'fas fa-pause';
-    }
-
-    function seekRelative(offsetSec) {
-        if (!audio.duration || isNaN(audio.duration)) return;
-        clearPendingRewindAndSkip();
-        let newTime = audio.currentTime + offsetSec;
-        newTime = Math.min(Math.max(0, newTime), audio.duration);
-        audio.currentTime = newTime;
-        updateProgressAndTime();
-    }
-
+    function updatePlayPauseIcon() { playPauseBtn.querySelector('i').className = audio.paused ? 'fas fa-play' : 'fas fa-pause'; }
+    function seekRelative(offset) { if(!audio.duration) return; clearPendingRewindAndSkip(); audio.currentTime = Math.min(Math.max(0, audio.currentTime+offset), audio.duration); updateProgressAndTime(); saveCurrentProgressToLocal();}
     rewindBtn.addEventListener('click', () => seekRelative(-5));
     forwardBtn.addEventListener('click', () => seekRelative(5));
     playPauseBtn.addEventListener('click', togglePlayPause);
+    progressBg.addEventListener('click', (e) => { if(!audio.duration) return; clearPendingRewindAndSkip(); const rect = progressBg.getBoundingClientRect(); const percent = (e.clientX - rect.left)/rect.width; audio.currentTime = percent * audio.duration; updateProgressAndTime(); saveCurrentProgressToLocal();});
 
-    progressBg.addEventListener('click', (e) => {
-        if (!audio.duration || isNaN(audio.duration)) return;
+    // GOTO 时间跳转 (支持 "1:30", "90", "2:15:30")
+    function parseTimeString(str) {
+        str = str.trim();
+        if (/^\d+$/.test(str)) return parseFloat(str);
+        const parts = str.split(':').map(Number);
+        if (parts.length === 2) return parts[0]*60 + parts[1];
+        if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+        return NaN;
+    }
+    gotoBtn.addEventListener('click', () => {
+        if (!audio.duration || isNaN(audio.duration)) { alert("请先加载音频"); return; }
+        const raw = gotoTimeInput.value;
+        if (!raw) { alert("输入时间，例如 1:30 或 120"); return; }
+        let seconds = parseTimeString(raw);
+        if (isNaN(seconds)) { alert("时间格式错误，使用 分:秒 或 秒数"); return; }
+        seconds = Math.min(Math.max(0, seconds), audio.duration);
         clearPendingRewindAndSkip();
-        const rect = progressBg.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = percent * audio.duration;
+        audio.currentTime = seconds;
         updateProgressAndTime();
+        saveCurrentProgressToLocal();
+        gotoTimeInput.value = "";
     });
 
-    function loadAudioFromFile(file) {
-        if (!file) return;
-        if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|opus|ogg|wav)$/i.test(file.name)) {
-            alert("请选择有效的音频文件");
-            return;
-        }
-        currentFile = file;
-        fileNameSpan.innerText = file.name;
-        trackTitleEl.innerText = file.name;
-        const url = URL.createObjectURL(file);
-        audio.src = url;
-        audio.load();
-        currentBookmarks = [];
-        renderBookmarks();
-        pendingRewindOnPlay = false;
-        skipNextRewindMark = false;
-        if(window.oldUrl) URL.revokeObjectURL(window.oldUrl);
-        window.oldUrl = url;
-        audio.addEventListener('loadedmetadata', function onMeta() {
-            audio.removeEventListener('loadedmetadata', onMeta);
-            updateProgressAndTime();
-            loadBookmarksFromLocal();
-        }, { once: true });
-    }
-
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) loadAudioFromFile(e.target.files[0]);
-    });
-
+    // 书签逻辑
     function addBookmark() {
-        if (!audio.src || isNaN(audio.duration)) {
-            alert("请先加载音频文件");
-            return;
-        }
-        const currentPos = audio.currentTime;
-        const label = formatTime(currentPos);
-        if(currentBookmarks.find(b => Math.abs(b.time - currentPos) < 0.5)) {
-            alert("该位置已有书签");
-            return;
-        }
-        currentBookmarks.push({ time: currentPos, label });
-        currentBookmarks.sort((a,b) => a.time - b.time);
+        if (!audio.src || isNaN(audio.duration)) { alert("请先加载音频"); return; }
+        const pos = audio.currentTime;
+        const label = formatTime(pos);
+        if(currentBookmarks.find(b=>Math.abs(b.time-pos)<0.5)) { alert("已有书签"); return; }
+        currentBookmarks.push({ time: pos, label });
+        currentBookmarks.sort((a,b)=>a.time-b.time);
         renderBookmarks();
-        saveBookmarksToLocal();
+        localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
     }
-
     function renderBookmarks() {
         bookmarkListDiv.innerHTML = '';
-        if (currentBookmarks.length === 0) {
-            bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签，点击上方添加</span>';
-            return;
-        }
-        currentBookmarks.forEach((bm) => {
+        if(currentBookmarks.length===0) { bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签</span>'; return; }
+        currentBookmarks.forEach(bm => {
             const chip = document.createElement('div');
             chip.className = 'bookmark-chip';
             chip.innerHTML = `<i class="fas fa-bookmark"></i> ${bm.label}`;
-            chip.addEventListener('click', () => {
-                clearPendingRewindAndSkip();
-                audio.currentTime = bm.time;
-                updateProgressAndTime();
-            });
+            chip.addEventListener('click', () => { clearPendingRewindAndSkip(); audio.currentTime = bm.time; updateProgressAndTime(); saveCurrentProgressToLocal(); });
             bookmarkListDiv.appendChild(chip);
         });
     }
-
-    function saveBookmarksToLocal() {
-        if (currentFile && currentFile.name) {
-            localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
-        }
-    }
-    function loadBookmarksFromLocal() {
-        if (currentFile && currentFile.name) {
-            const stored = localStorage.getItem(`bm_${currentFile.name}`);
-            if (stored) {
-                try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {}
-            } else { currentBookmarks = []; renderBookmarks(); }
-        }
-    }
-
-    // Gist 操作使用存储的token
-    async function saveToGist() {
-        const token = getActiveToken();
-        if (!token) {
-            alert("请先填写并保存GitHub Token (点击“记住Token”)");
-            return;
-        }
-        if (!currentFile) { alert("没有正在播放的音频"); return; }
-        const progressData = {
-            audioFileName: currentFile.name,
-            currentTime: audio.currentTime,
-            bookmarks: currentBookmarks,
-            lastUpdated: new Date().toISOString()
-        };
-        const content = JSON.stringify(progressData, null, 2);
-        const gistId = extractGistId(gistIdInput.value);
-        try {
-            let url = 'https://api.github.com/gists';
-            let method = 'POST';
-            let body = { description: `Audio Progress: ${currentFile.name}`, public: false, files: { "audio_progress.json": { content } } };
-            if (gistId) {
-                url = `https://api.github.com/gists/${gistId}`;
-                method = 'PATCH';
-                body = { files: { "audio_progress.json": { content } } };
-            }
-            const resp = await fetch(url, {
-                method, headers: { 'Accept': 'application/vnd.github.v3+json', 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!resp.ok) throw new Error(`API错误 ${resp.status}`);
-            const result = await resp.json();
-            gistIdInput.value = result.id;
-            gistStatusDiv.innerHTML = `✅ 保存成功！ Gist ID: ${result.id}`;
-        } catch(err) { alert("保存失败: "+err.message); gistStatusDiv.innerHTML = `❌ 保存失败`; }
-    }
-
-    async function loadFromGist() {
-        const token = getActiveToken();
-        if (!token) { alert("请先保存Token后再恢复"); return; }
-        const gistId = extractGistId(gistIdInput.value);
-        if (!gistId) { alert("请输入Gist ID"); return; }
-        try {
-            const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } });
-            if (!resp.ok) throw new Error("获取失败");
-            const gist = await resp.json();
-            const fileContent = gist.files['audio_progress.json']?.content;
-            if (!fileContent) throw new Error("未找到进度文件");
-            const data = JSON.parse(fileContent);
-            if (data.currentTime !== undefined && audio.duration) {
-                clearPendingRewindAndSkip();
-                audio.currentTime = Math.min(data.currentTime, audio.duration-0.1);
-                updateProgressAndTime();
-            }
-            if (data.bookmarks) { currentBookmarks = data.bookmarks; renderBookmarks(); if(currentFile) saveBookmarksToLocal(); }
-            gistStatusDiv.innerHTML = `✅ 从 Gist ${gistId} 恢复成功`;
-        } catch(e) { alert("恢复失败 "+e.message); }
-    }
-
-    function extractGistId(input) {
-        if(!input) return null;
-        const match = input.match(/([a-fA-F0-9]{32})$/);
-        if(match) return match[1];
-        const parts = input.split('/');
-        let last = parts[parts.length-1];
-        if(last.includes('.')) last = last.split('.')[0];
-        return last.length === 32 ? last : null;
-    }
-
+    function loadBookmarksFromLocal() { if(currentFile) { const stored = localStorage.getItem(`bm_${currentFile.name}`); if(stored) { try{ currentBookmarks = JSON.parse(stored); renderBookmarks(); }catch(e){} } } }
     addBookmarkBtn.addEventListener('click', addBookmark);
+
+    // GIST 功能利用原有的 token 逻辑
+    function getActiveToken() { return localStorage.getItem(STORAGE_TOKEN_KEY) || githubTokenInput.value.trim(); }
+    saveTokenBtn.addEventListener('click', () => { if(githubTokenInput.value.trim()) localStorage.setItem(STORAGE_TOKEN_KEY, githubTokenInput.value.trim()); gistStatusDiv.innerHTML = '✅ Token已保存'; });
+    clearTokenBtn.addEventListener('click', () => { localStorage.removeItem(STORAGE_TOKEN_KEY); githubTokenInput.value = ''; gistStatusDiv.innerHTML = 'Token已清除'; });
+    async function saveToGist() { /* 复用上次逻辑简化核心 */ const token=getActiveToken(); if(!token){alert("无Token");return;} if(!currentFile){alert("无音频");return;} const gistId=extractGistId(gistIdInput.value); const data={audioFileName:currentFile.name,currentTime:audio.currentTime,bookmarks:currentBookmarks,lastUpdated:new Date().toISOString()}; try{ let url='https://api.github.com/gists',method='POST',body={description:`Progress:${currentFile.name}`,public:false,files:{"audio_progress.json":{content:JSON.stringify(data,null,2)}}}; if(gistId){url=`https://api.github.com/gists/${gistId}`;method='PATCH';body={files:{"audio_progress.json":{content:JSON.stringify(data,null,2)}}};} const res=await fetch(url,{method,headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!res.ok)throw new Error(); const result=await res.json(); gistIdInput.value=result.id; gistStatusDiv.innerHTML=`✅ 已同步至 Gist ${result.id}`; }catch(e){alert("保存失败");}}
+    async function loadFromGist(){ const token=getActiveToken(); if(!token){alert("Token缺失");return;} const gistId=extractGistId(gistIdInput.value); if(!gistId){alert("无效Gist ID");return;} try{ const res=await fetch(`https://api.github.com/gists/${gistId}`,{headers:{'Authorization':`token ${token}`}}); if(!res.ok)throw new Error(); const gist=await res.json(); const content=gist.files['audio_progress.json']?.content; if(!content)throw new Error(); const data=JSON.parse(content); if(data.currentTime&&audio.duration){clearPendingRewindAndSkip(); audio.currentTime=Math.min(data.currentTime,audio.duration-0.1); updateProgressAndTime(); saveCurrentProgressToLocal();} if(data.bookmarks){currentBookmarks=data.bookmarks;renderBookmarks(); if(currentFile)localStorage.setItem(`bm_${currentFile.name}`,JSON.stringify(currentBookmarks));} gistStatusDiv.innerHTML=`✅ 从 Gist ${gistId} 恢复成功`; }catch(e){alert("恢复失败");}}
+    function extractGistId(input){ if(!input)return null; const m=input.match(/([a-fA-F0-9]{32})$/); if(m)return m[1]; const parts=input.split('/'); let last=parts.pop(); if(last.includes('.'))last=last.split('.')[0]; return last.length===32?last:null; }
     saveProgressGistBtn.addEventListener('click', saveToGist);
     loadFromGistBtn.addEventListener('click', loadFromGist);
-    loadTokenToInput();
+
+    // 初始化：载入数据库并尝试自动恢复
+    window.addEventListener('DOMContentLoaded', async () => {
+        await initIndexedDB();
+        await autoRestoreLastSession();
+        const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
+        if(storedToken) githubTokenInput.value = storedToken;
+    });
 </script>
 </body>
 </html>
