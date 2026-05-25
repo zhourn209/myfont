@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>智能音频伴侣 | 可删除书签 · 悬浮控制 · 定时停止</title>
+    <title>智能音频伴侣 | 文件夹播放 · 列表循环 · 云端同步</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -15,583 +15,539 @@
             padding: 1.5rem 1.5rem 5.5rem;
         }
         .player-card {
-            max-width: 620px;
+            max-width: 680px;
             margin: 0 auto;
             background: rgba(255,255,255,0.85);
             backdrop-filter: blur(16px);
-            border-radius: 3rem;
+            border-radius: 2rem;
             box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
-            padding: 1.8rem 2rem 2.2rem;
+            padding: 1.5rem;
             border: 1px solid rgba(255,255,255,0.6);
         }
-        h1 { font-size: 1.7rem; font-weight: 600; background: linear-gradient(135deg, #1A2A3F, #2C4A6E); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-        .sub { color: #4a627a; font-size: 0.8rem; font-weight: 450; border-left: 3px solid #3b82f6; padding-left: 0.7rem; margin-bottom: 1.5rem; }
-        .upload-area { background: #f9fafc; border-radius: 2rem; border: 1.5px dashed #cbd5e1; padding: 0.8rem 1rem; margin-bottom: 1.3rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .file-label { background: #1f2a3e; color: white; padding: 0.6rem 1.2rem; border-radius: 2.5rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .file-label:hover { background: #2c3e50; transform: scale(0.97);}
-        #file-input { display: none; }
-        .file-name { font-size: 0.8rem; color: #2c3e50; background: white; padding: 0.3rem 1rem; border-radius: 40px; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .track-info { text-align: center; margin: 0.5rem 0 0.8rem; }
-        .track-title { font-weight: 700; font-size: 1.2rem; color: #0f172a; }
-        .track-duration { font-size: 0.75rem; color: #5f6c84; margin-top: 5px; }
+        h1 { font-size: 1.5rem; font-weight: 600; background: linear-gradient(135deg, #1A2A3F, #2C4A6E); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .sub { color: #4a627a; font-size: 0.7rem; margin-bottom: 1rem; }
         
-        .player-controls { display: flex; justify-content: center; align-items: center; gap: 2rem; margin: 1.5rem 0; }
-        .ctrl-btn { background: white; border: none; width: 52px; height: 52px; border-radius: 60px; cursor: pointer; font-size: 1.4rem; color: #1f2a3e; box-shadow: 0 8px 18px rgba(0,0,0,0.05); transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; }
-        .ctrl-btn:active { transform: scale(0.96); }
-        .play-btn { background: #1f2a3e; color: white; width: 68px; height: 68px; font-size: 1.7rem; box-shadow: 0 12px 20px -8px rgba(0,0,0,0.2); }
+        /* 文件/文件夹选择区 */
+        .source-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
+        .primary-btn { background: #1f2a3e; color: white; border: none; padding: 8px 16px; border-radius: 40px; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .primary-btn:hover { background: #2c3e50; }
+        .secondary-outline { background: white; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 40px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         
-        .progress-section { margin: 0.5rem 0 1rem; }
-        .time-row { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 500; color: #2c3e50; margin-bottom: 6px; }
-        .progress-bar-bg { background: #e2e8f0; border-radius: 50px; height: 6px; width: 100%; cursor: pointer; }
-        .progress-fill { background: #3b82f6; width: 0%; height: 6px; border-radius: 50px; transition: width 0.05s linear; }
-        .goto-section { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; background: #f8fafc; padding: 8px 12px; border-radius: 60px; }
-        .goto-input { flex: 2; background: white; border: 1px solid #cbd5e1; border-radius: 40px; padding: 8px 12px; font-size: 0.8rem; font-family: monospace; text-align: center; }
-        .goto-btn { background: #eef2ff; border: none; border-radius: 40px; padding: 6px 14px; font-weight: 500; font-size: 0.75rem; cursor: pointer; color: #1e40af; }
-        
-        .timer-panel { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 8px; background: rgba(255,255,240,0.6); border-radius: 1.5rem; padding: 12px; }
-        .timer-card { flex: 1; background: white; border-radius: 1.2rem; padding: 8px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .timer-title { font-size: 0.7rem; font-weight: 600; color: #475569; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
-        .timer-input-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .timer-input { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 60px; padding: 8px 12px; font-size: 0.75rem; text-align: center; font-family: monospace; width: 90px; }
-        .timer-btn { background: #eef2ff; border: none; border-radius: 60px; padding: 6px 12px; font-size: 0.7rem; cursor: pointer; }
-        .timer-status { font-size: 0.65rem; color: #2563eb; margin-top: 6px; }
-        
-        .action-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin: 1rem 0 0.8rem; }
-        .secondary-btn { background: rgba(255,255,255,0.7); border: 1px solid #cddfe7; padding: 8px 15px; border-radius: 40px; font-size: 0.75rem; font-weight: 500; cursor: pointer; color: #1e293b; display: inline-flex; align-items: center; gap: 8px; }
-        .secondary-btn:hover { background: white; border-color: #3b82f6; color: #3b82f6; }
-        .gist-area { margin-top: 1rem; background: #f1f5f9; border-radius: 1.8rem; padding: 0.8rem 1rem; }
-        .gist-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-        .gist-url-input { flex: 1; padding: 8px 12px; border-radius: 40px; border: 1px solid #cbd5e1; font-size: 0.7rem; background: white; font-family: monospace; }
-        .token-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
-        .token-input { flex: 2; padding: 8px 12px; border-radius: 40px; border: 1px solid #cbd5e1; font-size: 0.7rem; background: #fffef5; font-family: monospace; }
-        .tiny-btn { background: #e2e8f0; border: none; padding: 6px 12px; border-radius: 60px; font-size: 0.7rem; font-weight: 500; cursor: pointer; }
-        .status-msg { font-size: 0.7rem; color: #2c5a2e; margin-top: 6px; word-break: break-all; }
-        
-        /* 书签样式 - 每个书签包含删除按钮 */
-        .bookmark-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
-        .bookmark-chip {
-            background: white;
-            border-radius: 40px;
-            padding: 4px 8px 4px 12px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .playlist-section {
+            background: rgba(255,255,255,0.6);
+            border-radius: 1.2rem;
+            margin: 0.8rem 0;
+            max-height: 220px;
+            overflow-y: auto;
             border: 1px solid #e2e8f0;
-            transition: all 0.1s;
         }
-        .bookmark-time {
-            cursor: pointer;
-            padding: 2px 0;
-        }
-        .bookmark-time:hover { text-decoration: underline; color: #3b82f6; }
-        .bookmark-delete {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 0.7rem;
-            padding: 2px 4px;
-            border-radius: 20px;
-            display: inline-flex;
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            transition: 0.1s;
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border-radius: 1.2rem 1.2rem 0 0;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .bookmark-delete:hover { color: #ef4444; background: #fee2e2; }
-        
-        .autosave-badge { font-size: 0.65rem; background: #dbeafe; border-radius: 20px; padding: 2px 8px; display: inline-block; margin-left: 6px; }
-        
-        /* 悬浮播放器 */
-        .floating-player {
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            right: 16px;
-            background: rgba(30, 41, 59, 0.92);
-            backdrop-filter: blur(24px);
-            border-radius: 60px;
-            padding: 10px 16px;
+        .loop-mode { cursor: pointer; background: #e2e8f0; padding: 2px 8px; border-radius: 30px; font-size: 0.65rem; }
+        .playlist-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            z-index: 1000;
-            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-bottom: 1px solid #eef2f6;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.05s;
         }
-        .floating-info { flex: 2; overflow: hidden; color: white; font-size: 0.75rem; font-weight: 500; }
-        .float-title { font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .float-time { font-size: 0.6rem; opacity: 0.7; }
-        .floating-buttons { display: flex; gap: 12px; align-items: center; }
-        .float-ctrl { background: rgba(255,255,255,0.2); border: none; width: 44px; height: 44px; border-radius: 40px; color: white; font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
-        .float-ctrl:active { transform: scale(0.94); background: rgba(255,255,255,0.35); }
-        .float-play { background: #3b82f6; width: 52px; height: 52px; font-size: 1.3rem; box-shadow: 0 2px 12px rgba(59,130,246,0.4); }
-        .float-toggle { background: rgba(255,255,255,0.15); padding: 0 8px; border-radius: 30px; font-size: 0.7rem; color: white; border: none; height: 32px; cursor: pointer; }
-        @media (max-width: 500px) {
-            .player-card { padding: 1.3rem; }
-            .ctrl-btn { width: 44px; height: 44px; font-size: 1.2rem; }
-            .play-btn { width: 56px; height: 56px; }
-            .timer-panel { flex-direction: column; }
-            .floating-buttons { gap: 8px; }
-            .float-ctrl { width: 38px; height: 38px; font-size: 1rem; }
-            .float-play { width: 46px; height: 46px; }
+        .playlist-item.active { background: #dbeafe; color: #1e40af; }
+        .playlist-item .track-num { width: 32px; color: #6c7a91; }
+        .playlist-item .track-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .playlist-item .track-dur { color: #7c8ba0; font-size: 0.65rem; }
+        
+        .track-info { text-align: center; margin: 8px 0; }
+        .track-title { font-weight: 700; font-size: 1rem; }
+        .player-controls { display: flex; justify-content: center; gap: 1.5rem; margin: 1rem 0; }
+        .ctrl-btn { background: white; border: none; width: 48px; height: 48px; border-radius: 60px; cursor: pointer; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .play-btn { background: #1f2a3e; color: white; width: 60px; height: 60px; font-size: 1.4rem; }
+        .progress-section { margin: 0.5rem 0; }
+        .time-row { display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px; }
+        .progress-bar-bg { background: #e2e8f0; border-radius: 50px; height: 5px; cursor: pointer; }
+        .progress-fill { background: #3b82f6; width: 0%; height: 5px; border-radius: 50px; }
+        .goto-section { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+        .goto-input { flex: 1; background: white; border: 1px solid #cbd5e1; border-radius: 40px; padding: 6px 12px; font-size: 0.7rem; }
+        .timer-panel, .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .timer-card, .gist-area { background: #f8fafc; border-radius: 1rem; padding: 8px 12px; flex: 1; }
+        .bookmark-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+        .bookmark-chip { background: white; border-radius: 40px; padding: 2px 8px 2px 10px; font-size: 0.65rem; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0; }
+        .floating-player {
+            position: fixed; bottom: 12px; left: 12px; right: 12px;
+            background: rgba(30,41,59,0.94); backdrop-filter: blur(20px);
+            border-radius: 60px; padding: 8px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 1000; border: 1px solid rgba(255,255,255,0.2);
         }
+        .float-info { color: white; font-size: 0.7rem; overflow: hidden; flex: 2; }
+        .float-buttons { display: flex; gap: 8px; }
+        .float-ctrl { background: rgba(255,255,255,0.2); border: none; width: 38px; height: 38px; border-radius: 40px; color: white; cursor: pointer; }
+        .float-play { background: #3b82f6; width: 46px; height: 46px; }
+        @media (max-width: 550px) { .player-card { padding: 1rem; } .ctrl-btn { width: 42px; height: 42px; } .play-btn { width: 54px; height: 54px; } }
     </style>
 </head>
 <body>
 
 <div class="player-card">
-    <h1><i class="fas fa-headphones"></i> 灵韵·云笺 <span class="autosave-badge"><i class="fas fa-trash-alt"></i> 可删除书签</span></h1>
-    <div class="sub">悬浮控制 · 定时停止 · 自动备份 · 书签可删除</div>
+    <h1><i class="fas fa-folder-open"></i> 文件夹播放器 · 自动连播</h1>
+    <div class="sub">📁 选择整个文件夹 → 自动排序 → 循环播放 | 书签/备份/定时停止</div>
 
-    <div class="upload-area">
-        <label class="file-label" for="file-input"><i class="fas fa-cloud-upload-alt"></i> 选择音频</label>
-        <input type="file" id="file-input" accept="audio/*,.mp3,.m4a,.opus,.ogg,.wav">
-        <span class="file-name" id="filename-display">未选择文件</span>
+    <div class="source-buttons">
+        <label class="primary-btn" for="folderInput"><i class="fas fa-folder"></i> 选择文件夹</label>
+        <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none;">
+        <label class="secondary-outline" for="fileInput"><i class="fas fa-music"></i> 单个文件</label>
+        <input type="file" id="fileInput" accept="audio/*" style="display:none;">
+        <button id="clearPlaylistBtn" class="secondary-outline"><i class="fas fa-trash"></i> 清空列表</button>
+    </div>
+
+    <!-- 播放列表区域 -->
+    <div class="playlist-section">
+        <div class="playlist-header">
+            <span><i class="fas fa-list"></i> 播放列表 <span id="playlistCount">0</span> 首</span>
+            <span id="loopModeBtn" class="loop-mode"><i class="fas fa-redo-alt"></i> 列表循环</span>
+        </div>
+        <div id="playlistContainer" style="max-height: 180px; overflow-y: auto;">
+            <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 0.7rem;">选择文件夹后自动显示音频文件</div>
+        </div>
     </div>
 
     <div class="track-info">
-        <div class="track-title" id="track-title">🎵 未加载音频</div>
-        <div class="track-duration" id="track-duration">--:-- / --:--</div>
+        <div class="track-title" id="trackTitle">🎵 未播放</div>
+        <div id="trackDuration" style="font-size:0.65rem;">--:-- / --:--</div>
     </div>
 
-    <audio id="audio-player" preload="metadata" style="display: none;"></audio>
+    <audio id="audioPlayer" preload="metadata"></audio>
 
     <div class="player-controls">
-        <button class="ctrl-btn" id="rewindBtn" title="后退5秒"><i class="fas fa-backward-step"></i> 5s</button>
+        <button class="ctrl-btn" id="prevBtn"><i class="fas fa-backward-fast"></i></button>
         <button class="ctrl-btn play-btn" id="playPauseBtn"><i class="fas fa-play"></i></button>
-        <button class="ctrl-btn" id="forwardBtn" title="前进5秒"><i class="fas fa-forward-step"></i> 5s</button>
+        <button class="ctrl-btn" id="nextBtn"><i class="fas fa-forward-fast"></i></button>
     </div>
-
     <div class="progress-section">
-        <div class="time-row">
-            <span id="current-time">0:00</span>
-            <span id="total-time">0:00</span>
-        </div>
-        <div class="progress-bar-bg" id="progressBarBg">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
+        <div class="time-row"><span id="currentTime">0:00</span><span id="totalTime">0:00</span></div>
+        <div class="progress-bar-bg" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
     </div>
-
     <div class="goto-section">
-        <i class="fas fa-clock" style="color:#3b82f6;"></i>
-        <input type="text" id="gotoTimeInput" class="goto-input" placeholder="跳转时间: 1:30 或 90">
-        <button id="gotoBtn" class="goto-btn"><i class="fas fa-location-dot"></i> 跳转</button>
+        <input type="text" id="gotoInput" class="goto-input" placeholder="跳转时间 1:30 或 90">
+        <button id="gotoBtn" class="secondary-outline" style="padding:4px 12px;">跳转</button>
+        <button id="rewind5Btn" class="secondary-outline"><i class="fas fa-backward-step"></i> -5s</button>
+        <button id="forward5Btn" class="secondary-outline"><i class="fas fa-forward-step"></i> +5s</button>
     </div>
 
     <div class="timer-panel">
-        <div class="timer-card">
-            <div class="timer-title"><i class="fas fa-hourglass-half"></i> 定时停止</div>
-            <div class="timer-input-group">
-                <input type="number" id="sleepMinutes" class="timer-input" placeholder="分钟" value="30" step="5" min="1">
-                <span style="font-size:0.7rem;">分钟</span>
-                <button id="setSleepTimerBtn" class="timer-btn"><i class="fas fa-bed"></i> 启动</button>
-                <button id="cancelSleepTimerBtn" class="timer-btn" style="background:#fee2e2;">取消</button>
-            </div>
-            <div id="sleepTimerStatus" class="timer-status">⏳ 未设置</div>
+        <div class="timer-card"><div><i class="fas fa-hourglass-half"></i> 定时停止</div>
+            <input type="number" id="sleepMin" value="30" style="width:70px; border-radius:20px; border:1px solid #ccc; padding:4px;"> 分钟
+            <button id="setSleepBtn" class="tiny-btn">启动</button> <button id="cancelSleepBtn" class="tiny-btn">取消</button>
+            <div id="sleepStatus" style="font-size:0.6rem;"></div>
         </div>
-        <div class="timer-card">
-            <div class="timer-title"><i class="fas fa-cloud-upload-alt"></i> 自动备份Gist</div>
-            <div class="timer-input-group">
-                <input type="number" id="backupInterval" class="timer-input" placeholder="分钟" value="10" step="5" min="2">
-                <span style="font-size:0.7rem;">分钟/次</span>
-                <button id="startAutoBackupBtn" class="timer-btn"><i class="fas fa-play"></i> 启动</button>
-                <button id="stopAutoBackupBtn" class="timer-btn" style="background:#fee2e2;">停止</button>
-            </div>
-            <div id="backupStatus" class="timer-status">💾 未启动</div>
+        <div class="timer-card"><div><i class="fas fa-cloud-upload-alt"></i> 自动备份Gist</div>
+            <input type="number" id="backupInterval" value="10" style="width:70px;"> 分钟/次
+            <button id="startAutoBackup" class="tiny-btn">启动</button> <button id="stopAutoBackup" class="tiny-btn">停止</button>
+            <div id="backupStatus" style="font-size:0.6rem;"></div>
         </div>
     </div>
 
     <div class="action-bar">
-        <button class="secondary-btn" id="addBookmarkBtn"><i class="fas fa-bookmark"></i> 添加书签</button>
-        <button class="secondary-btn" id="saveProgressGistBtn"><i class="fab fa-github"></i> 立即备份</button>
-        <button class="secondary-btn" id="loadFromGistBtn"><i class="fas fa-sync-alt"></i> 从Gist恢复</button>
+        <button id="addBookmarkBtn" class="secondary-outline"><i class="fas fa-bookmark"></i> 添加书签</button>
+        <button id="saveGistBtn" class="secondary-outline"><i class="fab fa-github"></i> 备份到Gist</button>
+        <button id="loadGistBtn" class="secondary-outline"><i class="fas fa-sync-alt"></i> 从Gist恢复</button>
     </div>
 
-    <div>
-        <div style="font-size:0.7rem; font-weight:500; margin-bottom:6px;"><i class="fas fa-tags"></i> 书签列表 (点击时间跳转，点击🗑️删除)</div>
-        <div class="bookmark-list" id="bookmarkList"></div>
-    </div>
+    <div><div class="bookmark-list" id="bookmarkList"></div></div>
 
     <div class="gist-area">
-        <div class="gist-header">
-            <span><i class="fab fa-github"></i> GitHub Gist</span>
-            <input type="text" id="gistIdInput" class="gist-url-input" placeholder="Gist ID (自动记忆)">
-        </div>
-        <div class="token-row">
-            <input type="password" id="githubTokenInput" class="token-input" placeholder="GitHub Token" autocomplete="off">
-            <button id="saveTokenBtn" class="tiny-btn">记住Token</button>
-            <button id="clearTokenBtn" class="tiny-btn">清除</button>
-        </div>
-        <div id="gistStatus" class="status-msg">⚡ 悬浮条位于底部，书签可单独删除。</div>
+        <input type="text" id="gistIdInput" placeholder="Gist ID (自动记忆)" style="width:100%; border-radius:40px; padding:6px 12px; margin-bottom:6px;">
+        <input type="password" id="tokenInput" placeholder="GitHub Token (需gist权限)" style="width:70%; border-radius:40px; padding:6px 12px;">
+        <button id="saveTokenBtn" class="tiny-btn">记住Token</button>
+        <div id="gistStatus" style="font-size:0.65rem; margin-top:4px;"></div>
     </div>
 </div>
 
-<!-- 悬浮播放器 -->
-<div id="floatingPlayer" class="floating-player">
-    <div class="floating-info">
-        <div class="float-title" id="floatTitle">未播放</div>
-        <div class="float-time" id="floatTime">0:00 / 0:00</div>
-    </div>
-    <div class="floating-buttons">
-        <button class="float-ctrl" id="floatRewind"><i class="fas fa-backward-step"></i></button>
+<!-- 悬浮条 -->
+<div id="floatBar" class="floating-player">
+    <div class="float-info"><div id="floatTitle">未播放</div><div id="floatTime">0:00/0:00</div></div>
+    <div class="float-buttons">
+        <button class="float-ctrl" id="floatPrev"><i class="fas fa-backward-fast"></i></button>
         <button class="float-ctrl float-play" id="floatPlayPause"><i class="fas fa-play"></i></button>
-        <button class="float-ctrl" id="floatForward"><i class="fas fa-forward-step"></i></button>
-        <button class="float-toggle" id="floatToggleHide" title="隐藏悬浮条"><i class="fas fa-chevron-down"></i></button>
+        <button class="float-ctrl" id="floatNext"><i class="fas fa-forward-fast"></i></button>
+        <button class="float-ctrl" id="floatHide" style="background:none;"><i class="fas fa-chevron-down"></i></button>
     </div>
 </div>
 
 <script>
-    // ==================== DOM 元素 ====================
-    const audio = document.getElementById('audio-player');
-    const fileInput = document.getElementById('file-input');
-    const fileNameSpan = document.getElementById('filename-display');
-    const trackTitleEl = document.getElementById('track-title');
-    const durationDisplay = document.getElementById('track-duration');
+    // -------------------- DOM 元素 --------------------
+    const audio = document.getElementById('audioPlayer');
+    const folderInput = document.getElementById('folderInput');
+    const singleFileInput = document.getElementById('fileInput');
+    const playlistContainer = document.getElementById('playlistContainer');
+    const playlistCountSpan = document.getElementById('playlistCount');
+    const trackTitle = document.getElementById('trackTitle');
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const rewindBtn = document.getElementById('rewindBtn');
-    const forwardBtn = document.getElementById('forwardBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressBarBg = document.getElementById('progressBar');
     const progressFill = document.getElementById('progressFill');
-    const progressBg = document.getElementById('progressBarBg');
-    const currentTimeSpan = document.getElementById('current-time');
-    const totalTimeSpan = document.getElementById('total-time');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const totalTimeSpan = document.getElementById('totalTime');
+    const loopModeBtn = document.getElementById('loopModeBtn');
+    const clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
+    const gotoInput = document.getElementById('gotoInput');
+    const gotoBtn = document.getElementById('gotoBtn');
+    const rewind5 = document.getElementById('rewind5Btn');
+    const forward5 = document.getElementById('forward5Btn');
     const addBookmarkBtn = document.getElementById('addBookmarkBtn');
     const bookmarkListDiv = document.getElementById('bookmarkList');
-    const saveProgressGistBtn = document.getElementById('saveProgressGistBtn');
-    const loadFromGistBtn = document.getElementById('loadFromGistBtn');
+    const saveGistBtn = document.getElementById('saveGistBtn');
+    const loadGistBtn = document.getElementById('loadGistBtn');
     const gistIdInput = document.getElementById('gistIdInput');
-    const githubTokenInput = document.getElementById('githubTokenInput');
+    const tokenInput = document.getElementById('tokenInput');
     const saveTokenBtn = document.getElementById('saveTokenBtn');
-    const clearTokenBtn = document.getElementById('clearTokenBtn');
-    const gistStatusDiv = document.getElementById('gistStatus');
-    const gotoTimeInput = document.getElementById('gotoTimeInput');
-    const gotoBtn = document.getElementById('gotoBtn');
-    const sleepMinutesInput = document.getElementById('sleepMinutes');
-    const setSleepTimerBtn = document.getElementById('setSleepTimerBtn');
-    const cancelSleepTimerBtn = document.getElementById('cancelSleepTimerBtn');
-    const sleepTimerStatus = document.getElementById('sleepTimerStatus');
+    const gistStatus = document.getElementById('gistStatus');
+    // 定时器
+    const sleepMin = document.getElementById('sleepMin');
+    const setSleepBtn = document.getElementById('setSleepBtn');
+    const cancelSleepBtn = document.getElementById('cancelSleepBtn');
+    const sleepStatus = document.getElementById('sleepStatus');
     const backupIntervalInput = document.getElementById('backupInterval');
-    const startAutoBackupBtn = document.getElementById('startAutoBackupBtn');
-    const stopAutoBackupBtn = document.getElementById('stopAutoBackupBtn');
-    const backupStatus = document.getElementById('backupStatus');
-    const floatingPlayer = document.getElementById('floatingPlayer');
+    const startAutoBackup = document.getElementById('startAutoBackup');
+    const stopAutoBackup = document.getElementById('stopAutoBackup');
+    const backupStatusDiv = document.getElementById('backupStatus');
+    // 悬浮
     const floatTitle = document.getElementById('floatTitle');
     const floatTime = document.getElementById('floatTime');
-    const floatRewind = document.getElementById('floatRewind');
+    const floatPrev = document.getElementById('floatPrev');
     const floatPlayPause = document.getElementById('floatPlayPause');
-    const floatForward = document.getElementById('floatForward');
-    const floatToggleHide = document.getElementById('floatToggleHide');
-    
-    // ==================== 全局变量 ====================
-    let currentFile = null;
-    let currentBookmarks = [];      // 每个元素 { time, label }
-    let pendingRewindOnPlay = false;
-    let skipNextRewindMark = false;
-    let sleepTimerId = null;
-    let autoBackupIntervalId = null;
-    
-    // ==================== 存储Key ====================
-    const STORAGE_TOKEN_KEY = 'gh_gist_token';
-    const STORAGE_GIST_ID_KEY = 'last_gist_id';
-    const DB_NAME = 'AudioPlayerDB';
-    const STORE_NAME = 'audioFile';
-    
-    // ==================== IndexedDB ====================
-    let db = null;
-    function initIndexedDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => { db = request.result; resolve(db); };
-            request.onupgradeneeded = (e) => {
-                const dbRef = e.target.result;
-                if (!dbRef.objectStoreNames.contains(STORE_NAME)) {
-                    dbRef.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    const floatNext = document.getElementById('floatNext');
+    const floatHide = document.getElementById('floatHide');
+    const floatBar = document.getElementById('floatBar');
+
+    // -------------------- 全局状态 --------------------
+    let playlist = [];          // { file, name, duration? }
+    let currentIndex = -1;
+    let currentBookmarks = [];  // { time, label }
+    let loopMode = 'list';      // 'list', 'single', 'shuffle' (暂做list和single)
+    let sleepTimer = null;
+    let autoBackupInterval = null;
+    let pendingRewind = false;   // 停顿后退5秒标志
+    let skipRewind = false;
+
+    // 存储Keys
+    const TOKEN_KEY = 'audio_gh_token';
+    const GIST_ID_KEY = 'audio_gist_id';
+
+    // -------------------- 辅助函数 --------------------
+    function formatTime(sec) {
+        if (isNaN(sec)) return '0:00';
+        const h = Math.floor(sec/3600);
+        const m = Math.floor((sec%3600)/60);
+        const s = Math.floor(sec%60);
+        if (h>0) return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        return `${m}:${s.toString().padStart(2,'0')}`;
+    }
+
+    // 智能排序：提取文件名中的数字进行自然排序
+    function sortByNumeric(files) {
+        return files.sort((a,b) => {
+            const numA = (a.name.match(/\d+/g) || []).map(Number).reduce((p,c)=>p*1000+c,0);
+            const numB = (b.name.match(/\d+/g) || []).map(Number).reduce((p,c)=>p*1000+c,0);
+            if (numA !== numB) return numA - numB;
+            return a.name.localeCompare(b.name);
+        });
+    }
+
+    // 加载文件夹
+    folderInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        const audioFiles = files.filter(f => /\.(mp3|m4a|opus|ogg|wav)$/i.test(f.name));
+        if (audioFiles.length === 0) { alert("文件夹中没有支持的音频文件"); return; }
+        playlist = sortByNumeric(audioFiles);
+        renderPlaylist();
+        if (playlist.length) {
+            currentIndex = 0;
+            loadTrack(currentIndex);
+        }
+    });
+
+    // 单个文件
+    singleFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            playlist = [ e.target.files[0] ];
+            renderPlaylist();
+            currentIndex = 0;
+            loadTrack(0);
+        }
+    });
+
+    function renderPlaylist() {
+        playlistContainer.innerHTML = '';
+        if (playlist.length === 0) {
+            playlistContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#7f8c8d;">暂无音频，选择文件夹</div>';
+            playlistCountSpan.innerText = '0';
+            return;
+        }
+        playlistCountSpan.innerText = playlist.length;
+        playlist.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'playlist-item' + (idx === currentIndex ? ' active' : '');
+            div.innerHTML = `<span class="track-num">${(idx+1).toString().padStart(2,'0')}</span>
+                             <span class="track-name">${item.name}</span>
+                             <span class="track-dur"></span>`;
+            div.addEventListener('click', () => {
+                if (currentIndex !== idx) {
+                    currentIndex = idx;
+                    loadTrack(currentIndex);
                 }
-            };
+            });
+            playlistContainer.appendChild(div);
         });
     }
-    async function saveAudioFileToIndexedDB(file) {
-        if (!db) await initIndexedDB();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const arrayBuffer = e.target.result;
-                const tx = db.transaction([STORE_NAME], 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                store.put({ id: 'current_audio', name: file.name, type: file.type, data: arrayBuffer, savedAt: Date.now() });
-                tx.oncomplete = () => resolve();
-                tx.onerror = (err) => reject(err);
-            };
-            reader.onerror = (err) => reject(err);
-            reader.readAsArrayBuffer(file);
+
+    function updatePlaylistActive() {
+        const items = document.querySelectorAll('.playlist-item');
+        items.forEach((item, i) => {
+            if (i === currentIndex) item.classList.add('active');
+            else item.classList.remove('active');
         });
     }
-    async function loadLastAudioFromDB() {
-        if (!db) await initIndexedDB();
-        return new Promise((resolve) => {
-            const tx = db.transaction([STORE_NAME], 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const getReq = store.get('current_audio');
-            getReq.onsuccess = (e) => {
-                const record = e.target.result;
-                if (record && record.data) {
-                    const blob = new Blob([record.data], { type: record.type });
-                    const file = new File([blob], record.name, { type: record.type });
-                    resolve(file);
-                } else resolve(null);
-            };
-            getReq.onerror = () => resolve(null);
-        });
+
+    // 加载指定索引的音频
+    async function loadTrack(index) {
+        if (index < 0 || index >= playlist.length) return;
+        const file = playlist[index];
+        const url = URL.createObjectURL(file);
+        audio.src = url;
+        audio.load();
+        currentFileObj = file;
+        trackTitle.innerText = file.name;
+        floatTitle.innerText = file.name;
+        if (window._oldUrl) URL.revokeObjectURL(window._oldUrl);
+        window._oldUrl = url;
+        // 重置书签（加载该文件的书签）
+        const stored = localStorage.getItem(`bm_${file.name}`);
+        if (stored) {
+            try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) { currentBookmarks = []; renderBookmarks(); }
+        } else { currentBookmarks = []; renderBookmarks(); }
+        // 恢复进度
+        const progKey = `prog_${file.name}`;
+        const prog = localStorage.getItem(progKey);
+        if (prog) {
+            try { let p = JSON.parse(prog); if (p.time && !isNaN(p.time)) audio.currentTime = Math.min(p.time, audio.duration||1e9); } catch(e) {}
+        }
+        updatePlaylistActive();
+        // 自动播放
+        audio.play().catch(e=>console.log);
+        // 保存当前文件到DB用于下次打开
+        saveCurrentFileToIndexedDB(file);
     }
-    
-    // ==================== Gist 记忆 ====================
-    function saveGistIdToLocal(gistId) { if (gistId) localStorage.setItem(STORAGE_GIST_ID_KEY, gistId); }
-    function loadGistIdFromLocal() { const saved = localStorage.getItem(STORAGE_GIST_ID_KEY); if (saved) gistIdInput.value = saved; return saved; }
-    function saveTokenToLocal(token) { if (token && token.trim()) localStorage.setItem(STORAGE_TOKEN_KEY, token.trim()); }
-    function getStoredToken() { return localStorage.getItem(STORAGE_TOKEN_KEY) || ''; }
-    
-    // ==================== 定时停止 ====================
-    function stopSleepTimer() { if (sleepTimerId) { clearTimeout(sleepTimerId); sleepTimerId = null; } sleepTimerStatus.innerHTML = '⏰ 定时停止已取消'; sleepTimerStatus.style.color = '#64748b'; }
-    function startSleepTimer(minutes) { stopSleepTimer(); if (!minutes || minutes <= 0) return; const ms = minutes * 60 * 1000; sleepTimerId = setTimeout(() => { if (!audio.paused) { audio.pause(); gistStatusDiv.innerHTML = `😴 定时停止触发，已暂停 (${minutes}分钟)`; setTimeout(() => { if(gistStatusDiv.innerHTML.includes('定时停止')) gistStatusDiv.innerHTML = '📻 播放已由定时器暂停'; }, 3000); } sleepTimerId = null; sleepTimerStatus.innerHTML = `⏰ 已触发 (${minutes}分钟)`; }, ms); sleepTimerStatus.innerHTML = `⏰ 已设置: ${minutes}分钟后暂停 ✅`; sleepTimerStatus.style.color = '#2563eb'; }
-    setSleepTimerBtn.addEventListener('click', () => { let mins = parseInt(sleepMinutesInput.value); if (isNaN(mins) || mins < 1) mins = 30; startSleepTimer(mins); });
-    cancelSleepTimerBtn.addEventListener('click', stopSleepTimer);
-    
-    // ==================== 自动备份 ====================
-    async function performBackupToGist(silent = false) {
-        const token = getStoredToken();
-        if (!token) { if(!silent) alert("未保存Token"); return false; }
-        if (!currentFile) return false;
-        const gistId = extractGistId(gistIdInput.value);
-        const progressData = { audioFileName: currentFile.name, currentTime: audio.currentTime, bookmarks: currentBookmarks, lastUpdated: new Date().toISOString() };
-        const content = JSON.stringify(progressData, null, 2);
-        try {
-            let url = 'https://api.github.com/gists', method = 'POST', body = { description: `Audio Progress: ${currentFile.name}`, public: false, files: { "audio_progress.json": { content } } };
-            if (gistId) { url = `https://api.github.com/gists/${gistId}`; method = 'PATCH'; body = { files: { "audio_progress.json": { content } } }; }
-            const resp = await fetch(url, { method, headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            if (!resp.ok) throw new Error(`API错误 ${resp.status}`);
-            const result = await resp.json();
-            const newGistId = result.id;
-            gistIdInput.value = newGistId;
-            saveGistIdToLocal(newGistId);
-            if (!silent) gistStatusDiv.innerHTML = `✅ 手动备份成功！ ID: ${newGistId}`;
-            else backupStatus.innerHTML = `💾 自动备份成功 ${new Date().toLocaleTimeString()}`;
-            return true;
-        } catch(err) { if (!silent) alert("备份失败: " + err.message); return false; }
+
+    // 下一首
+    function nextTrack() {
+        if (loopMode === 'single') {
+            // 单曲循环：重头播放
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        let next = currentIndex + 1;
+        if (next >= playlist.length) {
+            if (loopMode === 'list') next = 0;
+            else return;
+        }
+        if (next < playlist.length) {
+            currentIndex = next;
+            loadTrack(currentIndex);
+        }
     }
-    function startAutoBackup() { if (autoBackupIntervalId) clearInterval(autoBackupIntervalId); let mins = parseInt(backupIntervalInput.value); if (isNaN(mins) || mins < 2) mins = 10; autoBackupIntervalId = setInterval(() => { if (currentFile && audio.src) performBackupToGist(true); }, mins * 60 * 1000); backupStatus.innerHTML = `⏳ 自动备份运行中，每 ${mins} 分钟一次`; backupStatus.style.color = '#16a34a'; }
-    function stopAutoBackup() { if (autoBackupIntervalId) { clearInterval(autoBackupIntervalId); autoBackupIntervalId = null; backupStatus.innerHTML = `🛑 自动备份已停止`; backupStatus.style.color = '#64748b'; } }
-    startAutoBackupBtn.addEventListener('click', startAutoBackup);
-    stopAutoBackupBtn.addEventListener('click', stopAutoBackup);
-    
-    // ==================== 通用播放函数 ====================
-    function formatTime(seconds) { if (isNaN(seconds)) return "0:00"; const hrs = Math.floor(seconds/3600); const mins = Math.floor((seconds%3600)/60); const secs = Math.floor(seconds%60); if(hrs>0) return `${hrs}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`; return `${mins}:${secs.toString().padStart(2,'0')}`; }
-    function updateProgressAndTime() {
-        if (!isNaN(audio.duration) && isFinite(audio.duration)) {
+    function prevTrack() {
+        let prev = currentIndex - 1;
+        if (prev < 0) {
+            if (loopMode === 'list') prev = playlist.length - 1;
+            else return;
+        }
+        if (prev >= 0) {
+            currentIndex = prev;
+            loadTrack(currentIndex);
+        }
+    }
+
+    audio.addEventListener('ended', () => {
+        pendingRewind = false; // 结束自动下一首时不后退
+        nextTrack();
+    });
+
+    // 后退5秒逻辑（停顿重播）
+    function markStopped() { if (!skipRewind) pendingRewind = true; skipRewind = false; }
+    function applyRewind() { if (pendingRewind && audio.duration) { audio.currentTime = Math.max(0, audio.currentTime-5); pendingRewind = false; saveProgress(); } }
+    audio.addEventListener('pause', () => { if (!audio.ended) markStopped(); });
+    audio.addEventListener('play', () => { applyRewind(); });
+    function saveProgress() { if (currentFileObj) localStorage.setItem(`prog_${currentFileObj.name}`, JSON.stringify({ time: audio.currentTime })); }
+    setInterval(() => { if (currentFileObj) saveProgress(); }, 5000);
+
+    // 播放暂停
+    function togglePlay() { audio.paused ? audio.play() : audio.pause(); }
+    playPauseBtn.addEventListener('click', togglePlay);
+    floatPlayPause.addEventListener('click', togglePlay);
+    audio.addEventListener('play', () => { playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; floatPlayPause.innerHTML = '<i class="fas fa-pause"></i>'; });
+    audio.addEventListener('pause', () => { playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; floatPlayPause.innerHTML = '<i class="fas fa-play"></i>'; });
+    prevBtn.addEventListener('click', prevTrack);
+    nextBtn.addEventListener('click', nextTrack);
+    floatPrev.addEventListener('click', prevTrack);
+    floatNext.addEventListener('click', nextTrack);
+    rewind5.addEventListener('click', () => { skipRewind = true; audio.currentTime = Math.max(0, audio.currentTime-5); });
+    forward5.addEventListener('click', () => { skipRewind = true; audio.currentTime = Math.min(audio.duration, audio.currentTime+5); });
+
+    // 进度条
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
             const percent = (audio.currentTime/audio.duration)*100;
             progressFill.style.width = `${percent}%`;
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             totalTimeSpan.innerText = formatTime(audio.duration);
-            durationDisplay.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-            floatTime.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            floatTime.innerText = `${formatTime(audio.currentTime)}/${formatTime(audio.duration)}`;
         }
+    });
+    progressBarBg.addEventListener('click', (e) => {
+        const rect = progressBarBg.getBoundingClientRect();
+        let percent = (e.clientX - rect.left)/rect.width;
+        audio.currentTime = percent * audio.duration;
+        skipRewind = true;
+    });
+    gotoBtn.addEventListener('click', () => {
+        let sec = parseFloat(gotoInput.value);
+        if (isNaN(sec)) {
+            let parts = gotoInput.value.split(':');
+            if (parts.length===2) sec = parseInt(parts[0])*60 + parseInt(parts[1]);
+            else if (parts.length===3) sec = parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+            else sec = NaN;
+        }
+        if (!isNaN(sec) && audio.duration) audio.currentTime = Math.min(Math.max(0,sec), audio.duration);
+        gotoInput.value = '';
+    });
+
+    // 循环模式切换
+    loopModeBtn.addEventListener('click', () => {
+        if (loopMode === 'list') { loopMode = 'single'; loopModeBtn.innerHTML = '<i class="fas fa-repeat-1"></i> 单曲循环'; }
+        else { loopMode = 'list'; loopModeBtn.innerHTML = '<i class="fas fa-redo-alt"></i> 列表循环'; }
+    });
+
+    // 书签
+    function addBookmark() {
+        if (!audio.src || !audio.duration) return alert("请先播放音频");
+        let time = audio.currentTime;
+        let label = formatTime(time);
+        if (currentBookmarks.some(b => Math.abs(b.time-time)<0.5)) return alert("已有该书签");
+        currentBookmarks.push({ time, label });
+        currentBookmarks.sort((a,b)=>a.time-b.time);
+        renderBookmarks();
+        if (currentFileObj) localStorage.setItem(`bm_${currentFileObj.name}`, JSON.stringify(currentBookmarks));
     }
-    function updatePlayPauseIcon() { 
-        const icon = playPauseBtn.querySelector('i'); 
-        icon.className = audio.paused ? 'fas fa-play' : 'fas fa-pause'; 
-        const floatIcon = floatPlayPause.querySelector('i'); 
-        floatIcon.className = audio.paused ? 'fas fa-play' : 'fas fa-pause'; 
-    }
-    function togglePlayPause() { if (!audio.src) { alert("请先上传音频"); return; } audio.paused ? audio.play().catch(e=>console.warn) : audio.pause(); }
-    function seekRelative(offset) { if (!audio.duration) return; clearPendingRewindAndSkip(); audio.currentTime = Math.min(Math.max(0, audio.currentTime+offset), audio.duration); updateProgressAndTime(); saveCurrentProgressToLocal(); }
-    function clearPendingRewindAndSkip() { skipNextRewindMark = true; pendingRewindOnPlay = false; }
-    function markStoppedForRewind() { if (!skipNextRewindMark) pendingRewindOnPlay = true; skipNextRewindMark = false; }
-    function applyRewindBeforePlay() { if (pendingRewindOnPlay && !isNaN(audio.duration) && isFinite(audio.duration)) { audio.currentTime = Math.max(0, audio.currentTime - 5); updateProgressAndTime(); saveCurrentProgressToLocal(); pendingRewindOnPlay = false; } }
-    audio.addEventListener('ended', () => { markStoppedForRewind(); updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
-    audio.addEventListener('pause', () => { if (!audio.ended) markStoppedForRewind(); updatePlayPauseIcon(); saveCurrentProgressToLocal(); });
-    audio.addEventListener('play', () => { applyRewindBeforePlay(); updatePlayPauseIcon(); });
-    function saveCurrentProgressToLocal() { if (currentFile && audio && !isNaN(audio.currentTime)) { localStorage.setItem(`audio_progress_${currentFile.name}`, JSON.stringify({ time: audio.currentTime, updated: Date.now() })); } }
-    
-    // 悬浮条事件
-    floatRewind.addEventListener('click', () => seekRelative(-5));
-    floatForward.addEventListener('click', () => seekRelative(5));
-    floatPlayPause.addEventListener('click', togglePlayPause);
-    floatToggleHide.addEventListener('click', () => { floatingPlayer.style.display = 'none'; });
-    // 恢复悬浮条的小功能
-    const restoreSpan = document.createElement('span');
-    restoreSpan.style.cssText = 'margin-left:8px; color:#3b82f6; text-decoration:underline; cursor:pointer;';
-    restoreSpan.innerText = '显示悬浮条';
-    restoreSpan.onclick = () => { floatingPlayer.style.display = 'flex'; };
-    gistStatusDiv.appendChild(restoreSpan);
-    
-    // ==================== 书签渲染（带删除按钮） ====================
     function renderBookmarks() {
         bookmarkListDiv.innerHTML = '';
-        if (currentBookmarks.length === 0) {
-            bookmarkListDiv.innerHTML = '<span style="font-size:0.7rem; color:#7f8c8d;">暂无书签，点击上方添加</span>';
-            return;
-        }
+        if (currentBookmarks.length===0) { bookmarkListDiv.innerHTML = '<span style="font-size:0.6rem;">暂无书签</span>'; return; }
         currentBookmarks.forEach((bm, idx) => {
-            const chip = document.createElement('div');
+            let chip = document.createElement('div');
             chip.className = 'bookmark-chip';
-            
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'bookmark-time';
-            timeSpan.innerHTML = `<i class="fas fa-bookmark"></i> ${bm.label}`;
-            timeSpan.addEventListener('click', (e) => {
-                e.stopPropagation();
-                clearPendingRewindAndSkip();
-                audio.currentTime = bm.time;
-                updateProgressAndTime();
-                saveCurrentProgressToLocal();
-            });
-            
-            const delBtn = document.createElement('button');
-            delBtn.className = 'bookmark-delete';
-            delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-            delBtn.title = '删除此书签';
-            delBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // 删除书签
-                currentBookmarks.splice(idx, 1);
-                renderBookmarks();
-                // 保存到本地存储
-                if (currentFile) {
-                    localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
-                }
-                gistStatusDiv.innerHTML = `🗑️ 已删除书签 ${bm.label}`;
-                setTimeout(() => {
-                    if (gistStatusDiv.innerHTML.includes('已删除')) 
-                        gistStatusDiv.innerHTML = '📖 书签已更新';
-                }, 1500);
-            });
-            
-            chip.appendChild(timeSpan);
-            chip.appendChild(delBtn);
+            chip.innerHTML = `<span style="cursor:pointer;">${bm.label}</span> <button class="bookmark-delete" data-idx="${idx}" style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>`;
+            chip.querySelector('span').addEventListener('click', () => { audio.currentTime = bm.time; });
+            chip.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); currentBookmarks.splice(idx,1); renderBookmarks(); if(currentFileObj) localStorage.setItem(`bm_${currentFileObj.name}`, JSON.stringify(currentBookmarks)); });
             bookmarkListDiv.appendChild(chip);
         });
     }
-    
-    function addBookmark() {
-        if (!audio.src || isNaN(audio.duration)) { alert("请先加载音频"); return; }
-        const pos = audio.currentTime;
-        const label = formatTime(pos);
-        if (currentBookmarks.find(b => Math.abs(b.time - pos) < 0.5)) { alert("该位置已有书签"); return; }
-        currentBookmarks.push({ time: pos, label });
-        currentBookmarks.sort((a, b) => a.time - b.time);
-        renderBookmarks();
-        if (currentFile) localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks));
-        gistStatusDiv.innerHTML = `✅ 添加书签: ${label}`;
-    }
     addBookmarkBtn.addEventListener('click', addBookmark);
-    
-    // ==================== 音频文件加载 ====================
-    async function loadAudioFromFileObject(file, resetBookmarks = true) {
-        if (!file) return false;
-        currentFile = file;
-        fileNameSpan.innerText = file.name;
-        trackTitleEl.innerText = file.name;
-        floatTitle.innerText = file.name;
-        const url = URL.createObjectURL(file);
-        audio.src = url;
-        audio.load();
-        if (resetBookmarks) { currentBookmarks = []; renderBookmarks(); }
-        if (window.oldUrl) URL.revokeObjectURL(window.oldUrl);
-        window.oldUrl = url;
-        await saveAudioFileToIndexedDB(file).catch(e=>console.warn);
-        audio.addEventListener('loadedmetadata', async function onMeta() {
-            audio.removeEventListener('loadedmetadata', onMeta);
-            updateProgressAndTime();
-            const bmKey = `bm_${file.name}`; 
-            const storedBm = localStorage.getItem(bmKey);
-            if (storedBm) { 
-                try { currentBookmarks = JSON.parse(storedBm); renderBookmarks(); } catch(e) {} 
-            }
-            const progressKey = `audio_progress_${file.name}`; 
-            const progressRaw = localStorage.getItem(progressKey);
-            if (progressRaw) { 
-                try { const data = JSON.parse(progressRaw); if(data.time && !isNaN(data.time) && isFinite(audio.duration)) { clearPendingRewindAndSkip(); audio.currentTime = Math.min(data.time, audio.duration-0.5); updateProgressAndTime(); } } catch(e) {} 
-            }
-        }, { once: true });
-        return true;
+
+    // Gist 同步
+    function extractGistId(str) { let m = str.match(/([a-fA-F0-9]{32})/); return m ? m[1] : null; }
+    async function backupToGist(silent=false) {
+        let token = localStorage.getItem(TOKEN_KEY);
+        if (!token) { alert("请先输入Token并记住"); return; }
+        if (!currentFileObj) { alert("无正在播放的音频"); return; }
+        let gistId = extractGistId(gistIdInput.value);
+        let data = { audioFileName: currentFileObj.name, currentTime: audio.currentTime, bookmarks: currentBookmarks, playlistNames: playlist.map(f=>f.name), loopMode, lastUpdated: new Date() };
+        let content = JSON.stringify(data);
+        try {
+            let url = 'https://api.github.com/gists', method='POST', body={ description: 'Audio progress', public: false, files: { 'audio_state.json': { content } } };
+            if (gistId) { url = `https://api.github.com/gists/${gistId}`; method='PATCH'; body={ files: { 'audio_state.json': { content } } }; }
+            let res = await fetch(url, { method, headers: { 'Authorization': `token ${token}`, 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error(await res.text());
+            let result = await res.json();
+            gistIdInput.value = result.id;
+            localStorage.setItem(GIST_ID_KEY, result.id);
+            if (!silent) gistStatus.innerHTML = `✅ 备份成功 ID: ${result.id}`;
+            else backupStatusDiv.innerHTML = `🔄 自动备份 ${new Date().toLocaleTimeString()}`;
+        } catch(e) { if (!silent) alert("备份失败 "+e.message); }
     }
-    async function autoRestoreLastSession() { 
-        try { 
-            const file = await loadLastAudioFromDB(); 
-            if(file) { 
-                await loadAudioFromFileObject(file, false); 
-                gistStatusDiv.innerHTML = `🔄 已恢复上次文件: ${file.name}`; 
-            } else { 
-                gistStatusDiv.innerHTML = '📂 无历史音频，请选择文件'; 
-            } 
-        } catch(e) { console.warn(e); } 
+    async function restoreFromGist() {
+        let token = localStorage.getItem(TOKEN_KEY);
+        if (!token) { alert("请先保存Token"); return; }
+        let gistId = extractGistId(gistIdInput.value);
+        if (!gistId) { alert("请输入有效Gist ID"); return; }
+        try {
+            let res = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } });
+            if (!res.ok) throw new Error();
+            let gist = await res.json();
+            let content = gist.files['audio_state.json']?.content;
+            if (!content) throw new Error();
+            let data = JSON.parse(content);
+            if (data.audioFileName && data.currentTime) {
+                // 尝试匹配文件（需要手动选文件夹？简化：仅恢复进度和书签）
+                if (currentFileObj && currentFileObj.name === data.audioFileName) {
+                    audio.currentTime = Math.min(data.currentTime, audio.duration);
+                    currentBookmarks = data.bookmarks || [];
+                    renderBookmarks();
+                    saveProgress();
+                } else alert("当前音频文件与备份不匹配，请先打开对应文件夹再恢复");
+            } else alert("恢复数据不完整");
+            gistStatus.innerHTML = "✅ 恢复成功";
+        } catch(e) { alert("恢复失败 "+e.message); }
     }
-    
-    // ==================== Gist 恢复 ====================
-    function extractGistId(input) { 
-        if(!input) return null; 
-        const match = input.match(/([a-fA-F0-9]{32})$/); 
-        if(match) return match[1]; 
-        const parts = input.split('/'); 
-        let last = parts.pop(); 
-        if(last.includes('.')) last = last.split('.')[0]; 
-        return last.length===32 ? last : null; 
+    saveGistBtn.addEventListener('click', ()=>backupToGist(false));
+    loadGistBtn.addEventListener('click', restoreFromGist);
+    saveTokenBtn.addEventListener('click', () => { let t = tokenInput.value.trim(); if(t) { localStorage.setItem(TOKEN_KEY, t); gistStatus.innerHTML="Token已保存"; } });
+    let savedGist = localStorage.getItem(GIST_ID_KEY);
+    if (savedGist) gistIdInput.value = savedGist;
+
+    // 定时停止
+    function stopSleep() { if(sleepTimer) clearTimeout(sleepTimer); sleepTimer=null; sleepStatus.innerText=''; }
+    function startSleep(min) { stopSleep(); sleepTimer = setTimeout(()=>{ if(!audio.paused) audio.pause(); sleepStatus.innerText='定时停止已触发'; }, min*60000); sleepStatus.innerText=`将在${min}分钟后停止`; }
+    setSleepBtn.addEventListener('click',()=>{ let v=parseInt(sleepMin.value); if(v>0) startSleep(v); });
+    cancelSleepBtn.addEventListener('click', stopSleep);
+    // 自动备份
+    function stopAutoBackupFunc() { if(autoBackupInterval) clearInterval(autoBackupInterval); autoBackupInterval=null; backupStatusDiv.innerText='自动备份已停止'; }
+    function startAutoBackupFunc() { stopAutoBackupFunc(); let mins = parseInt(backupIntervalInput.value); if(mins<2) mins=5; autoBackupInterval = setInterval(()=>{ if(currentFileObj) backupToGist(true); }, mins*60000); backupStatusDiv.innerText=`每${mins}分钟自动备份`; }
+    startAutoBackup.addEventListener('click', startAutoBackupFunc);
+    stopAutoBackup.addEventListener('click', stopAutoBackupFunc);
+
+    // 悬浮条隐藏/显示
+    floatHide.addEventListener('click', ()=> floatBar.style.display='none');
+    let showSpan = document.createElement('span'); showSpan.innerText=' 显示悬浮条'; showSpan.style.cursor='pointer'; showSpan.style.textDecoration='underline'; showSpan.onclick=()=>floatBar.style.display='flex';
+    gistStatus.appendChild(showSpan);
+
+    // IndexedDB 保存当前文件，用于下次打开自动恢复文件夹列表较复杂，简化：保存当前播放的文件名
+    function saveCurrentFileToIndexedDB(file) {
+        // 只存文件名? 为了自动恢复文件夹复杂，本版本不做全文件夹恢复（因安全限制无法保存全部文件），但会记住上次单个文件
+        let reader = new FileReader();
+        reader.onload = () => { try { localStorage.setItem('lastAudioName', file.name); } catch(e){} };
+        reader.readAsArrayBuffer(file.slice(0, 256));
     }
-    async function manualLoadFromGist() { 
-        const token = getStoredToken(); 
-        if(!token) { alert("请保存Token"); return; } 
-        const gistId = extractGistId(gistIdInput.value); 
-        if(!gistId) { alert("请输入Gist ID"); return; } 
-        try { 
-            const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } }); 
-            if(!resp.ok) throw new Error(); 
-            const gist = await resp.json(); 
-            const content = gist.files['audio_progress.json']?.content; 
-            if(!content) throw new Error(); 
-            const data = JSON.parse(content); 
-            if(data.currentTime!==undefined && audio.duration) { 
-                clearPendingRewindAndSkip(); 
-                audio.currentTime = Math.min(data.currentTime, audio.duration-0.1); 
-                updateProgressAndTime(); 
-                saveCurrentProgressToLocal(); 
-            } 
-            if(data.bookmarks) { 
-                currentBookmarks = data.bookmarks; 
-                renderBookmarks(); 
-                if(currentFile) localStorage.setItem(`bm_${currentFile.name}`, JSON.stringify(currentBookmarks)); 
-            } 
-            saveGistIdToLocal(gistId); 
-            gistStatusDiv.innerHTML = `✅ 从Gist ${gistId} 恢复成功`; 
-        } catch(e) { alert("恢复失败 "+e.message); } 
-    }
-    saveProgressGistBtn.addEventListener('click', () => performBackupToGist(false));
-    loadFromGistBtn.addEventListener('click', manualLoadFromGist);
-    
-    // ==================== 其他UI绑定 ====================
-    function parseTimeString(str) { str = str.trim(); if(/^\d+$/.test(str)) return parseFloat(str); const parts = str.split(':').map(Number); if(parts.length===2) return parts[0]*60+parts[1]; if(parts.length===3) return parts[0]*3600+parts[1]*60+parts[2]; return NaN; }
-    gotoBtn.addEventListener('click', () => { if(!audio.duration || isNaN(audio.duration)) { alert("请先加载音频"); return; } const raw = gotoTimeInput.value; if(!raw) { alert("输入时间"); return; } let sec = parseTimeString(raw); if(isNaN(sec)) { alert("格式错误"); return; } sec = Math.min(Math.max(0,sec), audio.duration); clearPendingRewindAndSkip(); audio.currentTime = sec; updateProgressAndTime(); saveCurrentProgressToLocal(); gotoTimeInput.value = ""; });
-    progressBg.addEventListener('click', (e) => { if(!audio.duration) return; clearPendingRewindAndSkip(); const rect = progressBg.getBoundingClientRect(); audio.currentTime = (e.clientX - rect.left)/rect.width * audio.duration; updateProgressAndTime(); saveCurrentProgressToLocal(); });
-    rewindBtn.addEventListener('click', () => seekRelative(-5));
-    forwardBtn.addEventListener('click', () => seekRelative(5));
-    playPauseBtn.addEventListener('click', togglePlayPause);
-    
-    saveTokenBtn.addEventListener('click', () => { const token = githubTokenInput.value.trim(); if(token) { saveTokenToLocal(token); gistStatusDiv.innerHTML = '✅ Token已保存'; githubTokenInput.value = '********'; } else alert("请输入Token"); });
-    clearTokenBtn.addEventListener('click', () => { localStorage.removeItem(STORAGE_TOKEN_KEY); githubTokenInput.value = ''; gistStatusDiv.innerHTML = 'Token已清除'; });
-    
-    fileInput.addEventListener('change', async (e) => { if(e.target.files.length) await loadAudioFromFileObject(e.target.files[0], true); });
-    
-    let lastLocalSave = 0;
-    audio.addEventListener('timeupdate', () => { updateProgressAndTime(); if(currentFile && Date.now()-lastLocalSave > 5000) { saveCurrentProgressToLocal(); lastLocalSave = Date.now(); } });
-    
-    window.addEventListener('DOMContentLoaded', async () => { 
-        await initIndexedDB(); 
-        const savedToken = getStoredToken(); 
-        if(savedToken) githubTokenInput.value = '********'; 
-        loadGistIdFromLocal(); 
-        await autoRestoreLastSession(); 
+    // 自动恢复上次文件（如果是单个文件模式）
+    // 启动时如果有lastAudioName提示
+    window.addEventListener('load', () => {
+        // 无自动加载文件夹，但是用户可以再次选择
     });
+    // 清理播放列表
+    clearPlaylistBtn.addEventListener('click', () => { playlist = []; renderPlaylist(); audio.pause(); audio.src=''; currentIndex=-1; trackTitle.innerText='未播放'; });
+    let currentFileObj = null;
 </script>
 </body>
 </html>
