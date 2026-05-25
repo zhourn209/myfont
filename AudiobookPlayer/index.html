@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>智能音频伴侣 | 智能排序 · 完整播放列表备份 · 跨端同步</title>
+    <title>智能音频伴侣 | 自动恢复 · 文件夹播放 · 跨端同步</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -26,6 +26,9 @@
         }
         h1 { font-size: 1.5rem; font-weight: 600; background: linear-gradient(135deg, #1A2A3F, #2C4A6E); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .sub { color: #4a627a; font-size: 0.7rem; margin-bottom: 1rem; }
+        .mode-switch { display: flex; gap: 10px; margin-bottom: 12px; background: #f1f5f9; border-radius: 60px; padding: 4px; width: fit-content; }
+        .mode-btn { padding: 6px 16px; border-radius: 40px; font-size: 0.7rem; cursor: pointer; background: transparent; border: none; }
+        .mode-btn.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-weight: 500; }
         .source-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
         .primary-btn { background: #1f2a3e; color: white; border: none; padding: 8px 16px; border-radius: 40px; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .primary-btn:hover { background: #2c3e50; }
@@ -34,7 +37,7 @@
             background: rgba(255,255,255,0.6);
             border-radius: 1.2rem;
             margin: 0.8rem 0;
-            max-height: 240px;
+            max-height: 220px;
             overflow-y: auto;
             border: 1px solid #e2e8f0;
         }
@@ -50,7 +53,6 @@
             border-bottom: 1px solid #e2e8f0;
             position: sticky;
             top: 0;
-            background: #f1f5f9;
             z-index: 1;
         }
         .loop-mode { cursor: pointer; background: #e2e8f0; padding: 2px 8px; border-radius: 30px; font-size: 0.65rem; }
@@ -94,32 +96,46 @@
         .float-ctrl { background: rgba(255,255,255,0.2); border: none; width: 38px; height: 38px; border-radius: 40px; color: white; cursor: pointer; }
         .float-play { background: #3b82f6; width: 46px; height: 46px; }
         .tiny-btn { background: #e2e8f0; border: none; padding: 4px 10px; border-radius: 30px; font-size: 0.65rem; cursor: pointer; margin-left: 5px; }
+        .restore-hint { background: #fef3c7; border-radius: 12px; padding: 8px 12px; margin: 8px 0; font-size: 0.7rem; color: #92400e; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         @media (max-width: 550px) { .player-card { padding: 1rem; } .ctrl-btn { width: 42px; height: 42px; } .play-btn { width: 54px; height: 54px; } }
     </style>
 </head>
 <body>
 
 <div class="player-card">
-    <h1><i class="fas fa-folder-open"></i> 文件夹播放器 · 完整列表备份</h1>
-    <div class="sub">📁 选择文件夹 → 自动排序 → 备份/恢复整个播放列表 + 进度 + 书签</div>
+    <h1><i class="fas fa-folder-open"></i> 灵韵·云笺 <span style="font-size:0.7rem;">自动恢复</span></h1>
+    <div class="sub">📁 单文件自动恢复 | 文件夹播放列表备份到Gist | 跨端同步</div>
 
-    <div class="source-buttons">
-        <label class="primary-btn" for="folderInput"><i class="fas fa-folder"></i> 选择文件夹</label>
-        <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none;">
-        <label class="secondary-outline" for="fileInput"><i class="fas fa-music"></i> 单个文件</label>
-        <input type="file" id="fileInput" accept="audio/*" style="display:none;">
-        <button id="clearPlaylistBtn" class="secondary-outline"><i class="fas fa-trash"></i> 清空列表</button>
+    <!-- 模式切换 -->
+    <div class="mode-switch">
+        <button id="singleModeBtn" class="mode-btn active"><i class="fas fa-music"></i> 单文件模式</button>
+        <button id="folderModeBtn" class="mode-btn"><i class="fas fa-folder"></i> 文件夹模式</button>
     </div>
 
-    <!-- 播放列表区域 -->
-    <div class="playlist-section">
+    <div class="source-buttons">
+        <label class="primary-btn" id="fileSelectBtn" for="singleFileInput"><i class="fas fa-file-audio"></i> 选择音频文件</label>
+        <label class="primary-btn" id="folderSelectBtn" for="folderInput" style="display:none;"><i class="fas fa-folder"></i> 选择文件夹</label>
+        <input type="file" id="singleFileInput" accept="audio/*" style="display:none;">
+        <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none;">
+        <button id="clearPlaylistBtn" class="secondary-outline"><i class="fas fa-trash"></i> 清空</button>
+    </div>
+
+    <!-- 播放列表区域（文件夹模式显示） -->
+    <div class="playlist-section" id="playlistSection" style="display:none;">
         <div class="playlist-header">
             <span><i class="fas fa-list"></i> 播放列表 <span id="playlistCount">0</span> 首</span>
             <span id="loopModeBtn" class="loop-mode"><i class="fas fa-redo-alt"></i> 列表循环</span>
         </div>
-        <div id="playlistContainer" style="max-height: 190px; overflow-y: auto;">
+        <div id="playlistContainer" style="max-height: 170px; overflow-y: auto;">
             <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 0.7rem;">选择文件夹后自动排序显示</div>
         </div>
+    </div>
+
+    <div id="autoRestoreHint" class="restore-hint" style="display: none;">
+        <i class="fas fa-cloud-download-alt"></i>
+        <span id="hintText">检测到上次备份，是否恢复？</span>
+        <button id="confirmRestoreBtn" class="tiny-btn" style="background:#3b82f6; color:white;">恢复</button>
+        <button id="ignoreRestoreBtn" class="tiny-btn">忽略</button>
     </div>
 
     <div class="track-info">
@@ -147,11 +163,11 @@
 
     <div class="timer-panel">
         <div class="timer-card"><div><i class="fas fa-hourglass-half"></i> 定时停止</div>
-            <input type="number" id="sleepMin" value="30" style="width:70px; border-radius:20px; border:1px solid #ccc; padding:4px;"> 分钟
+            <input type="number" id="sleepMin" value="30" style="width:70px;"> 分钟
             <button id="setSleepBtn" class="tiny-btn">启动</button> <button id="cancelSleepBtn" class="tiny-btn">取消</button>
             <div id="sleepStatus" style="font-size:0.6rem;"></div>
         </div>
-        <div class="timer-card"><div><i class="fas fa-cloud-upload-alt"></i> 自动备份Gist</div>
+        <div class="timer-card"><div><i class="fas fa-cloud-upload-alt"></i> 自动备份</div>
             <input type="number" id="backupInterval" value="10" style="width:70px;"> 分钟/次
             <button id="startAutoBackup" class="tiny-btn">启动</button> <button id="stopAutoBackup" class="tiny-btn">停止</button>
             <div id="backupStatus" style="font-size:0.6rem;"></div>
@@ -167,7 +183,7 @@
     <div><div class="bookmark-list" id="bookmarkList"></div></div>
 
     <div class="gist-area">
-        <input type="text" id="gistIdInput" placeholder="Gist ID (自动记忆)" style="width:100%; border-radius:40px; padding:6px 12px; margin-bottom:6px;">
+        <input type="text" id="gistIdInput" placeholder="Gist ID" style="width:100%; border-radius:40px; padding:6px 12px; margin-bottom:6px;">
         <input type="password" id="tokenInput" placeholder="GitHub Token (需gist权限)" style="width:70%; border-radius:40px; padding:6px 12px;">
         <button id="saveTokenBtn" class="tiny-btn">记住Token</button>
         <div id="gistStatus" style="font-size:0.65rem; margin-top:4px;"></div>
@@ -181,17 +197,24 @@
         <button class="float-ctrl" id="floatPrev"><i class="fas fa-backward-fast"></i></button>
         <button class="float-ctrl float-play" id="floatPlayPause"><i class="fas fa-play"></i></button>
         <button class="float-ctrl" id="floatNext"><i class="fas fa-forward-fast"></i></button>
-        <button class="float-ctrl" id="floatHide" style="background:none;"><i class="fas fa-chevron-down"></i></button>
+        <button class="float-ctrl" id="floatHide"><i class="fas fa-chevron-down"></i></button>
     </div>
 </div>
 
 <script>
-    // -------------------- DOM 元素 --------------------
+    // ==================== DOM 元素 ====================
     const audio = document.getElementById('audioPlayer');
+    const singleFileInput = document.getElementById('singleFileInput');
     const folderInput = document.getElementById('folderInput');
-    const singleFileInput = document.getElementById('fileInput');
+    const singleModeBtn = document.getElementById('singleModeBtn');
+    const folderModeBtn = document.getElementById('folderModeBtn');
+    const fileSelectBtn = document.getElementById('fileSelectBtn');
+    const folderSelectBtn = document.getElementById('folderSelectBtn');
+    const playlistSection = document.getElementById('playlistSection');
     const playlistContainer = document.getElementById('playlistContainer');
     const playlistCountSpan = document.getElementById('playlistCount');
+    const loopModeBtn = document.getElementById('loopModeBtn');
+    const clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
     const trackTitle = document.getElementById('trackTitle');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const prevBtn = document.getElementById('prevBtn');
@@ -200,8 +223,6 @@
     const progressFill = document.getElementById('progressFill');
     const currentTimeSpan = document.getElementById('currentTime');
     const totalTimeSpan = document.getElementById('totalTime');
-    const loopModeBtn = document.getElementById('loopModeBtn');
-    const clearPlaylistBtn = document.getElementById('clearPlaylistBtn');
     const gotoInput = document.getElementById('gotoInput');
     const gotoBtn = document.getElementById('gotoBtn');
     const rewind5 = document.getElementById('rewind5Btn');
@@ -229,32 +250,144 @@
     const floatNext = document.getElementById('floatNext');
     const floatHide = document.getElementById('floatHide');
     const floatBar = document.getElementById('floatBar');
+    const autoRestoreHint = document.getElementById('autoRestoreHint');
+    const hintText = document.getElementById('hintText');
+    const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
+    const ignoreRestoreBtn = document.getElementById('ignoreRestoreBtn');
 
-    // -------------------- 全局状态 --------------------
-    let playlist = [];          // { file, name }
+    // ==================== 全局状态 ====================
+    let currentMode = 'single';        // 'single' 或 'folder'
+    let playlist = [];                  // 文件夹模式：{ file, name }
     let currentIndex = -1;
-    let currentBookmarks = [];  // { time, label }
-    let loopMode = 'list';      // 'list', 'single'
+    let currentBookmarks = [];
+    let loopMode = 'list';
     let sleepTimer = null;
     let autoBackupInterval = null;
     let pendingRewind = false;
     let skipRewind = false;
     let currentFileObj = null;
+    let pendingBackupData = null;       // 待恢复的备份数据
+
+    // IndexedDB 存储单文件
+    let db = null;
+    const DB_NAME = 'AudioPlayerSingleFile';
+    const STORE_NAME = 'currentAudio';
 
     // 存储Keys
     const TOKEN_KEY = 'audio_gh_token';
     const GIST_ID_KEY = 'audio_gist_id';
+    const LAST_BACKUP_GIST_KEY = 'last_backup_gist_id';
+    const MODE_KEY = 'audio_mode';
 
-    // -------------------- 核心：智能自然排序（忽略文字，按数字序列比较）--------------------
+    // ==================== IndexedDB 单文件存储 ====================
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => { db = request.result; resolve(db); };
+            request.onupgradeneeded = (e) => {
+                const dbRef = e.target.result;
+                if (!dbRef.objectStoreNames.contains(STORE_NAME)) {
+                    dbRef.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+            };
+        });
+    }
+
+    async function saveSingleFileToDB(file) {
+        if (!db) await initDB();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                const tx = db.transaction([STORE_NAME], 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put({ id: 'last_audio', name: file.name, type: file.type, data: arrayBuffer });
+                tx.oncomplete = () => resolve();
+                tx.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function loadSingleFileFromDB() {
+        if (!db) await initDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction([STORE_NAME], 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const getReq = store.get('last_audio');
+            getReq.onsuccess = (e) => {
+                const record = e.target.result;
+                if (record && record.data) {
+                    const blob = new Blob([record.data], { type: record.type });
+                    const file = new File([blob], record.name, { type: record.type });
+                    resolve(file);
+                } else resolve(null);
+            };
+            getReq.onerror = () => resolve(null);
+        });
+    }
+
+    // ==================== 模式切换 ====================
+    function setMode(mode) {
+        currentMode = mode;
+        localStorage.setItem(MODE_KEY, mode);
+        if (mode === 'single') {
+            singleModeBtn.classList.add('active');
+            folderModeBtn.classList.remove('active');
+            fileSelectBtn.style.display = 'inline-flex';
+            folderSelectBtn.style.display = 'none';
+            playlistSection.style.display = 'none';
+            // 停止当前播放，尝试恢复单文件
+            if (!currentFileObj && playlist.length === 0) {
+                restoreSingleFileFromDB();
+            }
+        } else {
+            singleModeBtn.classList.remove('active');
+            folderModeBtn.classList.add('active');
+            fileSelectBtn.style.display = 'none';
+            folderSelectBtn.style.display = 'inline-flex';
+            playlistSection.style.display = 'block';
+        }
+    }
+
+    // ==================== 单文件模式：自动恢复 ====================
+    async function restoreSingleFileFromDB() {
+        const file = await loadSingleFileFromDB();
+        if (file) {
+            await loadSingleFile(file);
+            gistStatus.innerHTML = `🔄 已自动恢复上次播放的文件: ${file.name}`;
+        }
+    }
+
+    async function loadSingleFile(file) {
+        const url = URL.createObjectURL(file);
+        audio.src = url;
+        audio.load();
+        currentFileObj = file;
+        playlist = [];  // 清空文件夹列表
+        currentIndex = -1;
+        trackTitle.innerText = file.name;
+        floatTitle.innerText = file.name;
+        if (window._oldUrl) URL.revokeObjectURL(window._oldUrl);
+        window._oldUrl = url;
+        
+        // 恢复书签和进度
+        const stored = localStorage.getItem(`bm_${file.name}`);
+        if (stored) { try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {} }
+        const prog = localStorage.getItem(`prog_${file.name}`);
+        if (prog) { try { let p = JSON.parse(prog); if (p.time) audio.currentTime = p.time; } catch(e) {} }
+        
+        audio.play().catch(e=>console.log);
+        await saveSingleFileToDB(file);
+    }
+
+    // ==================== 文件夹模式：智能排序 ====================
     function naturalCompare(a, b) {
-        const getNumberGroups = (str) => {
-            const matches = str.match(/\d+/g);
-            return matches ? matches.map(Number) : [];
-        };
-        const numsA = getNumberGroups(a.name);
-        const numsB = getNumberGroups(b.name);
-        const maxLen = Math.max(numsA.length, numsB.length);
-        for (let i = 0; i < maxLen; i++) {
+        const getNumbers = (str) => (str.match(/\d+/g) || []).map(Number);
+        const numsA = getNumbers(a.name), numsB = getNumbers(b.name);
+        for (let i = 0; i < Math.max(numsA.length, numsB.length); i++) {
             const valA = i < numsA.length ? numsA[i] : 0;
             const valB = i < numsB.length ? numsB[i] : 0;
             if (valA !== valB) return valA - valB;
@@ -262,33 +395,26 @@
         return a.name.localeCompare(b.name);
     }
 
-    // 选择文件夹处理
-    folderInput.addEventListener('change', (e) => {
+    folderInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         const audioFiles = files.filter(f => /\.(mp3|m4a|opus|ogg|wav)$/i.test(f.name));
-        if (audioFiles.length === 0) { alert("文件夹中没有支持的音频文件"); return; }
+        if (audioFiles.length === 0) { alert("文件夹中没有音频文件"); return; }
         playlist = audioFiles.sort(naturalCompare);
         renderPlaylist();
         if (playlist.length) {
             currentIndex = 0;
-            loadTrack(currentIndex);
-        }
-    });
-
-    // 单个文件
-    singleFileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) {
-            playlist = [ e.target.files[0] ];
-            renderPlaylist();
-            currentIndex = 0;
-            loadTrack(0);
+            await loadFolderTrack(currentIndex);
+            if (pendingBackupData) {
+                autoRestoreHint.style.display = 'flex';
+                hintText.innerHTML = `检测到备份 (${pendingBackupData.playlistNames?.length || 0}首)，恢复进度？`;
+            }
         }
     });
 
     function renderPlaylist() {
         playlistContainer.innerHTML = '';
         if (playlist.length === 0) {
-            playlistContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#7f8c8d;">暂无音频，选择文件夹</div>';
+            playlistContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#7f8c8d;">暂无音频</div>';
             playlistCountSpan.innerText = '0';
             return;
         }
@@ -296,31 +422,14 @@
         playlist.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'playlist-item' + (idx === currentIndex ? ' active' : '');
-            const displayNum = (idx+1).toString().padStart(2,'0');
-            div.innerHTML = `<span class="track-num">${displayNum}</span>
-                             <span class="track-name" title="${escapeHtml(item.name)}">${escapeHtml(truncateName(item.name))}</span>`;
-            div.addEventListener('click', () => {
-                if (currentIndex !== idx) {
-                    currentIndex = idx;
-                    loadTrack(currentIndex);
-                }
-            });
+            div.innerHTML = `<span class="track-num">${(idx+1).toString().padStart(2,'0')}</span>
+                             <span class="track-name">${escapeHtml(item.name)}</span>`;
+            div.addEventListener('click', () => { if (currentIndex !== idx) { currentIndex = idx; loadFolderTrack(currentIndex); } });
             playlistContainer.appendChild(div);
         });
     }
-    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-    function truncateName(name) { if(name.length>40) return name.slice(0,37)+'...'; return name; }
 
-    function updatePlaylistActive() {
-        const items = document.querySelectorAll('.playlist-item');
-        items.forEach((item, i) => {
-            if (i === currentIndex) item.classList.add('active');
-            else item.classList.remove('active');
-        });
-    }
-
-    // 加载指定索引的音频
-    async function loadTrack(index) {
+    async function loadFolderTrack(index) {
         if (index < 0 || index >= playlist.length) return;
         const file = playlist[index];
         const url = URL.createObjectURL(file);
@@ -332,54 +441,40 @@
         if (window._oldUrl) URL.revokeObjectURL(window._oldUrl);
         window._oldUrl = url;
         
-        // 加载该书签和进度
         const stored = localStorage.getItem(`bm_${file.name}`);
-        if (stored) {
-            try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) { currentBookmarks = []; renderBookmarks(); }
-        } else { currentBookmarks = []; renderBookmarks(); }
+        if (stored) { try { currentBookmarks = JSON.parse(stored); renderBookmarks(); } catch(e) {} }
+        const prog = localStorage.getItem(`prog_${file.name}`);
+        if (prog) { try { let p = JSON.parse(prog); if (p.time) audio.currentTime = p.time; } catch(e) {} }
         
-        const progKey = `prog_${file.name}`;
-        const prog = localStorage.getItem(progKey);
-        if (prog) {
-            try { let p = JSON.parse(prog); if (p.time && !isNaN(p.time)) audio.currentTime = Math.min(p.time, audio.duration||1e9); } catch(e) {}
-        }
         updatePlaylistActive();
         audio.play().catch(e=>console.log);
-        saveCurrentFileToIndexedDB(file);
     }
 
-    // 下一首/上一首逻辑
+    function updatePlaylistActive() {
+        const items = document.querySelectorAll('.playlist-item');
+        items.forEach((item, i) => { if (i === currentIndex) item.classList.add('active'); else item.classList.remove('active'); });
+    }
+
+    // ==================== 播放控制 ====================
     function nextTrack() {
-        if (loopMode === 'single') {
+        if (currentMode === 'single') {
             audio.currentTime = 0;
             audio.play();
             return;
         }
+        if (loopMode === 'single') { audio.currentTime = 0; audio.play(); return; }
         let next = currentIndex + 1;
-        if (next >= playlist.length) {
-            if (loopMode === 'list') next = 0;
-            else return;
-        }
-        if (next < playlist.length) {
-            currentIndex = next;
-            loadTrack(currentIndex);
-        }
+        if (next >= playlist.length) { if (loopMode === 'list') next = 0; else return; }
+        if (next < playlist.length) { currentIndex = next; loadFolderTrack(currentIndex); }
     }
     function prevTrack() {
+        if (currentMode === 'single') { audio.currentTime = 0; return; }
         let prev = currentIndex - 1;
-        if (prev < 0) {
-            if (loopMode === 'list') prev = playlist.length - 1;
-            else return;
-        }
-        if (prev >= 0) {
-            currentIndex = prev;
-            loadTrack(currentIndex);
-        }
+        if (prev < 0) { if (loopMode === 'list') prev = playlist.length - 1; else return; }
+        if (prev >= 0) { currentIndex = prev; loadFolderTrack(currentIndex); }
     }
 
     audio.addEventListener('ended', () => { pendingRewind = false; nextTrack(); });
-
-    // 后退5秒逻辑
     function markStopped() { if (!skipRewind) pendingRewind = true; skipRewind = false; }
     function applyRewind() { if (pendingRewind && audio.duration) { audio.currentTime = Math.max(0, audio.currentTime-5); pendingRewind = false; saveProgress(); } }
     audio.addEventListener('pause', () => { if (!audio.ended) markStopped(); });
@@ -399,11 +494,9 @@
     rewind5.addEventListener('click', () => { skipRewind = true; audio.currentTime = Math.max(0, audio.currentTime-5); });
     forward5.addEventListener('click', () => { skipRewind = true; audio.currentTime = Math.min(audio.duration, audio.currentTime+5); });
 
-    // 进度条
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
-            const percent = (audio.currentTime/audio.duration)*100;
-            progressFill.style.width = `${percent}%`;
+            progressFill.style.width = `${(audio.currentTime/audio.duration)*100}%`;
             currentTimeSpan.innerText = formatTime(audio.currentTime);
             totalTimeSpan.innerText = formatTime(audio.duration);
             floatTime.innerText = `${formatTime(audio.currentTime)}/${formatTime(audio.duration)}`;
@@ -411,8 +504,7 @@
     });
     progressBarBg.addEventListener('click', (e) => {
         const rect = progressBarBg.getBoundingClientRect();
-        let percent = (e.clientX - rect.left)/rect.width;
-        audio.currentTime = percent * audio.duration;
+        audio.currentTime = ((e.clientX - rect.left)/rect.width) * audio.duration;
         skipRewind = true;
     });
     gotoBtn.addEventListener('click', () => {
@@ -421,32 +513,26 @@
             let parts = gotoInput.value.split(':');
             if (parts.length===2) sec = parseInt(parts[0])*60 + parseInt(parts[1]);
             else if (parts.length===3) sec = parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
-            else sec = NaN;
         }
         if (!isNaN(sec) && audio.duration) audio.currentTime = Math.min(Math.max(0,sec), audio.duration);
         gotoInput.value = '';
     });
 
-    // 循环模式切换
     loopModeBtn.addEventListener('click', () => {
         if (loopMode === 'list') { loopMode = 'single'; loopModeBtn.innerHTML = '<i class="fas fa-repeat-1"></i> 单曲循环'; }
         else { loopMode = 'list'; loopModeBtn.innerHTML = '<i class="fas fa-redo-alt"></i> 列表循环'; }
     });
 
-    // 书签功能
     function formatTime(sec) {
         if (isNaN(sec)) return '0:00';
-        const h = Math.floor(sec/3600);
-        const m = Math.floor((sec%3600)/60);
-        const s = Math.floor(sec%60);
+        const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = Math.floor(sec%60);
         if (h>0) return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         return `${m}:${s.toString().padStart(2,'0')}`;
     }
     function addBookmark() {
         if (!audio.src || !audio.duration) return alert("请先播放音频");
-        let time = audio.currentTime;
-        let label = formatTime(time);
-        if (currentBookmarks.some(b => Math.abs(b.time-time)<0.5)) return alert("已有该书签");
+        let time = audio.currentTime, label = formatTime(time);
+        if (currentBookmarks.some(b => Math.abs(b.time-time)<0.5)) return alert("已有书签");
         currentBookmarks.push({ time, label });
         currentBookmarks.sort((a,b)=>a.time-b.time);
         renderBookmarks();
@@ -458,191 +544,135 @@
         currentBookmarks.forEach((bm, idx) => {
             let chip = document.createElement('div');
             chip.className = 'bookmark-chip';
-            chip.innerHTML = `<span style="cursor:pointer;">${bm.label}</span> <button class="bookmark-delete" data-idx="${idx}" style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>`;
+            chip.innerHTML = `<span style="cursor:pointer;">${bm.label}</span> <button style="background:none; border:none; color:#aaa; cursor:pointer;"><i class="fas fa-trash-alt"></i></button>`;
             chip.querySelector('span').addEventListener('click', () => { audio.currentTime = bm.time; });
             chip.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); currentBookmarks.splice(idx,1); renderBookmarks(); if(currentFileObj) localStorage.setItem(`bm_${currentFileObj.name}`, JSON.stringify(currentBookmarks)); });
             bookmarkListDiv.appendChild(chip);
         });
     }
     addBookmarkBtn.addEventListener('click', addBookmark);
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-    // ==================== 修复后的 Gist 同步 ====================
+    // ==================== Gist 同步 ====================
     function extractGistId(str) { let m = str.match(/([a-fA-F0-9]{32})/); return m ? m[1] : null; }
-    
-    // 备份：保存完整的播放列表（文件名数组）+ 当前索引 + 进度 + 书签
     async function backupToGist(silent=false) {
         let token = localStorage.getItem(TOKEN_KEY);
-        if (!token) { alert("请先输入Token并记住"); return; }
-        if (playlist.length === 0) { alert("播放列表为空，请先选择文件夹"); return; }
-        
-        // 保存当前播放的文件名和播放列表（只存文件名，不存文件对象）
-        const currentFileName = currentFileObj ? currentFileObj.name : (playlist[currentIndex]?.name || null);
-        const playlistNames = playlist.map(f => f.name);
-        
-        let data = {
-            version: "2.0",  // 版本标识，用于区分新旧格式
-            playlistNames: playlistNames,
-            currentFileName: currentFileName,
-            currentTime: audio.currentTime,
-            bookmarks: currentBookmarks,
-            loopMode: loopMode,
-            lastUpdated: new Date().toISOString()
-        };
-        
-        let content = JSON.stringify(data, null, 2);
-        let gistId = extractGistId(gistIdInput.value);
+        if (!token) { alert("请先保存Token"); return; }
+        if (currentMode === 'single') {
+            if (!currentFileObj) { alert("没有播放的音频"); return; }
+            var data = { version: "2.1", mode: 'single', fileName: currentFileObj.name, currentTime: audio.currentTime, bookmarks: currentBookmarks };
+        } else {
+            if (playlist.length === 0) { alert("播放列表为空"); return; }
+            var data = { version: "2.1", mode: 'folder', playlistNames: playlist.map(f=>f.name), currentFileName: currentFileObj?.name, currentTime: audio.currentTime, bookmarks: currentBookmarks, loopMode: loopMode };
+        }
+        let content = JSON.stringify(data), gistId = extractGistId(gistIdInput.value);
         try {
-            let url = 'https://api.github.com/gists';
-            let method = 'POST';
-            let body = { description: '完整播放列表备份', public: false, files: { 'playlist_backup.json': { content } } };
-            if (gistId) {
-                url = `https://api.github.com/gists/${gistId}`;
-                method = 'PATCH';
-                body = { files: { 'playlist_backup.json': { content } } };
-            }
-            let res = await fetch(url, {
-                method,
-                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error(await res.text());
+            let url = 'https://api.github.com/gists', method = 'POST', body = { description: '音频备份', public: false, files: { 'backup.json': { content } } };
+            if (gistId) { url = `https://api.github.com/gists/${gistId}`; method = 'PATCH'; body = { files: { 'backup.json': { content } } }; }
+            let res = await fetch(url, { method, headers: { 'Authorization': `token ${token}`, 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error();
             let result = await res.json();
             gistIdInput.value = result.id;
             localStorage.setItem(GIST_ID_KEY, result.id);
-            if (!silent) gistStatus.innerHTML = `✅ 备份成功！已保存${playlist.length}首曲目列表 ID: ${result.id}`;
-            else backupStatusDiv.innerHTML = `🔄 自动备份 ${new Date().toLocaleTimeString()} (${playlist.length}首)`;
-        } catch(e) {
-            if (!silent) alert("备份失败: " + e.message);
-            console.error(e);
-        }
+            localStorage.setItem(LAST_BACKUP_GIST_KEY, result.id);
+            if (!silent) gistStatus.innerHTML = `✅ 备份成功！`;
+            else backupStatusDiv.innerHTML = `🔄 自动备份 ${new Date().toLocaleTimeString()}`;
+        } catch(e) { if (!silent) alert("备份失败"); }
     }
-    
-    // 恢复：对比备份的播放列表和当前文件夹，智能匹配
-    async function restoreFromGist() {
+    async function fetchBackup(gistId) {
         let token = localStorage.getItem(TOKEN_KEY);
-        if (!token) { alert("请先保存Token"); return; }
-        let gistId = extractGistId(gistIdInput.value);
-        if (!gistId) { alert("请输入有效Gist ID"); return; }
-        
+        if (!token) return null;
         try {
-            let res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            let res = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } });
+            if (!res.ok) return null;
             let gist = await res.json();
-            let content = gist.files['playlist_backup.json']?.content;
-            if (!content) throw new Error("备份文件不存在，请确保选择了正确的Gist");
-            
-            let data = JSON.parse(content);
-            
-            // 情况1：当前播放列表为空 -> 提示先选择文件夹
-            if (playlist.length === 0) {
-                alert("请先选择一个文件夹，再执行恢复操作");
-                return;
-            }
-            
-            // 情况2：有播放列表，尝试匹配备份中的文件名
-            const backupPlaylistNames = data.playlistNames;
-            if (!backupPlaylistNames || backupPlaylistNames.length === 0) {
-                alert("备份文件中的播放列表为空");
-                return;
-            }
-            
-            // 检查当前播放列表中是否有与备份匹配的文件
-            const currentNames = playlist.map(f => f.name);
-            const matchedCurrentIndex = currentNames.findIndex(name => name === data.currentFileName);
-            
-            if (matchedCurrentIndex !== -1) {
-                // 找到了匹配的文件：恢复进度、书签、跳转到该文件
-                currentIndex = matchedCurrentIndex;
-                await loadTrack(currentIndex);
-                // 等待音频加载完成后设置进度
-                setTimeout(() => {
-                    if (data.currentTime && !isNaN(data.currentTime) && audio.duration) {
-                        audio.currentTime = Math.min(data.currentTime, audio.duration - 0.5);
-                        updateProgressAndTime();
-                    }
-                    if (data.bookmarks) {
-                        currentBookmarks = data.bookmarks;
-                        renderBookmarks();
-                        if (currentFileObj) localStorage.setItem(`bm_${currentFileObj.name}`, JSON.stringify(currentBookmarks));
-                    }
-                    if (data.loopMode) {
-                        loopMode = data.loopMode;
-                        loopModeBtn.innerHTML = loopMode === 'list' ? '<i class="fas fa-redo-alt"></i> 列表循环' : '<i class="fas fa-repeat-1"></i> 单曲循环';
-                    }
-                    gistStatus.innerHTML = `✅ 恢复成功！当前文件: ${currentFileObj?.name}，进度已恢复`;
-                }, 200);
+            let content = gist.files['backup.json']?.content;
+            return content ? JSON.parse(content) : null;
+        } catch(e) { return null; }
+    }
+    async function applyRestore(data) {
+        if (!data) return;
+        if (data.mode === 'single') {
+            setMode('single');
+            // 单文件需要从本地恢复，提示用户选择
+            alert(`备份文件: ${data.fileName}\n请手动选择该文件恢复（单文件无法自动读取）`);
+        } else if (data.mode === 'folder') {
+            setMode('folder');
+            pendingBackupData = data;
+            if (playlist.length > 0) {
+                autoRestoreHint.style.display = 'flex';
+                hintText.innerHTML = `恢复 ${data.playlistNames.length} 首曲目？`;
             } else {
-                // 没找到匹配的文件：提示用户，但可以尝试找到相似文件名（可选）
-                gistStatus.innerHTML = `⚠️ 备份文件 "${data.currentFileName}" 在当前文件夹中未找到。请确保选择了正确的文件夹。`;
-                alert(`未找到文件 "${data.currentFileName}"，请确认选择了正确的文件夹。\n\n您可以手动在播放列表中选择文件，书签和进度可能无法自动匹配。`);
+                autoRestoreHint.style.display = 'flex';
+                hintText.innerHTML = `请先选择文件夹，然后点击恢复`;
             }
-            
-        } catch(e) {
-            alert("恢复失败: " + e.message);
-            console.error(e);
         }
     }
-    
-    function updateProgressAndTime() {
-        if (audio.duration) {
-            currentTimeSpan.innerText = formatTime(audio.currentTime);
-            totalTimeSpan.innerText = formatTime(audio.duration);
+    confirmRestoreBtn.addEventListener('click', async () => {
+        if (pendingBackupData && pendingBackupData.mode === 'folder' && playlist.length > 0) {
+            const targetName = pendingBackupData.currentFileName;
+            const idx = playlist.findIndex(f => f.name === targetName);
+            if (idx !== -1) {
+                currentIndex = idx;
+                await loadFolderTrack(currentIndex);
+                setTimeout(() => {
+                    if (pendingBackupData.currentTime) audio.currentTime = pendingBackupData.currentTime;
+                    if (pendingBackupData.bookmarks) { currentBookmarks = pendingBackupData.bookmarks; renderBookmarks(); }
+                    if (pendingBackupData.loopMode) { loopMode = pendingBackupData.loopMode; loopModeBtn.innerHTML = loopMode === 'list' ? '<i class="fas fa-redo-alt"></i> 列表循环' : '<i class="fas fa-repeat-1"></i> 单曲循环'; }
+                    gistStatus.innerHTML = `✅ 恢复成功`;
+                }, 200);
+            } else { alert(`未找到文件: ${targetName}`); }
+        } else if (pendingBackupData && pendingBackupData.mode === 'folder' && playlist.length === 0) {
+            alert("请先选择文件夹");
         }
-    }
-    
-    saveGistBtn.addEventListener('click', () => backupToGist(false));
-    loadGistBtn.addEventListener('click', restoreFromGist);
-    saveTokenBtn.addEventListener('click', () => {
-        let t = tokenInput.value.trim();
-        if (t) {
-            localStorage.setItem(TOKEN_KEY, t);
-            gistStatus.innerHTML = "✅ Token已保存";
-            tokenInput.value = '';
-        } else {
-            alert("请输入Token");
-        }
+        autoRestoreHint.style.display = 'none';
     });
-    
+    ignoreRestoreBtn.addEventListener('click', () => { autoRestoreHint.style.display = 'none'; pendingBackupData = null; });
+    loadGistBtn.addEventListener('click', async () => {
+        let gistId = extractGistId(gistIdInput.value);
+        if (!gistId) { alert("请输入Gist ID"); return; }
+        let data = await fetchBackup(gistId);
+        if (data) { await applyRestore(data); }
+        else { alert("读取失败"); }
+    });
+    saveGistBtn.addEventListener('click', () => backupToGist(false));
+    saveTokenBtn.addEventListener('click', () => { let t = tokenInput.value.trim(); if(t) { localStorage.setItem(TOKEN_KEY, t); gistStatus.innerHTML = "✅ Token已保存"; tokenInput.value = ''; } else alert("请输入Token"); });
     let savedGist = localStorage.getItem(GIST_ID_KEY);
     if (savedGist) gistIdInput.value = savedGist;
 
-    // 定时停止
+    // ==================== 定时/自动备份 ====================
     function stopSleep() { if(sleepTimer) clearTimeout(sleepTimer); sleepTimer=null; sleepStatus.innerText=''; }
     function startSleep(min) { stopSleep(); sleepTimer = setTimeout(()=>{ if(!audio.paused) audio.pause(); sleepStatus.innerText='定时停止已触发'; }, min*60000); sleepStatus.innerText=`将在${min}分钟后停止`; }
     setSleepBtn.addEventListener('click',()=>{ let v=parseInt(sleepMin.value); if(v>0) startSleep(v); });
     cancelSleepBtn.addEventListener('click', stopSleep);
-    
-    // 自动备份
     function stopAutoBackupFunc() { if(autoBackupInterval) clearInterval(autoBackupInterval); autoBackupInterval=null; backupStatusDiv.innerText='自动备份已停止'; }
-    function startAutoBackupFunc() { stopAutoBackupFunc(); let mins = parseInt(backupIntervalInput.value); if(mins<2) mins=5; autoBackupInterval = setInterval(()=>{ if(playlist.length > 0) backupToGist(true); }, mins*60000); backupStatusDiv.innerText=`每${mins}分钟自动备份`; }
+    function startAutoBackupFunc() { stopAutoBackupFunc(); let mins = parseInt(backupIntervalInput.value); if(mins<2) mins=5; autoBackupInterval = setInterval(()=>{ if((currentMode==='single' && currentFileObj) || (currentMode==='folder' && playlist.length>0)) backupToGist(true); }, mins*60000); backupStatusDiv.innerText=`每${mins}分钟自动备份`; }
     startAutoBackup.addEventListener('click', startAutoBackupFunc);
     stopAutoBackup.addEventListener('click', stopAutoBackupFunc);
 
-    // 悬浮条
+    // ==================== 悬浮条 ====================
     floatHide.addEventListener('click', ()=> floatBar.style.display='none');
-    let showSpan = document.createElement('span'); 
-    showSpan.innerText = ' 显示悬浮条'; 
-    showSpan.style.cursor = 'pointer'; 
-    showSpan.style.textDecoration = 'underline'; 
-    showSpan.onclick = () => floatBar.style.display = 'flex';
+    let showSpan = document.createElement('span'); showSpan.innerText=' 显示悬浮条'; showSpan.style.cursor='pointer'; showSpan.style.textDecoration='underline'; showSpan.onclick=()=>floatBar.style.display='flex';
     gistStatus.appendChild(showSpan);
+    clearPlaylistBtn.addEventListener('click', () => { playlist = []; renderPlaylist(); audio.pause(); audio.src=''; currentIndex=-1; trackTitle.innerText='未播放'; currentFileObj=null; currentBookmarks=[]; renderBookmarks(); pendingBackupData=null; autoRestoreHint.style.display='none'; });
 
-    function saveCurrentFileToIndexedDB(file) {
-        localStorage.setItem('lastAudioName', file.name);
-    }
-    
-    clearPlaylistBtn.addEventListener('click', () => { 
-        playlist = []; 
-        renderPlaylist(); 
-        audio.pause(); 
-        audio.src = ''; 
-        currentIndex = -1; 
-        trackTitle.innerText = '未播放'; 
-        currentFileObj = null;
-        currentBookmarks = [];
-        renderBookmarks();
+    // ==================== 启动 ====================
+    singleFileInput.addEventListener('change', async (e) => { if(e.target.files.length) { setMode('single'); await loadSingleFile(e.target.files[0]); } });
+    singleModeBtn.addEventListener('click', () => setMode('single'));
+    folderModeBtn.addEventListener('click', () => setMode('folder'));
+    window.addEventListener('load', async () => {
+        await initDB();
+        let savedMode = localStorage.getItem(MODE_KEY);
+        if (savedMode === 'folder') setMode('folder');
+        else setMode('single');
+        if (currentMode === 'single') await restoreSingleFileFromDB();
+        let token = localStorage.getItem(TOKEN_KEY);
+        if (token) tokenInput.value = '********';
+        let lastGist = localStorage.getItem(LAST_BACKUP_GIST_KEY);
+        if (lastGist) {
+            let data = await fetchBackup(lastGist);
+            if (data) pendingBackupData = data;
+        }
     });
 </script>
 </body>
