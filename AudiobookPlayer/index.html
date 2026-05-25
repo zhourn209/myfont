@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>智能音频伴侣 | 智能排序 · 文件夹播放 · 云端同步</title>
+    <title>智能音频伴侣 | 智能排序 · 完整播放列表备份 · 跨端同步</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -100,8 +100,8 @@
 <body>
 
 <div class="player-card">
-    <h1><i class="fas fa-folder-open"></i> 文件夹播放器 · 自然数排序</h1>
-    <div class="sub">📁 选择文件夹 → 自动按数字序号排序 → 连播 | 书签/备份/Gist</div>
+    <h1><i class="fas fa-folder-open"></i> 文件夹播放器 · 完整列表备份</h1>
+    <div class="sub">📁 选择文件夹 → 自动排序 → 备份/恢复整个播放列表 + 进度 + 书签</div>
 
     <div class="source-buttons">
         <label class="primary-btn" for="folderInput"><i class="fas fa-folder"></i> 选择文件夹</label>
@@ -247,7 +247,6 @@
 
     // -------------------- 核心：智能自然排序（忽略文字，按数字序列比较）--------------------
     function naturalCompare(a, b) {
-        // 提取文件名中所有的数字段
         const getNumberGroups = (str) => {
             const matches = str.match(/\d+/g);
             return matches ? matches.map(Number) : [];
@@ -260,7 +259,6 @@
             const valB = i < numsB.length ? numsB[i] : 0;
             if (valA !== valB) return valA - valB;
         }
-        // 如果数字完全相同，按原始字符串排序
         return a.name.localeCompare(b.name);
     }
 
@@ -269,7 +267,6 @@
         const files = Array.from(e.target.files);
         const audioFiles = files.filter(f => /\.(mp3|m4a|opus|ogg|wav)$/i.test(f.name));
         if (audioFiles.length === 0) { alert("文件夹中没有支持的音频文件"); return; }
-        // 使用自然排序
         playlist = audioFiles.sort(naturalCompare);
         renderPlaylist();
         if (playlist.length) {
@@ -299,7 +296,6 @@
         playlist.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'playlist-item' + (idx === currentIndex ? ' active' : '');
-            // 显示序号 (从1开始)
             const displayNum = (idx+1).toString().padStart(2,'0');
             div.innerHTML = `<span class="track-num">${displayNum}</span>
                              <span class="track-name" title="${escapeHtml(item.name)}">${escapeHtml(truncateName(item.name))}</span>`;
@@ -348,7 +344,6 @@
             try { let p = JSON.parse(prog); if (p.time && !isNaN(p.time)) audio.currentTime = Math.min(p.time, audio.duration||1e9); } catch(e) {}
         }
         updatePlaylistActive();
-        // 自动播放
         audio.play().catch(e=>console.log);
         saveCurrentFileToIndexedDB(file);
     }
@@ -384,7 +379,7 @@
 
     audio.addEventListener('ended', () => { pendingRewind = false; nextTrack(); });
 
-    // 后退5秒逻辑（停顿重播）
+    // 后退5秒逻辑
     function markStopped() { if (!skipRewind) pendingRewind = true; skipRewind = false; }
     function applyRewind() { if (pendingRewind && audio.duration) { audio.currentTime = Math.max(0, audio.currentTime-5); pendingRewind = false; saveProgress(); } }
     audio.addEventListener('pause', () => { if (!audio.ended) markStopped(); });
@@ -471,52 +466,145 @@
     }
     addBookmarkBtn.addEventListener('click', addBookmark);
 
-    // Gist 同步
+    // ==================== 修复后的 Gist 同步 ====================
     function extractGistId(str) { let m = str.match(/([a-fA-F0-9]{32})/); return m ? m[1] : null; }
+    
+    // 备份：保存完整的播放列表（文件名数组）+ 当前索引 + 进度 + 书签
     async function backupToGist(silent=false) {
         let token = localStorage.getItem(TOKEN_KEY);
         if (!token) { alert("请先输入Token并记住"); return; }
-        if (!currentFileObj) { alert("无正在播放的音频"); return; }
+        if (playlist.length === 0) { alert("播放列表为空，请先选择文件夹"); return; }
+        
+        // 保存当前播放的文件名和播放列表（只存文件名，不存文件对象）
+        const currentFileName = currentFileObj ? currentFileObj.name : (playlist[currentIndex]?.name || null);
+        const playlistNames = playlist.map(f => f.name);
+        
+        let data = {
+            version: "2.0",  // 版本标识，用于区分新旧格式
+            playlistNames: playlistNames,
+            currentFileName: currentFileName,
+            currentTime: audio.currentTime,
+            bookmarks: currentBookmarks,
+            loopMode: loopMode,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        let content = JSON.stringify(data, null, 2);
         let gistId = extractGistId(gistIdInput.value);
-        let data = { audioFileName: currentFileObj.name, currentTime: audio.currentTime, bookmarks: currentBookmarks, playlistNames: playlist.map(f=>f.name), loopMode, lastUpdated: new Date() };
-        let content = JSON.stringify(data);
         try {
-            let url = 'https://api.github.com/gists', method='POST', body={ description: 'Audio progress', public: false, files: { 'audio_state.json': { content } } };
-            if (gistId) { url = `https://api.github.com/gists/${gistId}`; method='PATCH'; body={ files: { 'audio_state.json': { content } } }; }
-            let res = await fetch(url, { method, headers: { 'Authorization': `token ${token}`, 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+            let url = 'https://api.github.com/gists';
+            let method = 'POST';
+            let body = { description: '完整播放列表备份', public: false, files: { 'playlist_backup.json': { content } } };
+            if (gistId) {
+                url = `https://api.github.com/gists/${gistId}`;
+                method = 'PATCH';
+                body = { files: { 'playlist_backup.json': { content } } };
+            }
+            let res = await fetch(url, {
+                method,
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
             if (!res.ok) throw new Error(await res.text());
             let result = await res.json();
             gistIdInput.value = result.id;
             localStorage.setItem(GIST_ID_KEY, result.id);
-            if (!silent) gistStatus.innerHTML = `✅ 备份成功 ID: ${result.id}`;
-            else backupStatusDiv.innerHTML = `🔄 自动备份 ${new Date().toLocaleTimeString()}`;
-        } catch(e) { if (!silent) alert("备份失败 "+e.message); }
+            if (!silent) gistStatus.innerHTML = `✅ 备份成功！已保存${playlist.length}首曲目列表 ID: ${result.id}`;
+            else backupStatusDiv.innerHTML = `🔄 自动备份 ${new Date().toLocaleTimeString()} (${playlist.length}首)`;
+        } catch(e) {
+            if (!silent) alert("备份失败: " + e.message);
+            console.error(e);
+        }
     }
+    
+    // 恢复：对比备份的播放列表和当前文件夹，智能匹配
     async function restoreFromGist() {
         let token = localStorage.getItem(TOKEN_KEY);
         if (!token) { alert("请先保存Token"); return; }
         let gistId = extractGistId(gistIdInput.value);
         if (!gistId) { alert("请输入有效Gist ID"); return; }
+        
         try {
-            let res = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${token}` } });
-            if (!res.ok) throw new Error();
+            let res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             let gist = await res.json();
-            let content = gist.files['audio_state.json']?.content;
-            if (!content) throw new Error();
+            let content = gist.files['playlist_backup.json']?.content;
+            if (!content) throw new Error("备份文件不存在，请确保选择了正确的Gist");
+            
             let data = JSON.parse(content);
-            if (data.audioFileName && data.currentTime && currentFileObj && currentFileObj.name === data.audioFileName) {
-                audio.currentTime = Math.min(data.currentTime, audio.duration);
-                currentBookmarks = data.bookmarks || [];
-                renderBookmarks();
-                saveProgress();
-                gistStatus.innerHTML = "✅ 恢复成功";
-            } else if (currentFileObj) alert("当前音频与备份不匹配，请先打开对应文件");
-            else alert("无播放中的音频，请先选择文件夹");
-        } catch(e) { alert("恢复失败 "+e.message); }
+            
+            // 情况1：当前播放列表为空 -> 提示先选择文件夹
+            if (playlist.length === 0) {
+                alert("请先选择一个文件夹，再执行恢复操作");
+                return;
+            }
+            
+            // 情况2：有播放列表，尝试匹配备份中的文件名
+            const backupPlaylistNames = data.playlistNames;
+            if (!backupPlaylistNames || backupPlaylistNames.length === 0) {
+                alert("备份文件中的播放列表为空");
+                return;
+            }
+            
+            // 检查当前播放列表中是否有与备份匹配的文件
+            const currentNames = playlist.map(f => f.name);
+            const matchedCurrentIndex = currentNames.findIndex(name => name === data.currentFileName);
+            
+            if (matchedCurrentIndex !== -1) {
+                // 找到了匹配的文件：恢复进度、书签、跳转到该文件
+                currentIndex = matchedCurrentIndex;
+                await loadTrack(currentIndex);
+                // 等待音频加载完成后设置进度
+                setTimeout(() => {
+                    if (data.currentTime && !isNaN(data.currentTime) && audio.duration) {
+                        audio.currentTime = Math.min(data.currentTime, audio.duration - 0.5);
+                        updateProgressAndTime();
+                    }
+                    if (data.bookmarks) {
+                        currentBookmarks = data.bookmarks;
+                        renderBookmarks();
+                        if (currentFileObj) localStorage.setItem(`bm_${currentFileObj.name}`, JSON.stringify(currentBookmarks));
+                    }
+                    if (data.loopMode) {
+                        loopMode = data.loopMode;
+                        loopModeBtn.innerHTML = loopMode === 'list' ? '<i class="fas fa-redo-alt"></i> 列表循环' : '<i class="fas fa-repeat-1"></i> 单曲循环';
+                    }
+                    gistStatus.innerHTML = `✅ 恢复成功！当前文件: ${currentFileObj?.name}，进度已恢复`;
+                }, 200);
+            } else {
+                // 没找到匹配的文件：提示用户，但可以尝试找到相似文件名（可选）
+                gistStatus.innerHTML = `⚠️ 备份文件 "${data.currentFileName}" 在当前文件夹中未找到。请确保选择了正确的文件夹。`;
+                alert(`未找到文件 "${data.currentFileName}"，请确认选择了正确的文件夹。\n\n您可以手动在播放列表中选择文件，书签和进度可能无法自动匹配。`);
+            }
+            
+        } catch(e) {
+            alert("恢复失败: " + e.message);
+            console.error(e);
+        }
     }
-    saveGistBtn.addEventListener('click', ()=>backupToGist(false));
+    
+    function updateProgressAndTime() {
+        if (audio.duration) {
+            currentTimeSpan.innerText = formatTime(audio.currentTime);
+            totalTimeSpan.innerText = formatTime(audio.duration);
+        }
+    }
+    
+    saveGistBtn.addEventListener('click', () => backupToGist(false));
     loadGistBtn.addEventListener('click', restoreFromGist);
-    saveTokenBtn.addEventListener('click', () => { let t = tokenInput.value.trim(); if(t) { localStorage.setItem(TOKEN_KEY, t); gistStatus.innerHTML="Token已保存"; } });
+    saveTokenBtn.addEventListener('click', () => {
+        let t = tokenInput.value.trim();
+        if (t) {
+            localStorage.setItem(TOKEN_KEY, t);
+            gistStatus.innerHTML = "✅ Token已保存";
+            tokenInput.value = '';
+        } else {
+            alert("请输入Token");
+        }
+    });
+    
     let savedGist = localStorage.getItem(GIST_ID_KEY);
     if (savedGist) gistIdInput.value = savedGist;
 
@@ -525,23 +613,37 @@
     function startSleep(min) { stopSleep(); sleepTimer = setTimeout(()=>{ if(!audio.paused) audio.pause(); sleepStatus.innerText='定时停止已触发'; }, min*60000); sleepStatus.innerText=`将在${min}分钟后停止`; }
     setSleepBtn.addEventListener('click',()=>{ let v=parseInt(sleepMin.value); if(v>0) startSleep(v); });
     cancelSleepBtn.addEventListener('click', stopSleep);
+    
     // 自动备份
     function stopAutoBackupFunc() { if(autoBackupInterval) clearInterval(autoBackupInterval); autoBackupInterval=null; backupStatusDiv.innerText='自动备份已停止'; }
-    function startAutoBackupFunc() { stopAutoBackupFunc(); let mins = parseInt(backupIntervalInput.value); if(mins<2) mins=5; autoBackupInterval = setInterval(()=>{ if(currentFileObj) backupToGist(true); }, mins*60000); backupStatusDiv.innerText=`每${mins}分钟自动备份`; }
+    function startAutoBackupFunc() { stopAutoBackupFunc(); let mins = parseInt(backupIntervalInput.value); if(mins<2) mins=5; autoBackupInterval = setInterval(()=>{ if(playlist.length > 0) backupToGist(true); }, mins*60000); backupStatusDiv.innerText=`每${mins}分钟自动备份`; }
     startAutoBackup.addEventListener('click', startAutoBackupFunc);
     stopAutoBackup.addEventListener('click', stopAutoBackupFunc);
 
-    // 悬浮条隐藏/显示
+    // 悬浮条
     floatHide.addEventListener('click', ()=> floatBar.style.display='none');
-    let showSpan = document.createElement('span'); showSpan.innerText=' 显示悬浮条'; showSpan.style.cursor='pointer'; showSpan.style.textDecoration='underline'; showSpan.onclick=()=>floatBar.style.display='flex';
+    let showSpan = document.createElement('span'); 
+    showSpan.innerText = ' 显示悬浮条'; 
+    showSpan.style.cursor = 'pointer'; 
+    showSpan.style.textDecoration = 'underline'; 
+    showSpan.onclick = () => floatBar.style.display = 'flex';
     gistStatus.appendChild(showSpan);
 
     function saveCurrentFileToIndexedDB(file) {
-        // 简化：仅记录最后文件名，不做全量存储
         localStorage.setItem('lastAudioName', file.name);
     }
-    clearPlaylistBtn.addEventListener('click', () => { playlist = []; renderPlaylist(); audio.pause(); audio.src=''; currentIndex=-1; trackTitle.innerText='未播放'; currentFileObj=null; });
-    window.addEventListener('load', () => {});
+    
+    clearPlaylistBtn.addEventListener('click', () => { 
+        playlist = []; 
+        renderPlaylist(); 
+        audio.pause(); 
+        audio.src = ''; 
+        currentIndex = -1; 
+        trackTitle.innerText = '未播放'; 
+        currentFileObj = null;
+        currentBookmarks = [];
+        renderBookmarks();
+    });
 </script>
 </body>
 </html>
