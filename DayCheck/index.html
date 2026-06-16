@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <base target="_self">
   <title>📅 月签 · 记事日历</title>
   <style>
+    /* ===== 全局重置 ===== */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-    body {
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
       background: #f5f7fb;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
       padding: 16px;
       margin: 0;
     }
@@ -25,14 +26,15 @@
     .calendar-wrapper {
       max-width: 1200px;
       width: 100%;
+      margin: 0 auto;
       background: white;
       border-radius: 32px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
       padding: 24px 20px 28px;
-      transition: padding 0.2s;
-      position: relative;
+      box-sizing: border-box;
     }
 
+    /* ===== 所有尺寸均使用相对单位 ===== */
     .app-header {
       display: flex;
       align-items: baseline;
@@ -45,7 +47,6 @@
     .app-header h1 {
       font-size: 1.7rem;
       font-weight: 600;
-      letter-spacing: -0.3px;
       color: #1e293b;
       display: flex;
       align-items: center;
@@ -56,7 +57,22 @@
       font-size: 0.9rem;
       font-weight: 400;
       color: #64748b;
-      letter-spacing: 0;
+    }
+
+    .year-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .year-nav button {
+      background: #f1f4fa;
+      border: 1px solid #d1d9e6;
+      border-radius: 40px;
+      padding: 4px 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #1e293b;
     }
 
     .year-badge {
@@ -67,8 +83,11 @@
       font-weight: 500;
       font-size: 0.95rem;
       border: 1px solid #d9e2ef;
+      min-width: 80px;
+      text-align: center;
     }
 
+    /* ===== GitHub 控制区 ===== */
     .github-controls {
       background: #f8fafc;
       border-radius: 20px;
@@ -79,6 +98,8 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 12px 16px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .github-controls .field-group {
@@ -87,6 +108,7 @@
       gap: 8px;
       flex-wrap: wrap;
       flex: 1 1 160px;
+      min-width: 140px;
     }
 
     .github-controls label {
@@ -106,12 +128,11 @@
       border-radius: 40px;
       font-size: 0.9rem;
       background: white;
-      transition: border 0.15s;
       outline: none;
+      box-sizing: border-box;
     }
 
-    .github-controls input[type="text"]:focus,
-    .github-controls input[type="password"]:focus {
+    .github-controls input:focus {
       border-color: #818cf8;
       box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
     }
@@ -124,7 +145,7 @@
     }
 
     .btn {
-      background: white;
+      background: #f1f4fa;
       border: 1px solid #d1d9e6;
       padding: 6px 16px;
       border-radius: 40px;
@@ -136,7 +157,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: #f1f4fa;
+      white-space: nowrap;
     }
 
     .btn-primary {
@@ -144,34 +165,24 @@
       border-color: #1e293b;
       color: white;
     }
-
-    .btn-primary:hover {
-      background: #0f172a;
-    }
-
-    .btn-outline {
-      background: transparent;
-      border-color: #cbd5e1;
-    }
-
-    .btn-outline:hover {
-      background: #f1f5f9;
-    }
+    .btn-primary:hover { background: #0f172a; }
 
     .btn-success {
       background: #16a34a;
       border-color: #16a34a;
       color: white;
     }
+    .btn-success:hover { background: #15803d; }
 
-    .btn-success:hover {
-      background: #15803d;
+    .btn-outline {
+      background: transparent;
+      border-color: #cbd5e1;
     }
+    .btn-outline:hover { background: #f1f5f9; }
 
-    .btn:active {
-      transform: scale(0.96);
-    }
+    .btn:active { transform: scale(0.96); }
 
+    /* ===== 月份标签 ===== */
     .tabs-container {
       display: flex;
       flex-wrap: wrap;
@@ -179,40 +190,35 @@
       margin-bottom: 22px;
       border-bottom: 2px solid #e9edf4;
       padding-bottom: 12px;
+      width: 100%;
     }
 
     .month-tab {
       flex: 0 0 auto;
       padding: 8px 18px;
       border-radius: 40px;
-      background: transparent;
       border: none;
       font-size: 0.95rem;
       font-weight: 500;
       color: #475569;
       cursor: pointer;
-      transition: all 0.15s;
       background: #f1f4fa;
-      letter-spacing: 0.3px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      transition: all 0.15s;
     }
 
-    .month-tab:hover {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
-
+    .month-tab:hover { background: #e2e8f0; }
     .month-tab.active {
       background: #1e293b;
       color: white;
-      box-shadow: 0 4px 8px rgba(30, 41, 59, 0.12);
     }
 
+    /* ===== 日历网格 ===== */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 6px;
       margin-top: 6px;
+      width: 100%;
     }
 
     .weekday-label {
@@ -221,7 +227,6 @@
       color: #64748b;
       text-align: center;
       padding: 6px 0 10px 0;
-      letter-spacing: 0.3px;
       border-bottom: 1px solid #eef2f6;
       margin-bottom: 4px;
     }
@@ -234,9 +239,8 @@
       display: flex;
       flex-direction: column;
       border: 1px solid #eef2f6;
-      transition: box-shadow 0.1s, background 0.1s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.01);
       position: relative;
+      box-sizing: border-box;
     }
 
     @media (max-width: 600px) {
@@ -245,27 +249,11 @@
         padding: 4px 3px 3px 3px;
         border-radius: 12px;
       }
-      .calendar-wrapper {
-        padding: 16px 12px 20px;
-      }
-      .month-tab {
-        padding: 6px 12px;
-        font-size: 0.85rem;
-      }
-      .app-header h1 {
-        font-size: 1.4rem;
-      }
-      .github-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .github-controls .field-group {
-        flex: 1 1 auto;
-      }
-      .github-controls .btn-group {
-        margin-left: 0;
-        justify-content: center;
-      }
+      .calendar-wrapper { padding: 16px 12px 20px; }
+      .month-tab { padding: 6px 12px; font-size: 0.85rem; }
+      .app-header h1 { font-size: 1.4rem; }
+      .github-controls { flex-direction: column; align-items: stretch; }
+      .github-controls .btn-group { margin-left: 0; justify-content: center; }
     }
 
     .day-number {
@@ -278,12 +266,10 @@
       width: fit-content;
       padding: 0 4px;
       border-radius: 8px;
+      cursor: pointer;
     }
 
-    .day-cell.other-month .day-number {
-      color: #a3b3cc;
-      font-weight: 400;
-    }
+    .day-cell.other-month .day-number { color: #a3b3cc; font-weight: 400; }
 
     .day-cell.today {
       background: #f0f4ff;
@@ -297,6 +283,7 @@
       border-radius: 20px;
     }
 
+    /* ===== 编辑框 ===== */
     .day-note {
       flex: 1;
       border: none;
@@ -311,10 +298,10 @@
       min-height: 40px;
       line-height: 1.4;
       border-radius: 8px;
-      transition: background 0.1s;
       outline: none;
       overflow-y: auto;
       cursor: pointer;
+      box-sizing: border-box;
     }
 
     .day-note:focus {
@@ -328,29 +315,27 @@
       opacity: 0.6;
     }
 
-    /* ===== 编辑框放大模式 ===== */
+    /* ===== 放大模式 ===== */
     .day-note.expanded {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 600px;
-      height: 60vh;
-      max-height: 400px;
-      font-size: 1.1rem;
-      padding: 20px 24px;
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8;
-      z-index: 1000;
-      resize: none;
-      line-height: 1.8;
-      cursor: default;
-      border: none;
-      outline: none;
-      overflow-y: auto;
-      transition: none;
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: 90% !important;
+      max-width: 600px !important;
+      height: 60vh !important;
+      max-height: 400px !important;
+      font-size: 1.1rem !important;
+      padding: 20px 24px !important;
+      background: white !important;
+      border-radius: 24px !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8 !important;
+      z-index: 1000 !important;
+      resize: none !important;
+      line-height: 1.8 !important;
+      border: none !important;
+      outline: none !important;
+      overflow-y: auto !important;
     }
 
     .day-note.expanded::placeholder {
@@ -358,7 +343,6 @@
       opacity: 0.4;
     }
 
-    /* 放大时的遮罩层 */
     .overlay {
       position: fixed;
       top: 0;
@@ -370,42 +354,7 @@
       z-index: 999;
       display: none;
     }
-
-    .overlay.active {
-      display: block;
-    }
-
-    .day-note.expanded:focus {
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8;
-      background: white;
-    }
-
-    .day-cell .day-note.expanded {
-      /* 确保在固定定位时不受父容器影响 */
-      position: fixed;
-    }
-
-    /* 放大模式下的提示 */
-    .expand-hint {
-      display: none;
-      font-size: 0.65rem;
-      color: #94a3b8;
-      text-align: center;
-      padding: 2px 0;
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .day-note:not(.expanded) + .expand-hint {
-      display: block;
-    }
-
-    .day-cell.empty {
-      background: transparent;
-      border: 1px solid transparent;
-      box-shadow: none;
-      pointer-events: none;
-    }
+    .overlay.active { display: block; }
 
     .footer-tip {
       margin-top: 24px;
@@ -414,13 +363,11 @@
       text-align: center;
       border-top: 1px solid #eef2f6;
       padding-top: 18px;
-      letter-spacing: 0.2px;
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
       gap: 8px 20px;
     }
-
     .footer-tip span {
       background: #f1f5f9;
       padding: 4px 16px;
@@ -444,80 +391,50 @@
       z-index: 999;
       font-weight: 500;
     }
-
-    .toast-message.success {
-      background: #16a34a;
-    }
-
-    .toast-message.error {
-      background: #dc2626;
-    }
-
-    .toast-message.show {
-      opacity: 1;
-    }
-
-    .year-nav {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .year-nav button {
-      background: #f1f4fa;
-      border: 1px solid #d1d9e6;
-      border-radius: 40px;
-      padding: 4px 12px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.15s;
-      color: #1e293b;
-    }
-
-    .year-nav button:hover {
-      background: #e2e8f0;
-    }
-
-    .year-nav .year-badge {
-      min-width: 80px;
-      text-align: center;
-    }
+    .toast-message.success { background: #16a34a; }
+    .toast-message.error { background: #dc2626; }
+    .toast-message.show { opacity: 1; }
   </style>
 </head>
 <body>
+
 <div class="calendar-wrapper">
+  <!-- ===== 头部 ===== -->
   <div class="app-header">
     <h1>📅 月签 <small>· 每日笔记</small></h1>
     <div class="year-nav">
-      <button id="prevYearBtn" title="上一年">◀</button>
+      <button id="prevYearBtn">◀</button>
       <div class="year-badge" id="yearDisplay">2026</div>
-      <button id="nextYearBtn" title="下一年">▶</button>
+      <button id="nextYearBtn">▶</button>
     </div>
   </div>
 
+  <!-- ===== Gist 控制 ===== -->
   <div class="github-controls">
     <div class="field-group">
       <label>🔑 Token</label>
-      <input type="password" id="gistTokenInput" placeholder="ghp_xxxxxxxxxxxx" value="">
+      <input type="password" id="gistTokenInput" placeholder="ghp_xxxxxxxx">
     </div>
     <div class="field-group">
       <label>📌 Gist ID</label>
-      <input type="text" id="gistIdInput" placeholder="例如: 3f4a5b6c7d8e" value="">
+      <input type="text" id="gistIdInput" placeholder="例如: 3f4a5b6c">
     </div>
     <div class="field-group">
       <label>📄 文件名</label>
-      <input type="text" id="gistFilenameInput" placeholder="calendar_notes.json" value="calendar_notes.json">
+      <input type="text" id="gistFilenameInput" value="calendar_notes.json">
     </div>
     <div class="btn-group">
-      <button class="btn btn-primary" id="saveToGistBtn">📤 保存到Gist</button>
-      <button class="btn btn-success" id="loadFromGistBtn">📥 从Gist下载</button>
-      <button class="btn btn-outline" id="exportJsonBtn">⬇️ 导出JSON</button>
-      <button class="btn btn-outline" id="importJsonBtn">⬆️ 导入JSON</button>
+      <button class="btn btn-primary" id="saveToGistBtn">📤 保存</button>
+      <button class="btn btn-success" id="loadFromGistBtn">📥 下载</button>
+      <button class="btn btn-outline" id="exportJsonBtn">⬇️ 导出</button>
+      <button class="btn btn-outline" id="importJsonBtn">⬆️ 导入</button>
     </div>
   </div>
 
+  <!-- ===== 月份标签 ===== -->
   <div class="tabs-container" id="tabsContainer"></div>
 
+  <!-- ===== 日历网格 ===== -->
   <div class="calendar-grid" id="calendarGrid">
     <div class="weekday-label">一</div>
     <div class="weekday-label">二</div>
@@ -529,448 +446,293 @@
   </div>
 
   <div class="footer-tip">
-    <span>✏️ 点击日期格放大编辑 · 点击空白处恢复</span>
-    <span>📦 支持 Gist 同步 / JSON 导入导出</span>
+    <span>✏️ 点击日期格放大编辑</span>
+    <span>📦 Gist 同步 / JSON 导入导出</span>
   </div>
 </div>
 
-<!-- 遮罩层 -->
+<!-- ===== 遮罩 ===== -->
 <div class="overlay" id="overlay"></div>
-
 <div id="toastMessage" class="toast-message"></div>
 
 <script>
   (function() {
-    const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    'use strict';
+
+    const MONTHS = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let notes = {};
-    let expandedTextarea = null; // 当前放大的编辑框
+    let expandedTextarea = null;
 
-    const tabsContainer = document.getElementById('tabsContainer');
-    const gridContainer = document.getElementById('calendarGrid');
+    const grid = document.getElementById('calendarGrid');
+    const tabs = document.getElementById('tabsContainer');
     const yearDisplay = document.getElementById('yearDisplay');
-    const gistTokenInput = document.getElementById('gistTokenInput');
-    const gistIdInput = document.getElementById('gistIdInput');
-    const gistFilenameInput = document.getElementById('gistFilenameInput');
-    const toastEl = document.getElementById('toastMessage');
-    const prevYearBtn = document.getElementById('prevYearBtn');
-    const nextYearBtn = document.getElementById('nextYearBtn');
     const overlay = document.getElementById('overlay');
+    const toast = document.getElementById('toastMessage');
 
-    // ---------- 辅助 ----------
-    function formatDateKey(year, month, day) {
-      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    }
+    const gistToken = document.getElementById('gistTokenInput');
+    const gistId = document.getElementById('gistIdInput');
+    const gistFile = document.getElementById('gistFilenameInput');
 
-    function loadNotesFromStorage() {
+    function fmt(y,m,d) { return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+
+    function loadStorage() {
       try {
-        const stored = localStorage.getItem('calendar_notes_v1');
-        if (stored) {
-          notes = JSON.parse(stored);
-          if (typeof notes !== 'object' || Array.isArray(notes)) notes = {};
-        }
-      } catch (e) { notes = {}; }
+        const s = localStorage.getItem('calendar_notes_v1');
+        if (s) { notes = JSON.parse(s); if (typeof notes !== 'object' || Array.isArray(notes)) notes = {}; }
+      } catch(e){ notes = {}; }
+    }
+    function saveStorage() {
+      try { localStorage.setItem('calendar_notes_v1', JSON.stringify(notes)); } catch(e){}
     }
 
-    function saveNotesToStorage() {
-      try {
-        localStorage.setItem('calendar_notes_v1', JSON.stringify(notes));
-      } catch (e) {}
-    }
-
-    // ---------- Toast ----------
     let toastTimer = null;
-    function showToast(msg, type = 'info', duration = 2200) {
-      toastEl.textContent = msg;
-      toastEl.className = 'toast-message';
-      if (type === 'success') toastEl.classList.add('success');
-      if (type === 'error') toastEl.classList.add('error');
-      toastEl.classList.add('show');
+    function showToast(msg, type='', dur=2200) {
+      toast.textContent = msg;
+      toast.className = 'toast-message' + (type ? ' '+type : '');
+      toast.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toastEl.classList.remove('show');
-      }, duration);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), dur);
     }
 
-    // ---------- 编辑框放大/缩小 ----------
-    function expandTextarea(textarea) {
-      // 如果已经有放大的，先恢复
-      if (expandedTextarea && expandedTextarea !== textarea) {
-        collapseTextarea(expandedTextarea);
-      }
-
-      // 保存当前滚动位置
-      const scrollY = window.scrollY;
-
-      // 添加放大类
-      textarea.classList.add('expanded');
-      textarea.focus();
-      expandedTextarea = textarea;
+    // ===== 放大/缩小 =====
+    function expand(ta) {
+      if (expandedTextarea && expandedTextarea !== ta) collapse(expandedTextarea);
+      ta.classList.add('expanded');
+      ta.focus();
+      expandedTextarea = ta;
       overlay.classList.add('active');
-
-      // 阻止页面滚动
       document.body.style.overflow = 'hidden';
-
-      // 恢复滚动位置（防止跳动）
-      window.scrollTo(0, scrollY);
-
-      // 全选文本方便编辑
-      textarea.select();
+      ta.select();
     }
 
-    function collapseTextarea(textarea) {
-      if (!textarea) return;
-      textarea.classList.remove('expanded');
-      if (expandedTextarea === textarea) {
-        expandedTextarea = null;
-      }
+    function collapse(ta) {
+      if (!ta) return;
+      ta.classList.remove('expanded');
+      if (expandedTextarea === ta) expandedTextarea = null;
       overlay.classList.remove('active');
       document.body.style.overflow = '';
-      // 保存内容
-      const key = textarea.dataset.noteKey;
+      const key = ta.dataset.noteKey;
       if (key) {
-        const val = textarea.value;
-        if (val && val.trim() !== '') notes[key] = val.trim();
+        const v = ta.value;
+        if (v && v.trim()) notes[key] = v.trim();
         else delete notes[key];
-        saveNotesToStorage();
+        saveStorage();
       }
     }
 
     function collapseAll() {
-      if (expandedTextarea) {
-        collapseTextarea(expandedTextarea);
-      }
+      if (expandedTextarea) collapse(expandedTextarea);
       overlay.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    // ---------- 渲染日历 ----------
-    function renderCalendar(year, month) {
-      // 如果有放大的编辑框，先收起
-      collapseAll();
+    overlay.addEventListener('click', collapseAll);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') collapseAll(); });
 
-      gridContainer.innerHTML = '';
-      const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
-      weekDays.forEach(label => {
-        const div = document.createElement('div');
-        div.className = 'weekday-label';
-        div.textContent = label;
-        gridContainer.appendChild(div);
+    // ===== 渲染 =====
+    function render(year, month) {
+      collapseAll();
+      grid.innerHTML = '';
+      ['一','二','三','四','五','六','日'].forEach(l => {
+        const d = document.createElement('div');
+        d.className = 'weekday-label';
+        d.textContent = l;
+        grid.appendChild(d);
       });
 
-      const firstDay = new Date(year, month, 1);
-      let startDayOfWeek = firstDay.getDay();
-      let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const prevMonthDays = new Date(year, month, 0).getDate();
+      const first = new Date(year, month, 1);
+      let offset = (first.getDay() === 0) ? 6 : first.getDay() - 1;
+      const days = new Date(year, month+1, 0).getDate();
+      const prevDays = new Date(year, month, 0).getDate();
 
       const today = new Date();
-      const todayYear = today.getFullYear();
-      const todayMonth = today.getMonth();
-      const todayDate = today.getDate();
+      const ty = today.getFullYear(), tm = today.getMonth(), td = today.getDate();
 
-      const totalCells = 42;
-      for (let i = 0; i < totalCells; i++) {
-        let dayNumber, isOtherMonth = false, cellYear = year, cellMonth = month;
-
-        if (i < startOffset) {
-          const prevDay = prevMonthDays - startOffset + i + 1;
-          dayNumber = prevDay;
-          isOtherMonth = true;
-          if (month === 0) { cellYear = year - 1; cellMonth = 11; }
-          else { cellYear = year; cellMonth = month - 1; }
-        } else if (i >= startOffset + daysInMonth) {
-          const nextDay = i - (startOffset + daysInMonth) + 1;
-          dayNumber = nextDay;
-          isOtherMonth = true;
-          if (month === 11) { cellYear = year + 1; cellMonth = 0; }
-          else { cellYear = year; cellMonth = month + 1; }
+      for (let i=0; i<42; i++) {
+        let day, other=false, cy=year, cm=month;
+        if (i < offset) {
+          day = prevDays - offset + i + 1;
+          other = true;
+          if (month===0) { cy=year-1; cm=11; } else { cy=year; cm=month-1; }
+        } else if (i >= offset + days) {
+          day = i - (offset + days) + 1;
+          other = true;
+          if (month===11) { cy=year+1; cm=0; } else { cy=year; cm=month+1; }
         } else {
-          dayNumber = i - startOffset + 1;
-          cellYear = year;
-          cellMonth = month;
+          day = i - offset + 1;
+          cy=year; cm=month;
         }
 
         const cell = document.createElement('div');
-        cell.className = 'day-cell';
-        if (isOtherMonth) cell.classList.add('other-month');
+        cell.className = 'day-cell' + (other ? ' other-month' : '');
+        if (cy===ty && cm===tm && day===td) cell.classList.add('today');
 
-        if (cellYear === todayYear && cellMonth === todayMonth && dayNumber === todayDate) {
-          cell.classList.add('today');
-        }
+        const num = document.createElement('span');
+        num.className = 'day-number';
+        num.textContent = day;
+        cell.appendChild(num);
 
-        const numberSpan = document.createElement('span');
-        numberSpan.className = 'day-number';
-        numberSpan.textContent = dayNumber;
-        cell.appendChild(numberSpan);
+        const key = fmt(cy, cm, day);
+        const ta = document.createElement('textarea');
+        ta.className = 'day-note';
+        ta.placeholder = '点击放大...';
+        ta.dataset.noteKey = key;
+        if (notes[key]) ta.value = notes[key];
 
-        const textarea = document.createElement('textarea');
-        textarea.className = 'day-note';
-        textarea.placeholder = '点击放大编辑...';
-        const noteKey = formatDateKey(cellYear, cellMonth, dayNumber);
-        textarea.dataset.noteKey = noteKey;
-        if (notes[noteKey]) textarea.value = notes[noteKey];
-
-        // 点击编辑框 -> 放大
-        textarea.addEventListener('click', function(e) {
+        ta.addEventListener('click', e => {
           e.stopPropagation();
-          if (this.classList.contains('expanded')) return;
-          expandTextarea(this);
+          if (!ta.classList.contains('expanded')) expand(ta);
         });
 
-        // 输入时自动保存
-        textarea.addEventListener('input', function() {
-          const key = this.dataset.noteKey;
-          const val = this.value;
-          if (val && val.trim() !== '') notes[key] = val.trim();
-          else delete notes[key];
-          saveNotesToStorage();
+        ta.addEventListener('input', function() {
+          const k = this.dataset.noteKey;
+          const v = this.value;
+          if (v && v.trim()) notes[k] = v.trim();
+          else delete notes[k];
+          saveStorage();
         });
 
-        // 键盘 ESC 收起
-        textarea.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape' && this.classList.contains('expanded')) {
+        ta.addEventListener('keydown', e => {
+          if (e.key === 'Escape' && ta.classList.contains('expanded')) {
             e.preventDefault();
-            collapseTextarea(this);
+            collapse(ta);
           }
         });
 
-        cell.appendChild(textarea);
-
-        // 小提示：点击日期数字也可放大
-        numberSpan.style.cursor = 'pointer';
-        numberSpan.addEventListener('click', function(e) {
+        num.addEventListener('click', e => {
           e.stopPropagation();
-          const ta = this.parentElement.querySelector('.day-note');
-          if (ta && !ta.classList.contains('expanded')) {
-            expandTextarea(ta);
-          }
+          if (!ta.classList.contains('expanded')) expand(ta);
         });
 
-        gridContainer.appendChild(cell);
+        cell.appendChild(ta);
+        grid.appendChild(cell);
       }
       yearDisplay.textContent = year;
     }
 
-    // ---------- 点击空白处收起 ----------
-    overlay.addEventListener('click', function() {
-      collapseAll();
-    });
-
-    // 全局 ESC 键收起
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        collapseAll();
-      }
-    });
-
-    // 窗口 resize 时如果编辑框放大，保持位置 (不需要额外处理，fixed定位自适应)
-    // 但如果 resize 导致编辑框超出，不做额外处理
-
-    // ---------- 月份标签 ----------
+    // ===== 月份标签 =====
     function initTabs() {
-      tabsContainer.innerHTML = '';
-      MONTHS.forEach((name, index) => {
+      tabs.innerHTML = '';
+      MONTHS.forEach((name, idx) => {
         const btn = document.createElement('button');
-        btn.className = 'month-tab';
-        if (index === currentMonth) btn.classList.add('active');
+        btn.className = 'month-tab' + (idx===currentMonth ? ' active' : '');
         btn.textContent = name;
-        btn.dataset.monthIndex = index;
+        btn.dataset.idx = idx;
         btn.addEventListener('click', function() {
           collapseAll();
-          const monthIdx = parseInt(this.dataset.monthIndex, 10);
-          document.querySelectorAll('.month-tab').forEach(tab => tab.classList.remove('active'));
+          document.querySelectorAll('.month-tab').forEach(b => b.classList.remove('active'));
           this.classList.add('active');
-          currentMonth = monthIdx;
-          renderCalendar(currentYear, currentMonth);
+          currentMonth = parseInt(this.dataset.idx);
+          render(currentYear, currentMonth);
         });
-        tabsContainer.appendChild(btn);
+        tabs.appendChild(btn);
       });
     }
 
-    function switchMonth(monthIndex) {
-      if (monthIndex < 0 || monthIndex > 11) return;
-      currentMonth = monthIndex;
-      const tabs = document.querySelectorAll('.month-tab');
-      tabs.forEach((tab, idx) => {
-        tab.classList.toggle('active', idx === monthIndex);
-      });
-      renderCalendar(currentYear, currentMonth);
-    }
+    // ===== 年份 =====
+    document.getElementById('prevYearBtn').addEventListener('click', () => { collapseAll(); currentYear--; render(currentYear, currentMonth); });
+    document.getElementById('nextYearBtn').addEventListener('click', () => { collapseAll(); currentYear++; render(currentYear, currentMonth); });
 
-    // ---------- 年份切换 ----------
-    function changeYear(delta) {
-      collapseAll();
-      currentYear += delta;
-      renderCalendar(currentYear, currentMonth);
-    }
-
-    // ---------- Gist 操作 ----------
-    async function saveToGist() {
-      const token = gistTokenInput.value.trim();
-      if (!token) {
-        showToast('⚠️ 请先输入 GitHub Token', 'error', 2000);
-        return;
-      }
-      const gistId = gistIdInput.value.trim();
-      if (!gistId) {
-        showToast('⚠️ 请先输入 Gist ID', 'error', 2000);
-        return;
-      }
-      const filename = gistFilenameInput.value.trim() || 'calendar_notes.json';
-
+    // ===== Gist =====
+    async function saveGist() {
+      const token = gistToken.value.trim();
+      if (!token) return showToast('⚠️ 请输入 Token', 'error');
+      const id = gistId.value.trim();
+      if (!id) return showToast('⚠️ 请输入 Gist ID', 'error');
+      const file = gistFile.value.trim() || 'calendar_notes.json';
       localStorage.setItem('github_gist_token', token);
-      localStorage.setItem('gist_id_last', gistId);
-
-      const payload = {
-        files: {
-          [filename]: {
-            content: JSON.stringify(notes, null, 2)
-          }
-        }
-      };
+      localStorage.setItem('gist_id_last', id);
 
       try {
-        const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+        const r = await fetch(`https://api.github.com/gists/${id}`, {
           method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: { [file]: { content: JSON.stringify(notes, null, 2) } } })
         });
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.message || '保存失败');
-        }
-        showToast('✅ 更新成功！已保存到 Gist', 'success', 2000);
-      } catch (e) {
-        showToast('❌ 保存失败: ' + e.message, 'error', 3000);
-        console.error(e);
-      }
+        if (!r.ok) { const e = await r.json(); throw new Error(e.message || '失败'); }
+        showToast('✅ 更新成功！已保存到 Gist', 'success');
+      } catch(e) { showToast('❌ 保存失败: '+e.message, 'error', 3000); }
     }
 
-    async function loadFromGist() {
-      const token = gistTokenInput.value.trim();
-      if (!token) {
-        showToast('⚠️ 请先输入 GitHub Token', 'error', 2000);
-        return;
-      }
-      const gistId = gistIdInput.value.trim();
-      if (!gistId) {
-        showToast('⚠️ 请先输入 Gist ID', 'error', 2000);
-        return;
-      }
-      const filename = gistFilenameInput.value.trim() || 'calendar_notes.json';
-
+    async function loadGist() {
+      const token = gistToken.value.trim();
+      if (!token) return showToast('⚠️ 请输入 Token', 'error');
+      const id = gistId.value.trim();
+      if (!id) return showToast('⚠️ 请输入 Gist ID', 'error');
+      const file = gistFile.value.trim() || 'calendar_notes.json';
       localStorage.setItem('github_gist_token', token);
-      localStorage.setItem('gist_id_last', gistId);
+      localStorage.setItem('gist_id_last', id);
 
       try {
-        const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-          }
+        const r = await fetch(`https://api.github.com/gists/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
         });
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.message || '加载失败');
-        }
-        const data = await resp.json();
-        const fileContent = data.files[filename]?.content;
-        if (!fileContent) {
-          showToast('⚠️ 未找到文件: ' + filename, 'error', 2500);
-          return;
-        }
-        const parsed = JSON.parse(fileContent);
+        if (!r.ok) { const e = await r.json(); throw new Error(e.message || '加载失败'); }
+        const data = await r.json();
+        const content = data.files[file]?.content;
+        if (!content) return showToast('⚠️ 未找到文件: '+file, 'error');
+        const parsed = JSON.parse(content);
         if (typeof parsed === 'object' && !Array.isArray(parsed)) {
           notes = parsed;
-          saveNotesToStorage();
-          renderCalendar(currentYear, currentMonth);
-          showToast('✅ 已从 Gist 加载数据', 'success', 1800);
-        } else {
-          throw new Error('数据格式无效');
-        }
-      } catch (e) {
-        showToast('❌ 加载失败: ' + e.message, 'error', 3000);
-        console.error(e);
-      }
+          saveStorage();
+          render(currentYear, currentMonth);
+          showToast('✅ 已从 Gist 加载', 'success');
+        } else throw new Error('数据格式无效');
+      } catch(e) { showToast('❌ 加载失败: '+e.message, 'error', 3000); }
     }
 
-    // ---------- JSON 导入导出 ----------
     function exportJSON() {
-      const dataStr = JSON.stringify(notes, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
-      a.href = url;
+      a.href = URL.createObjectURL(blob);
       a.download = 'calendar_notes.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('📥 导出 JSON 成功', 'success', 1500);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('📥 导出成功', 'success');
     }
 
     function importJSON() {
-      collapseAll();
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'application/json';
-      input.onchange = (e) => {
+      input.onchange = e => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = ev => {
           try {
-            const content = ev.target.result;
-            const parsed = JSON.parse(content);
+            const parsed = JSON.parse(ev.target.result);
             if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-              notes = parsed;
-              saveNotesToStorage();
-              renderCalendar(currentYear, currentMonth);
-              showToast('✅ 导入 JSON 成功', 'success', 1800);
-            } else {
-              showToast('❌ 无效的 JSON 格式', 'error', 2000);
-            }
-          } catch (err) {
-            showToast('❌ 解析失败: ' + err.message, 'error', 2500);
-          }
+              notes = parsed; saveStorage(); render(currentYear, currentMonth);
+              showToast('✅ 导入成功', 'success');
+            } else showToast('❌ 无效格式', 'error');
+          } catch(err) { showToast('❌ 解析失败: '+err.message, 'error', 2500); }
         };
         reader.readAsText(file);
       };
       input.click();
     }
 
-    // ---------- 初始化 ----------
-    function init() {
-      loadNotesFromStorage();
+    document.getElementById('saveToGistBtn').addEventListener('click', saveGist);
+    document.getElementById('loadFromGistBtn').addEventListener('click', loadGist);
+    document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
+    document.getElementById('importJsonBtn').addEventListener('click', importJSON);
 
-      const now = new Date();
-      currentYear = now.getFullYear();
-      currentMonth = now.getMonth();
+    // ===== 恢复存储 =====
+    const savedToken = localStorage.getItem('github_gist_token');
+    if (savedToken) gistToken.value = savedToken;
+    const savedId = localStorage.getItem('gist_id_last');
+    if (savedId) gistId.value = savedId;
 
-      initTabs();
-      renderCalendar(currentYear, currentMonth);
-
-      document.getElementById('saveToGistBtn').addEventListener('click', saveToGist);
-      document.getElementById('loadFromGistBtn').addEventListener('click', loadFromGist);
-      document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
-      document.getElementById('importJsonBtn').addEventListener('click', importJSON);
-
-      prevYearBtn.addEventListener('click', () => changeYear(-1));
-      nextYearBtn.addEventListener('click', () => changeYear(1));
-
-      const savedToken = localStorage.getItem('github_gist_token');
-      if (savedToken) gistTokenInput.value = savedToken;
-      const savedGistId = localStorage.getItem('gist_id_last');
-      if (savedGistId) gistIdInput.value = savedGistId;
-    }
-
-    init();
+    // ===== 启动 =====
+    loadStorage();
+    const now = new Date();
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth();
+    initTabs();
+    render(currentYear, currentMonth);
   })();
 </script>
 </body>
