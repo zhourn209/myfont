@@ -68,7 +68,6 @@
       border: 1px solid #d9e2ef;
     }
 
-    /* GitHub 控制区 - 改进 */
     .github-controls {
       background: #f8fafc;
       border-radius: 20px;
@@ -278,6 +277,7 @@
       width: fit-content;
       padding: 0 4px;
       border-radius: 8px;
+      cursor: pointer;
     }
 
     .day-cell.other-month .day-number {
@@ -314,6 +314,7 @@
       transition: background 0.1s;
       outline: none;
       overflow-y: auto;
+      cursor: pointer;
     }
 
     .day-note:focus {
@@ -325,6 +326,48 @@
       color: #b9c7dd;
       font-size: 0.7rem;
       opacity: 0.6;
+    }
+
+    /* ===== 编辑框放大 - 使用独立的 modal 层 ===== */
+    .note-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .note-modal.active {
+      display: flex;
+    }
+
+    .note-modal textarea {
+      width: 100%;
+      max-width: 600px;
+      height: 60vh;
+      max-height: 500px;
+      padding: 24px 28px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      line-height: 1.8;
+      border: none;
+      border-radius: 24px;
+      background: white;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      outline: none;
+      resize: none;
+      overflow-y: auto;
+    }
+
+    .note-modal textarea:focus {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8;
     }
 
     .day-cell.empty {
@@ -354,7 +397,6 @@
       border-radius: 30px;
     }
 
-    /* Toast 消息 - 增强 */
     .toast-message {
       position: fixed;
       bottom: 30px;
@@ -369,7 +411,7 @@
       opacity: 0;
       transition: opacity 0.25s;
       pointer-events: none;
-      z-index: 999;
+      z-index: 99999;
       font-weight: 500;
     }
 
@@ -385,7 +427,6 @@
       opacity: 1;
     }
 
-    /* 年份导航 */
     .year-nav {
       display: flex;
       align-items: center;
@@ -424,7 +465,6 @@
     </div>
   </div>
 
-  <!-- GitHub Gist 控制区 - 增加 Token 输入框 -->
   <div class="github-controls">
     <div class="field-group">
       <label>🔑 Token</label>
@@ -459,23 +499,26 @@
   </div>
 
   <div class="footer-tip">
-    <span>✏️ 点击日期格记录 · 自动保存本地</span>
+    <span>✏️ 点击日期格放大编辑 · 点击空白处恢复</span>
     <span>📦 支持 Gist 同步 / JSON 导入导出</span>
   </div>
 </div>
 
-<!-- Toast 消息 -->
+<!-- 独立放大编辑弹窗 -->
+<div class="note-modal" id="noteModal">
+  <textarea id="modalTextarea" placeholder="在这里编辑..."></textarea>
+</div>
+
 <div id="toastMessage" class="toast-message"></div>
 
 <script>
   (function() {
-    // ---------- 核心状态 ----------
     const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let notes = {};
+    let activeNoteKey = null;
 
-    // DOM 引用
     const tabsContainer = document.getElementById('tabsContainer');
     const gridContainer = document.getElementById('calendarGrid');
     const yearDisplay = document.getElementById('yearDisplay');
@@ -486,7 +529,10 @@
     const prevYearBtn = document.getElementById('prevYearBtn');
     const nextYearBtn = document.getElementById('nextYearBtn');
 
-    // ---------- 辅助 ----------
+    // Modal 元素
+    const modal = document.getElementById('noteModal');
+    const modalTextarea = document.getElementById('modalTextarea');
+
     function formatDateKey(year, month, day) {
       return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
@@ -507,38 +553,59 @@
       } catch (e) {}
     }
 
-    function getNote(year, month, day) {
-      const key = formatDateKey(year, month, day);
-      return notes[key] || '';
-    }
-
-    function setNote(year, month, day, text) {
-      const key = formatDateKey(year, month, day);
-      if (text && text.trim() !== '') {
-        notes[key] = text.trim();
-      } else {
-        delete notes[key];
-      }
-      saveNotesToStorage();
-    }
-
-    // ---------- Toast ----------
-    let toastTimer = null;
     function showToast(msg, type = 'info', duration = 2200) {
       toastEl.textContent = msg;
       toastEl.className = 'toast-message';
       if (type === 'success') toastEl.classList.add('success');
       if (type === 'error') toastEl.classList.add('error');
       toastEl.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
+      clearTimeout(toastEl._timer);
+      toastEl._timer = setTimeout(() => {
         toastEl.classList.remove('show');
       }, duration);
     }
 
-    // ---------- 渲染日历 ----------
+    // ===== 打开放大编辑 =====
+    function openNoteEditor(key, currentText) {
+      activeNoteKey = key;
+      modalTextarea.value = currentText || '';
+      modal.classList.add('active');
+      modalTextarea.focus();
+      modalTextarea.select();
+    }
+
+    function closeNoteEditor(save = true) {
+      if (save && activeNoteKey) {
+        const val = modalTextarea.value;
+        if (val && val.trim() !== '') {
+          notes[activeNoteKey] = val.trim();
+        } else {
+          delete notes[activeNoteKey];
+        }
+        saveNotesToStorage();
+        // 刷新日历显示
+        renderCalendar(currentYear, currentMonth);
+      }
+      modal.classList.remove('active');
+      activeNoteKey = null;
+    }
+
+    // 点击模态背景关闭
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeNoteEditor(true);
+      }
+    });
+
+    // ESC 关闭
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeNoteEditor(true);
+      }
+    });
+
+    // ===== 渲染日历 =====
     function renderCalendar(year, month) {
-      const weekLabels = gridContainer.querySelectorAll('.weekday-label');
       gridContainer.innerHTML = '';
       const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
       weekDays.forEach(label => {
@@ -594,23 +661,36 @@
         numberSpan.textContent = dayNumber;
         cell.appendChild(numberSpan);
 
+        const noteKey = formatDateKey(cellYear, cellMonth, dayNumber);
         const textarea = document.createElement('textarea');
         textarea.className = 'day-note';
-        textarea.placeholder = '✏️ 记事';
-        const noteKey = formatDateKey(cellYear, cellMonth, dayNumber);
+        textarea.placeholder = '点击放大编辑...';
+        textarea.dataset.noteKey = noteKey;
         if (notes[noteKey]) textarea.value = notes[noteKey];
 
-        textarea.addEventListener('input', function() {
+        // 点击编辑框 -> 打开放大模态
+        textarea.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const key = this.dataset.noteKey;
           const val = this.value;
-          const key = formatDateKey(cellYear, cellMonth, dayNumber);
-          if (val && val.trim() !== '') notes[key] = val.trim();
-          else delete notes[key];
-          saveNotesToStorage();
+          openNoteEditor(key, val);
         });
 
-        textarea.addEventListener('blur', function() {
+        // 点击日期数字也触发放大
+        numberSpan.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const ta = this.parentElement.querySelector('.day-note');
+          if (ta) {
+            const key = ta.dataset.noteKey;
+            const val = ta.value;
+            openNoteEditor(key, val);
+          }
+        });
+
+        // 普通输入也保存（实时保存）
+        textarea.addEventListener('input', function() {
+          const key = this.dataset.noteKey;
           const val = this.value;
-          const key = formatDateKey(cellYear, cellMonth, dayNumber);
           if (val && val.trim() !== '') notes[key] = val.trim();
           else delete notes[key];
           saveNotesToStorage();
@@ -622,7 +702,7 @@
       yearDisplay.textContent = year;
     }
 
-    // ---------- 月份标签 ----------
+    // ===== 月份标签 =====
     function initTabs() {
       tabsContainer.innerHTML = '';
       MONTHS.forEach((name, index) => {
@@ -632,6 +712,7 @@
         btn.textContent = name;
         btn.dataset.monthIndex = index;
         btn.addEventListener('click', function() {
+          if (modal.classList.contains('active')) closeNoteEditor(true);
           const monthIdx = parseInt(this.dataset.monthIndex, 10);
           document.querySelectorAll('.month-tab').forEach(tab => tab.classList.remove('active'));
           this.classList.add('active');
@@ -642,39 +723,20 @@
       });
     }
 
-    function switchMonth(monthIndex) {
-      if (monthIndex < 0 || monthIndex > 11) return;
-      currentMonth = monthIndex;
-      const tabs = document.querySelectorAll('.month-tab');
-      tabs.forEach((tab, idx) => {
-        tab.classList.toggle('active', idx === monthIndex);
-      });
-      renderCalendar(currentYear, currentMonth);
-    }
-
-    // ---------- 年份切换 ----------
     function changeYear(delta) {
+      if (modal.classList.contains('active')) closeNoteEditor(true);
       currentYear += delta;
-      // 确保当前月份有效（如果当前是2月，但新年份有2月，没问题）
       renderCalendar(currentYear, currentMonth);
-      // 更新标签页状态不变
     }
 
-    // ---------- Gist 操作 ----------
+    // ===== Gist 操作 =====
     async function saveToGist() {
       const token = gistTokenInput.value.trim();
-      if (!token) {
-        showToast('⚠️ 请先输入 GitHub Token', 'error', 2000);
-        return;
-      }
+      if (!token) { showToast('⚠️ 请先输入 GitHub Token', 'error', 2000); return; }
       const gistId = gistIdInput.value.trim();
-      if (!gistId) {
-        showToast('⚠️ 请先输入 Gist ID', 'error', 2000);
-        return;
-      }
+      if (!gistId) { showToast('⚠️ 请先输入 Gist ID', 'error', 2000); return; }
       const filename = gistFilenameInput.value.trim() || 'calendar_notes.json';
 
-      // 保存 token 到 localStorage 方便下次
       localStorage.setItem('github_gist_token', token);
       localStorage.setItem('gist_id_last', gistId);
 
@@ -709,15 +771,9 @@
 
     async function loadFromGist() {
       const token = gistTokenInput.value.trim();
-      if (!token) {
-        showToast('⚠️ 请先输入 GitHub Token', 'error', 2000);
-        return;
-      }
+      if (!token) { showToast('⚠️ 请先输入 GitHub Token', 'error', 2000); return; }
       const gistId = gistIdInput.value.trim();
-      if (!gistId) {
-        showToast('⚠️ 请先输入 Gist ID', 'error', 2000);
-        return;
-      }
+      if (!gistId) { showToast('⚠️ 请先输入 Gist ID', 'error', 2000); return; }
       const filename = gistFilenameInput.value.trim() || 'calendar_notes.json';
 
       localStorage.setItem('github_gist_token', token);
@@ -755,7 +811,6 @@
       }
     }
 
-    // ---------- JSON 导入导出 ----------
     function exportJSON() {
       const dataStr = JSON.stringify(notes, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
@@ -771,6 +826,7 @@
     }
 
     function importJSON() {
+      if (modal.classList.contains('active')) closeNoteEditor(true);
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'application/json';
@@ -799,7 +855,7 @@
       input.click();
     }
 
-    // ---------- 初始化 ----------
+    // ===== 初始化 =====
     function init() {
       loadNotesFromStorage();
 
@@ -810,17 +866,14 @@
       initTabs();
       renderCalendar(currentYear, currentMonth);
 
-      // 绑定按钮事件
       document.getElementById('saveToGistBtn').addEventListener('click', saveToGist);
       document.getElementById('loadFromGistBtn').addEventListener('click', loadFromGist);
       document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
       document.getElementById('importJsonBtn').addEventListener('click', importJSON);
 
-      // 年份切换
       prevYearBtn.addEventListener('click', () => changeYear(-1));
       nextYearBtn.addEventListener('click', () => changeYear(1));
 
-      // 从 localStorage 恢复
       const savedToken = localStorage.getItem('github_gist_token');
       if (savedToken) gistTokenInput.value = savedToken;
       const savedGistId = localStorage.getItem('gist_id_last');
