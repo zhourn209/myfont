@@ -30,6 +30,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
       padding: 24px 20px 28px;
       transition: padding 0.2s;
+      position: relative;
     }
 
     .app-header {
@@ -68,7 +69,6 @@
       border: 1px solid #d9e2ef;
     }
 
-    /* GitHub 控制区 - 改进 */
     .github-controls {
       background: #f8fafc;
       border-radius: 20px;
@@ -86,7 +86,7 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      flex: 1 1 180px;
+      flex: 1 1 160px;
     }
 
     .github-controls label {
@@ -94,13 +94,13 @@
       font-weight: 500;
       color: #334155;
       white-space: nowrap;
-      min-width: 70px;
+      min-width: 60px;
     }
 
     .github-controls input[type="text"],
     .github-controls input[type="password"] {
       flex: 1;
-      min-width: 120px;
+      min-width: 100px;
       padding: 8px 14px;
       border: 1px solid #d1d9e6;
       border-radius: 40px;
@@ -314,6 +314,7 @@
       transition: background 0.1s;
       outline: none;
       overflow-y: auto;
+      cursor: pointer;
     }
 
     .day-note:focus {
@@ -325,6 +326,78 @@
       color: #b9c7dd;
       font-size: 0.7rem;
       opacity: 0.6;
+    }
+
+    /* ===== 编辑框放大模式 ===== */
+    .day-note.expanded {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 600px;
+      height: 60vh;
+      max-height: 400px;
+      font-size: 1.1rem;
+      padding: 20px 24px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8;
+      z-index: 1000;
+      resize: none;
+      line-height: 1.8;
+      cursor: default;
+      border: none;
+      outline: none;
+      overflow-y: auto;
+      transition: none;
+    }
+
+    .day-note.expanded::placeholder {
+      font-size: 1rem;
+      opacity: 0.4;
+    }
+
+    /* 放大时的遮罩层 */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    .day-note.expanded:focus {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 4px #818cf8;
+      background: white;
+    }
+
+    .day-cell .day-note.expanded {
+      /* 确保在固定定位时不受父容器影响 */
+      position: fixed;
+    }
+
+    /* 放大模式下的提示 */
+    .expand-hint {
+      display: none;
+      font-size: 0.65rem;
+      color: #94a3b8;
+      text-align: center;
+      padding: 2px 0;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .day-note:not(.expanded) + .expand-hint {
+      display: block;
     }
 
     .day-cell.empty {
@@ -354,7 +427,6 @@
       border-radius: 30px;
     }
 
-    /* Toast 消息 - 增强 */
     .toast-message {
       position: fixed;
       bottom: 30px;
@@ -385,7 +457,6 @@
       opacity: 1;
     }
 
-    /* 年份导航 */
     .year-nav {
       display: flex;
       align-items: center;
@@ -424,7 +495,6 @@
     </div>
   </div>
 
-  <!-- GitHub Gist 控制区 - 增加 Token 输入框 -->
   <div class="github-controls">
     <div class="field-group">
       <label>🔑 Token</label>
@@ -459,23 +529,24 @@
   </div>
 
   <div class="footer-tip">
-    <span>✏️ 点击日期格记录 · 自动保存本地</span>
+    <span>✏️ 点击日期格放大编辑 · 点击空白处恢复</span>
     <span>📦 支持 Gist 同步 / JSON 导入导出</span>
   </div>
 </div>
 
-<!-- Toast 消息 -->
+<!-- 遮罩层 -->
+<div class="overlay" id="overlay"></div>
+
 <div id="toastMessage" class="toast-message"></div>
 
 <script>
   (function() {
-    // ---------- 核心状态 ----------
     const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let notes = {};
+    let expandedTextarea = null; // 当前放大的编辑框
 
-    // DOM 引用
     const tabsContainer = document.getElementById('tabsContainer');
     const gridContainer = document.getElementById('calendarGrid');
     const yearDisplay = document.getElementById('yearDisplay');
@@ -485,6 +556,7 @@
     const toastEl = document.getElementById('toastMessage');
     const prevYearBtn = document.getElementById('prevYearBtn');
     const nextYearBtn = document.getElementById('nextYearBtn');
+    const overlay = document.getElementById('overlay');
 
     // ---------- 辅助 ----------
     function formatDateKey(year, month, day) {
@@ -507,21 +579,6 @@
       } catch (e) {}
     }
 
-    function getNote(year, month, day) {
-      const key = formatDateKey(year, month, day);
-      return notes[key] || '';
-    }
-
-    function setNote(year, month, day, text) {
-      const key = formatDateKey(year, month, day);
-      if (text && text.trim() !== '') {
-        notes[key] = text.trim();
-      } else {
-        delete notes[key];
-      }
-      saveNotesToStorage();
-    }
-
     // ---------- Toast ----------
     let toastTimer = null;
     function showToast(msg, type = 'info', duration = 2200) {
@@ -536,9 +593,63 @@
       }, duration);
     }
 
+    // ---------- 编辑框放大/缩小 ----------
+    function expandTextarea(textarea) {
+      // 如果已经有放大的，先恢复
+      if (expandedTextarea && expandedTextarea !== textarea) {
+        collapseTextarea(expandedTextarea);
+      }
+
+      // 保存当前滚动位置
+      const scrollY = window.scrollY;
+
+      // 添加放大类
+      textarea.classList.add('expanded');
+      textarea.focus();
+      expandedTextarea = textarea;
+      overlay.classList.add('active');
+
+      // 阻止页面滚动
+      document.body.style.overflow = 'hidden';
+
+      // 恢复滚动位置（防止跳动）
+      window.scrollTo(0, scrollY);
+
+      // 全选文本方便编辑
+      textarea.select();
+    }
+
+    function collapseTextarea(textarea) {
+      if (!textarea) return;
+      textarea.classList.remove('expanded');
+      if (expandedTextarea === textarea) {
+        expandedTextarea = null;
+      }
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+      // 保存内容
+      const key = textarea.dataset.noteKey;
+      if (key) {
+        const val = textarea.value;
+        if (val && val.trim() !== '') notes[key] = val.trim();
+        else delete notes[key];
+        saveNotesToStorage();
+      }
+    }
+
+    function collapseAll() {
+      if (expandedTextarea) {
+        collapseTextarea(expandedTextarea);
+      }
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
     // ---------- 渲染日历 ----------
     function renderCalendar(year, month) {
-      const weekLabels = gridContainer.querySelectorAll('.weekday-label');
+      // 如果有放大的编辑框，先收起
+      collapseAll();
+
       gridContainer.innerHTML = '';
       const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
       weekDays.forEach(label => {
@@ -596,31 +707,66 @@
 
         const textarea = document.createElement('textarea');
         textarea.className = 'day-note';
-        textarea.placeholder = '✏️ 记事';
+        textarea.placeholder = '点击放大编辑...';
         const noteKey = formatDateKey(cellYear, cellMonth, dayNumber);
+        textarea.dataset.noteKey = noteKey;
         if (notes[noteKey]) textarea.value = notes[noteKey];
 
+        // 点击编辑框 -> 放大
+        textarea.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (this.classList.contains('expanded')) return;
+          expandTextarea(this);
+        });
+
+        // 输入时自动保存
         textarea.addEventListener('input', function() {
+          const key = this.dataset.noteKey;
           const val = this.value;
-          const key = formatDateKey(cellYear, cellMonth, dayNumber);
           if (val && val.trim() !== '') notes[key] = val.trim();
           else delete notes[key];
           saveNotesToStorage();
         });
 
-        textarea.addEventListener('blur', function() {
-          const val = this.value;
-          const key = formatDateKey(cellYear, cellMonth, dayNumber);
-          if (val && val.trim() !== '') notes[key] = val.trim();
-          else delete notes[key];
-          saveNotesToStorage();
+        // 键盘 ESC 收起
+        textarea.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && this.classList.contains('expanded')) {
+            e.preventDefault();
+            collapseTextarea(this);
+          }
         });
 
         cell.appendChild(textarea);
+
+        // 小提示：点击日期数字也可放大
+        numberSpan.style.cursor = 'pointer';
+        numberSpan.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const ta = this.parentElement.querySelector('.day-note');
+          if (ta && !ta.classList.contains('expanded')) {
+            expandTextarea(ta);
+          }
+        });
+
         gridContainer.appendChild(cell);
       }
       yearDisplay.textContent = year;
     }
+
+    // ---------- 点击空白处收起 ----------
+    overlay.addEventListener('click', function() {
+      collapseAll();
+    });
+
+    // 全局 ESC 键收起
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        collapseAll();
+      }
+    });
+
+    // 窗口 resize 时如果编辑框放大，保持位置 (不需要额外处理，fixed定位自适应)
+    // 但如果 resize 导致编辑框超出，不做额外处理
 
     // ---------- 月份标签 ----------
     function initTabs() {
@@ -632,6 +778,7 @@
         btn.textContent = name;
         btn.dataset.monthIndex = index;
         btn.addEventListener('click', function() {
+          collapseAll();
           const monthIdx = parseInt(this.dataset.monthIndex, 10);
           document.querySelectorAll('.month-tab').forEach(tab => tab.classList.remove('active'));
           this.classList.add('active');
@@ -654,10 +801,9 @@
 
     // ---------- 年份切换 ----------
     function changeYear(delta) {
+      collapseAll();
       currentYear += delta;
-      // 确保当前月份有效（如果当前是2月，但新年份有2月，没问题）
       renderCalendar(currentYear, currentMonth);
-      // 更新标签页状态不变
     }
 
     // ---------- Gist 操作 ----------
@@ -674,7 +820,6 @@
       }
       const filename = gistFilenameInput.value.trim() || 'calendar_notes.json';
 
-      // 保存 token 到 localStorage 方便下次
       localStorage.setItem('github_gist_token', token);
       localStorage.setItem('gist_id_last', gistId);
 
@@ -771,6 +916,7 @@
     }
 
     function importJSON() {
+      collapseAll();
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'application/json';
@@ -810,17 +956,14 @@
       initTabs();
       renderCalendar(currentYear, currentMonth);
 
-      // 绑定按钮事件
       document.getElementById('saveToGistBtn').addEventListener('click', saveToGist);
       document.getElementById('loadFromGistBtn').addEventListener('click', loadFromGist);
       document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
       document.getElementById('importJsonBtn').addEventListener('click', importJSON);
 
-      // 年份切换
       prevYearBtn.addEventListener('click', () => changeYear(-1));
       nextYearBtn.addEventListener('click', () => changeYear(1));
 
-      // 从 localStorage 恢复
       const savedToken = localStorage.getItem('github_gist_token');
       if (savedToken) gistTokenInput.value = savedToken;
       const savedGistId = localStorage.getItem('gist_id_last');
