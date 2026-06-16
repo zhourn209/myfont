@@ -593,8 +593,8 @@
         function initYearSelector() {
             const select = document.getElementById('yearSelect');
             const currentY = new Date().getFullYear();
-            const startYear = currentY - 10;
-            const endYear = currentY + 10;
+            const startYear = currentY - 1;
+            const endYear = currentY + 30;
 
             for (let y = startYear; y <= endYear; y++) {
                 const option = document.createElement('option');
