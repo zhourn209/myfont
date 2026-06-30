@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能血压记录仪 - 紧凑版</title>
+    <title>智能血压记录仪 - 网格版</title>
     <style>
         * {
             font-family: 'Trebuchet MS', '微软雅黑', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -45,7 +45,7 @@
             border: 1px solid #cbd5e1;
             border-radius: 20px;
             font-size: 14px;
-            width: 200px;
+            width: 180px;
             font-family: inherit;
         }
         button {
@@ -101,74 +101,114 @@
             color: #1e3a5f;
         }
         
-        /* 标签页区域 - 紧凑设计，可滚动，默认显示最近两周 */
-        .tabs-header {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 6px;
+        /* 标签页区域 - 网格布局，右侧滚动条 */
+        .tabs-wrapper {
+            position: relative;
             background: white;
-            padding: 8px 12px;
             border-radius: 28px;
-            align-items: center;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            max-height: 48px;
-            min-height: 44px;
+            padding: 12px 16px 12px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            max-height: 280px;
+            overflow-y: auto;
+            overflow-x: hidden;
             scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 #e2e8f0;
+            scrollbar-color: #94a3b8 #e2e8f0;
         }
-        .tabs-header::-webkit-scrollbar {
-            height: 4px;
+        .tabs-wrapper::-webkit-scrollbar {
+            width: 6px;
         }
-        .tabs-header::-webkit-scrollbar-track {
+        .tabs-wrapper::-webkit-scrollbar-track {
             background: #e2e8f0;
             border-radius: 4px;
         }
-        .tabs-header::-webkit-scrollbar-thumb {
+        .tabs-wrapper::-webkit-scrollbar-thumb {
             background: #94a3b8;
             border-radius: 4px;
+        }
+        .tabs-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .tabs-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            align-content: start;
         }
         .tab-btn {
             background: #e2e8f0;
             color: #1e293b;
-            padding: 4px 14px;
-            border-radius: 40px;
-            font-size: 13px;
-            white-space: nowrap;
+            padding: 6px 8px;
+            border-radius: 20px;
+            font-size: 12px;
             cursor: pointer;
             font-family: inherit;
-            flex-shrink: 0;
             transition: 0.15s;
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: space-between;
+            white-space: nowrap;
+            min-width: 0;
+            gap: 2px;
         }
         .tab-btn.active {
             background: #0f3b5c;
             color: white;
         }
         .tab-btn .tab-date {
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+        }
+        .tab-btn .tab-count {
+            font-size: 9px;
+            opacity: 0.7;
+            background: rgba(0,0,0,0.08);
+            padding: 0 6px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .tab-btn.active .tab-count {
+            background: rgba(255,255,255,0.2);
         }
         .delete-tab-btn {
             background: none;
             color: #dc2626;
-            font-size: 14px;
+            font-size: 12px;
             padding: 0 2px;
-            margin-left: 2px;
             cursor: pointer;
             line-height: 1;
+            flex-shrink: 0;
+            opacity: 0.5;
         }
         .tab-btn.active .delete-tab-btn {
             color: #fca5a5;
+            opacity: 0.8;
         }
-        .tab-scroll-indicator {
-            font-size: 12px;
+        .delete-tab-btn:hover {
+            opacity: 1 !important;
+        }
+        .tab-btn:hover {
+            background: #cbd5e1;
+        }
+        .tab-btn.active:hover {
+            background: #1e4a6b;
+        }
+        .no-tabs-msg {
+            grid-column: 1 / -1;
+            text-align: center;
             color: #94a3b8;
-            padding: 0 4px;
-            flex-shrink: 0;
+            padding: 20px 0;
+            font-size: 14px;
+        }
+        .tabs-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 6px 4px 0 0;
+            font-size: 11px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 8px;
         }
         .record-card {
             background: white;
@@ -267,17 +307,20 @@
         }
         .export-group { display: flex; gap: 8px; flex-wrap: wrap; }
         .gist-download-btn { background: #2c6e2f; }
-        .tab-count-badge {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-left: 2px;
+
+        @media (max-width: 1200px) {
+            .tabs-grid { grid-template-columns: repeat(6, 1fr); }
         }
-        @media (max-width: 680px) {
+        @media (max-width: 900px) {
+            .tabs-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .tabs-grid { grid-template-columns: repeat(3, 1fr); }
             .add-form input, .add-form textarea { width: 100%; }
             .record-details { flex-direction: column; align-items: flex-start; }
             .standard-bar { flex-direction: column; gap: 8px; }
-            .tabs-header { max-height: 40px; min-height: 36px; padding: 4px 10px; }
-            .tab-btn { font-size: 12px; padding: 3px 10px; }
+            .tabs-wrapper { max-height: 200px; padding: 8px; }
+            .tab-btn { font-size: 11px; padding: 4px 6px; }
         }
     </style>
 </head>
@@ -286,8 +329,8 @@
     <!-- 第一行工具栏 -->
     <div class="toolbar">
         <div class="gist-config">
-            <input type="text" id="tokenInput" placeholder="GitHub Token" style="width:200px">
-            <input type="text" id="gistIdInput" placeholder="Gist ID" style="width:160px">
+            <input type="text" id="tokenInput" placeholder="GitHub Token" style="width:180px">
+            <input type="text" id="gistIdInput" placeholder="Gist ID" style="width:150px">
             <button id="testConnBtn">🔌 测试</button>
             <button id="saveGistBtn" class="primary">💾 保存</button>
             <button id="downloadGistBtn" class="gist-download-btn">⬇️ 下载</button>
@@ -310,9 +353,14 @@
     </div>
 
     <div class="main-panel">
-        <!-- 标签页：紧凑滚动，默认显示最近两周 -->
-        <div class="tabs-header" id="tabsContainer">
-            <!-- 由JS动态渲染 -->
+        <!-- 标签页：网格布局，右侧滚动条 -->
+        <div class="tabs-wrapper" id="tabsWrapper">
+            <div class="tabs-grid" id="tabsContainer">
+                <!-- 由JS动态渲染 -->
+            </div>
+            <div class="tabs-footer" id="tabsFooter">
+                <span id="tabInfo">共 0 个日期</span>
+            </div>
         </div>
         <div class="record-card">
             <div class="add-form">
@@ -349,6 +397,8 @@
     const importFileInput = document.getElementById('importFileInput');
     const statsPanel = document.getElementById('statsPanel');
     const tabsContainer = document.getElementById('tabsContainer');
+    const tabsWrapper = document.getElementById('tabsWrapper');
+    const tabInfo = document.getElementById('tabInfo');
     const recordsListDiv = document.getElementById('recordsList');
     const addRecordBtn = document.getElementById('addRecordBtn');
     const sysInput = document.getElementById('sysInput');
@@ -589,7 +639,7 @@
         renderTabs();
     }
 
-    // 核心：渲染紧凑标签页，自动滚动到最近两周范围
+    // 核心：渲染网格标签页
     function renderTabs() {
         const dates = Object.keys(masterData).sort();
         tabsContainer.innerHTML = '';
@@ -605,7 +655,11 @@
             tabDiv.className = `tab-btn ${activeDate === date ? 'active' : ''}`;
             tabDiv.dataset.date = date;
             const count = masterData[date] ? masterData[date].length : 0;
-            tabDiv.innerHTML = `<span class="tab-date">${date}</span><span class="tab-count-badge">(${count})</span><span class="delete-tab-btn" data-date="${date}">✕</span>`;
+            tabDiv.innerHTML = `
+                <span class="tab-date">${date}</span>
+                <span class="tab-count">${count}</span>
+                <span class="delete-tab-btn" data-date="${date}">✕</span>
+            `;
             tabDiv.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-tab-btn')) {
                     e.stopPropagation();
@@ -614,49 +668,20 @@
                     activeDate = date;
                     renderTabs();
                     renderCurrentTabRecords();
-                    // 滚动到可见区域
-                    const activeTab = tabsContainer.querySelector('.tab-btn.active');
-                    if (activeTab) {
-                        activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    }
                 }
             });
             tabsContainer.appendChild(tabDiv);
         });
 
-        // 自动滚动到最近两周的范围（即最后14个标签左右）
-        if (dates.length > 14) {
-            // 找到倒数第14个标签的位置
-            const targetIndex = Math.max(0, dates.length - 14);
-            const targetDate = dates[targetIndex];
-            const targetTab = tabsContainer.querySelector(`.tab-btn[data-date="${targetDate}"]`);
-            if (targetTab) {
-                // 延迟执行确保渲染完成
-                setTimeout(() => {
-                    targetTab.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
-                }, 50);
-            }
-        } else if (dates.length > 0) {
-            // 如果标签较少，滚动到最后一个（最新）
-            const lastDate = dates[dates.length - 1];
-            const lastTab = tabsContainer.querySelector(`.tab-btn[data-date="${lastDate}"]`);
-            if (lastTab) {
-                setTimeout(() => {
-                    lastTab.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' });
-                }, 50);
-            }
-        }
+        // 更新底部信息
+        tabInfo.textContent = `共 ${dates.length} 个日期`;
 
-        // 如果当前激活的标签不在可视区域，滚动到它
+        // 自动滚动到激活的标签位置（确保可见）
         const activeTab = tabsContainer.querySelector('.tab-btn.active');
         if (activeTab) {
-            const rect = activeTab.getBoundingClientRect();
-            const containerRect = tabsContainer.getBoundingClientRect();
-            if (rect.left < containerRect.left || rect.right > containerRect.right) {
-                setTimeout(() => {
-                    activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                }, 100);
-            }
+            setTimeout(() => {
+                activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }, 50);
         }
 
         renderCurrentTabRecords();
