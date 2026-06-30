@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>智能血压记录仪 - 全功能版</title>
+    <title>智能血压记录仪 - 紧凑版</title>
     <style>
         * {
-            box-sizing: border-box;
             font-family: 'Trebuchet MS', '微软雅黑', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            box-sizing: border-box;
         }
         body {
             background: #f0f4f8;
@@ -46,6 +46,7 @@
             border-radius: 20px;
             font-size: 14px;
             width: 200px;
+            font-family: inherit;
         }
         button {
             background: #1e293b;
@@ -57,6 +58,7 @@
             cursor: pointer;
             transition: 0.2s;
             font-size: 14px;
+            font-family: inherit;
         }
         button.primary { background: #0f3b5c; }
         button.success { background: #2c6e2f; }
@@ -69,10 +71,12 @@
             border-radius: 32px;
             font-weight: 600;
             font-size: 14px;
+            font-family: inherit;
+            white-space: nowrap;
         }
         .main-panel { display: flex; flex-direction: column; gap: 20px; }
         
-        /* 参考标准栏 - 固定在页面上端第二行 */
+        /* 参考标准栏 */
         .standard-bar {
             background: linear-gradient(135deg, #e0f2fe 0%, #fef9e3 100%);
             border-radius: 24px;
@@ -91,44 +95,80 @@
             padding: 6px 14px;
             border-radius: 40px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-family: inherit;
         }
         .standard-item strong {
             color: #1e3a5f;
         }
-        .badge-normal { color: #15803d; }
-        .badge-warning { color: #b45309; }
-        .badge-danger { color: #b91c1c; }
         
+        /* 标签页区域 - 紧凑设计，可滚动，默认显示最近两周 */
         .tabs-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-wrap: nowrap;
+            gap: 6px;
             background: white;
-            padding: 12px 16px;
+            padding: 8px 12px;
             border-radius: 28px;
             align-items: center;
             overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            max-height: 48px;
+            min-height: 44px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #e2e8f0;
+        }
+        .tabs-header::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tabs-header::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+        .tabs-header::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
         }
         .tab-btn {
             background: #e2e8f0;
             color: #1e293b;
-            padding: 6px 18px;
+            padding: 4px 14px;
             border-radius: 40px;
-            font-size: 14px;
+            font-size: 13px;
             white-space: nowrap;
             cursor: pointer;
+            font-family: inherit;
+            flex-shrink: 0;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         .tab-btn.active {
             background: #0f3b5c;
             color: white;
         }
+        .tab-btn .tab-date {
+            font-size: 12px;
+        }
         .delete-tab-btn {
             background: none;
             color: #dc2626;
-            font-size: 16px;
-            padding: 0 4px;
-            margin-left: 6px;
+            font-size: 14px;
+            padding: 0 2px;
+            margin-left: 2px;
             cursor: pointer;
+            line-height: 1;
+        }
+        .tab-btn.active .delete-tab-btn {
+            color: #fca5a5;
+        }
+        .tab-scroll-indicator {
+            font-size: 12px;
+            color: #94a3b8;
+            padding: 0 4px;
+            flex-shrink: 0;
         }
         .record-card {
             background: white;
@@ -150,6 +190,7 @@
             border: 1px solid #cbd5e1;
             border-radius: 20px;
             font-size: 14px;
+            font-family: inherit;
         }
         .add-form input { width: 110px; }
         .add-form textarea { width: 180px; resize: vertical; }
@@ -186,6 +227,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            font-family: inherit;
         }
         .record-field input, .record-field textarea {
             border: none;
@@ -208,6 +250,7 @@
             border-radius: 30px;
             font-size: 12px;
             cursor: pointer;
+            font-family: inherit;
         }
         .status-toast {
             position: fixed;
@@ -220,13 +263,21 @@
             font-size: 13px;
             z-index: 1000;
             transition: 0.2s;
+            font-family: inherit;
         }
-        .export-group { display: flex; gap: 8px; }
+        .export-group { display: flex; gap: 8px; flex-wrap: wrap; }
         .gist-download-btn { background: #2c6e2f; }
+        .tab-count-badge {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-left: 2px;
+        }
         @media (max-width: 680px) {
             .add-form input, .add-form textarea { width: 100%; }
             .record-details { flex-direction: column; align-items: flex-start; }
             .standard-bar { flex-direction: column; gap: 8px; }
+            .tabs-header { max-height: 40px; min-height: 36px; padding: 4px 10px; }
+            .tab-btn { font-size: 12px; padding: 3px 10px; }
         }
     </style>
 </head>
@@ -235,32 +286,34 @@
     <!-- 第一行工具栏 -->
     <div class="toolbar">
         <div class="gist-config">
-            <input type="text" id="tokenInput" placeholder="GitHub Token" style="width:220px">
-            <input type="text" id="gistIdInput" placeholder="Gist ID (可选)">
-            <button id="testConnBtn">🔌 测试连接</button>
-            <button id="saveGistBtn" class="primary">💾 保存到Gist</button>
-            <button id="downloadGistBtn" class="gist-download-btn">⬇️ 从Gist下载</button>
+            <input type="text" id="tokenInput" placeholder="GitHub Token" style="width:200px">
+            <input type="text" id="gistIdInput" placeholder="Gist ID" style="width:160px">
+            <button id="testConnBtn">🔌 测试</button>
+            <button id="saveGistBtn" class="primary">💾 保存</button>
+            <button id="downloadGistBtn" class="gist-download-btn">⬇️ 下载</button>
         </div>
         <div class="export-group">
-            <button id="exportCsvBtn" class="warning">📎 导出CSV</button>
-            <button id="exportJsonBtn" class="warning">📄 导出JSON</button>
-            <button id="uploadDataBtn">⬆️ 导入(JSON/CSV)</button>
+            <button id="exportCsvBtn" class="warning">📎 CSV</button>
+            <button id="exportJsonBtn" class="warning">📄 JSON</button>
+            <button id="uploadDataBtn">⬆️ 导入</button>
             <input type="file" id="importFileInput" accept=".json,.csv" style="display:none">
         </div>
-        <div class="stats" id="statsPanel">📊 总记录:0 | 今日:0</div>
+        <div class="stats" id="statsPanel">📊 总:0 | 今日:0</div>
     </div>
 
-    <!-- 第二行：统一的参考标准栏 (所有标准集中展示) -->
+    <!-- 第二行：统一的参考标准栏 -->
     <div class="standard-bar" id="standardBar">
-        <div class="standard-item"><strong>🩺 血压标准</strong> 正常&lt;120/&lt;80 ｜ 正常高值120-139/80-89 ｜ 1级140-159/90-99 ｜ 2级≥160/≥100<br>
-56–60岁建议：收缩压110-135 / 舒张压70-85 ｜低血压：收缩压<90 和（或）舒张压<60  </div>
-        <div class="standard-item"><strong>❤️ 心率标准</strong> 正常静息 60-100 bpm | 56岁以上男性 60-90 bpm</div>
-        <div class="standard-item"><strong>📉 脉压差</strong> 正常 30-50 mmHg | &lt;30偏低 | &gt;50偏高</div>
-        <div class="standard-item"><strong>🔄 双臂差&lt;10正常 ｜ 10-15轻度 ｜ ≥15需关注</div>
+        <div class="standard-item"><strong>🩺 血压</strong> 正常 &lt;120/80 | 1级 130-139/80-89 | 2级 ≥140/90</div>
+        <div class="standard-item"><strong>❤️ 心率</strong> 60-100 bpm | 56岁↑男 60-90</div>
+        <div class="standard-item"><strong>📉 脉压差</strong> 正常 30-50 | &lt;30偏低 | &gt;50偏高</div>
+        <div class="standard-item"><strong>🔄 双臂差</strong> 收缩压差 &gt;10 mmHg 需注意</div>
     </div>
 
     <div class="main-panel">
-        <div class="tabs-header" id="tabsContainer"></div>
+        <!-- 标签页：紧凑滚动，默认显示最近两周 -->
+        <div class="tabs-header" id="tabsContainer">
+            <!-- 由JS动态渲染 -->
+        </div>
         <div class="record-card">
             <div class="add-form">
                 <input type="number" id="sysInput" placeholder="收缩压" step="1" value="120">
@@ -278,11 +331,10 @@
 
 <script>
     // ---------- 数据模型 ----------
-    let masterData = {};       // { "2026-04-06": [ { id, time, sys, dia, hr, pulsePressure, remark } ] }
+    let masterData = {};
     let activeDate = null;
     let gistToken = "", gistId = "";
     let autoSaveTimer = null;
-    let lastDataChangeTime = 0;
     const AUTO_SAVE_DELAY = 30000;
 
     // DOM 元素
@@ -326,19 +378,15 @@
         }
     }
 
-    // 触发数据变更，重置自动上传定时器（30秒无动作自动上传）
     function markDataChanged() {
-        lastDataChangeTime = Date.now();
         resetAutoUploadTimer();
     }
 
     function resetAutoUploadTimer() {
         if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        // 仅当配置了有效的token时，自动上传才有意义
         const token = gistToken || tokenInput.value.trim();
         if (token && token.length > 0) {
             autoSaveTimer = setTimeout(() => {
-                // 再次检查是否有token，并且有gistId（或允许新建）
                 const currentToken = gistToken || tokenInput.value.trim();
                 if (currentToken) {
                     withProgress("自动上传Gist", () => uploadToGistCore(false)).catch(e => console.warn("自动上传失败:", e));
@@ -366,7 +414,6 @@
         return "00:00:00";
     }
 
-    // 转换旧格式记录
     function convertLegacyRecord(rec, dateKey) {
         let sys = null, dia = null, hr = null;
         if (rec.bp && typeof rec.bp === 'string') {
@@ -483,7 +530,7 @@
         sysInput.value = "120";
         diaInput.value = "80";
         hrInput.value = "72";
-        markDataChanged();  // 触发自动上传计时
+        markDataChanged();
         showStatus("记录已添加");
     }
 
@@ -542,6 +589,7 @@
         renderTabs();
     }
 
+    // 核心：渲染紧凑标签页，自动滚动到最近两周范围
     function renderTabs() {
         const dates = Object.keys(masterData).sort();
         tabsContainer.innerHTML = '';
@@ -551,12 +599,13 @@
             activeDate = today;
             dates.push(today);
         }
+        // 为每个日期创建标签
         dates.forEach(date => {
             const tabDiv = document.createElement('div');
             tabDiv.className = `tab-btn ${activeDate === date ? 'active' : ''}`;
-            tabDiv.style.display = 'inline-flex';
-            tabDiv.style.alignItems = 'center';
-            tabDiv.innerHTML = `${date} <span class="delete-tab-btn" data-date="${date}" style="margin-left:6px;">🗑️</span>`;
+            tabDiv.dataset.date = date;
+            const count = masterData[date] ? masterData[date].length : 0;
+            tabDiv.innerHTML = `<span class="tab-date">${date}</span><span class="tab-count-badge">(${count})</span><span class="delete-tab-btn" data-date="${date}">✕</span>`;
             tabDiv.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-tab-btn')) {
                     e.stopPropagation();
@@ -565,17 +614,58 @@
                     activeDate = date;
                     renderTabs();
                     renderCurrentTabRecords();
+                    // 滚动到可见区域
+                    const activeTab = tabsContainer.querySelector('.tab-btn.active');
+                    if (activeTab) {
+                        activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
                 }
             });
             tabsContainer.appendChild(tabDiv);
         });
+
+        // 自动滚动到最近两周的范围（即最后14个标签左右）
+        if (dates.length > 14) {
+            // 找到倒数第14个标签的位置
+            const targetIndex = Math.max(0, dates.length - 14);
+            const targetDate = dates[targetIndex];
+            const targetTab = tabsContainer.querySelector(`.tab-btn[data-date="${targetDate}"]`);
+            if (targetTab) {
+                // 延迟执行确保渲染完成
+                setTimeout(() => {
+                    targetTab.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+                }, 50);
+            }
+        } else if (dates.length > 0) {
+            // 如果标签较少，滚动到最后一个（最新）
+            const lastDate = dates[dates.length - 1];
+            const lastTab = tabsContainer.querySelector(`.tab-btn[data-date="${lastDate}"]`);
+            if (lastTab) {
+                setTimeout(() => {
+                    lastTab.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' });
+                }, 50);
+            }
+        }
+
+        // 如果当前激活的标签不在可视区域，滚动到它
+        const activeTab = tabsContainer.querySelector('.tab-btn.active');
+        if (activeTab) {
+            const rect = activeTab.getBoundingClientRect();
+            const containerRect = tabsContainer.getBoundingClientRect();
+            if (rect.left < containerRect.left || rect.right > containerRect.right) {
+                setTimeout(() => {
+                    activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }, 100);
+            }
+        }
+
         renderCurrentTabRecords();
         updateStats();
     }
 
     function renderCurrentTabRecords() {
         if (!activeDate || !masterData[activeDate] || masterData[activeDate].length === 0) {
-            recordsListDiv.innerHTML = '<div style="padding:20px;text-align:center">暂无记录，请添加记录</div>';
+            recordsListDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">暂无记录，请添加记录</div>';
             return;
         }
         const records = masterData[activeDate];
@@ -587,9 +677,9 @@
                 <div class="record-details">
                     <div class="record-field">🕒 <input type="text" value="${escapeHtml(rec.time)}" data-field="time" data-id="${rec.id}" class="editable-field" style="width:80px;"></div>
                     <div class="record-field">❤️ <input type="number" value="${rec.sys}" data-field="sys" data-id="${rec.id}" class="editable-field" style="width:60px;"> / <input type="number" value="${rec.dia}" data-field="dia" data-id="${rec.id}" class="editable-field" style="width:60px;"> mmHg</div>
-                    <div class="record-field">💓 心率 <input type="number" value="${rec.hr}" data-field="hr" data-id="${rec.id}" class="editable-field" style="width:60px;"> bpm</div>
+                    <div class="record-field">💓 <input type="number" value="${rec.hr}" data-field="hr" data-id="${rec.id}" class="editable-field" style="width:60px;"> bpm</div>
                     <div class="record-field">📊 脉压差 ${rec.pulsePressure} mmHg</div>
-                    <div class="record-field">📝 备注 <textarea rows="1" data-field="remark" data-id="${rec.id}" class="editable-field remark-edit" style="width:140px;">${escapeHtml(rec.remark)}</textarea></div>
+                    <div class="record-field">📝 <textarea rows="1" data-field="remark" data-id="${rec.id}" class="editable-field remark-edit" style="width:140px;">${escapeHtml(rec.remark)}</textarea></div>
                 </div>
                 <button class="delete-record" data-id="${rec.id}">删除</button>
             `;
@@ -617,7 +707,7 @@
     function updateStats() {
         let total = 0, todayCount = 0, today = getTodayStr();
         for (let d in masterData) { total += masterData[d].length; if (d === today) todayCount = masterData[d].length; }
-        statsPanel.innerHTML = `📊 总记录:${total} | 今日:${todayCount}`;
+        statsPanel.innerHTML = `📊 总:${total} | 今日:${todayCount}`;
     }
 
     // ---------- Gist 操作 ----------
@@ -663,7 +753,7 @@
         renderTabs();
         updateStats();
         showStatus("从Gist下载完成");
-        markDataChanged(); // 下载后重置计时器
+        markDataChanged();
     }
 
     async function testConnection() {
@@ -790,7 +880,6 @@
         if (Object.keys(masterData).length === 0) ensureTodayTabExists();
         renderTabs();
         updateStats();
-        // 监听输入框变化重置计时器
         [sysInput, diaInput, hrInput, remarkInput].forEach(inp => inp.addEventListener('input', ()=> markDataChanged()));
     };
 </script>
