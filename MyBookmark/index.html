@@ -121,6 +121,7 @@
         .btn-purple:hover { background: #805ad5; }
         .btn-outline { background: transparent; color: #4a5568; border: 2px solid #e2e8f0; }
         .btn-outline:hover { background: #f7fafc; border-color: #667eea; }
+        .btn-sm { padding: 4px 12px; font-size: 12px; border-radius: 6px; }
         
         /* 统计 */
         .stats {
@@ -221,12 +222,6 @@
             justify-content: flex-end;
         }
         
-        .bookmark-card .card-actions .btn-sm {
-            padding: 4px 12px;
-            font-size: 12px;
-            border-radius: 6px;
-        }
-        
         .folder-section {
             margin-bottom: 30px;
         }
@@ -283,7 +278,7 @@
             background: white;
             border-radius: 16px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 550px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
@@ -293,6 +288,9 @@
         .modal-content h2 {
             margin-bottom: 20px;
             color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .modal-content label {
@@ -312,6 +310,7 @@
             font-size: 14px;
             margin-bottom: 16px;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
         
         .modal-content input:focus,
@@ -321,9 +320,10 @@
         }
         
         .modal-content textarea {
-            min-height: 100px;
+            min-height: 80px;
             resize: vertical;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
         }
         
         .modal-actions {
@@ -371,6 +371,109 @@
         .toast-warning { background: #ed8936; }
         .toast-info { background: #667eea; }
         
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin: 2px;
+        }
+        
+        /* 导入预览 */
+        .import-preview {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            font-size: 13px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .import-preview .folder-group {
+            margin-bottom: 12px;
+        }
+        
+        .import-preview .folder-group .folder-name {
+            font-weight: 600;
+            color: #2d3748;
+            padding: 4px 0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 6px;
+        }
+        
+        .import-preview .item {
+            padding: 3px 0 3px 16px;
+            color: #4a5568;
+            font-size: 12px;
+        }
+        
+        .import-preview .item .url {
+            color: #a0aec0;
+            font-size: 11px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .badge-blue { background: #ebf4ff; color: #3182ce; }
+        .badge-green { background: #f0fff4; color: #38a169; }
+        
+        /* 配置区域 */
+        .config-section {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .config-section.active {
+            display: block;
+        }
+        
+        .config-section .config-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .config-section .config-row input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .config-section .config-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .config-toggle {
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .config-toggle:hover {
+            opacity: 1;
+        }
+        
         /* 响应式 */
         @media (max-width: 768px) {
             .header h1 { font-size: 22px; }
@@ -380,8 +483,12 @@
             .btn { width: 100%; justify-content: center; }
             .bookmarks-grid { grid-template-columns: 1fr; }
             .folder-header { flex-direction: column; align-items: stretch; gap: 10px; }
-            .folder-actions { justify-content: flex-start; }
+            .folder-actions { justify-content: flex-start; flex-wrap: wrap; }
             .stats { grid-template-columns: repeat(2, 1fr); }
+            .config-section .config-row { flex-direction: column; }
+            .config-section .config-row input { width: 100%; }
+            .header-actions { width: 100%; }
+            .header-actions .btn { flex: 1; }
         }
         
         @keyframes fadeIn {
@@ -399,43 +506,22 @@
             to { transform: translateY(0); opacity: 1; }
         }
         
-        /* 标签 */
-        .tag {
+        /* 配置按钮状态 */
+        .config-indicator {
             display: inline-block;
-            background: #edf2f7;
-            color: #4a5568;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin: 2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
         }
         
-        /* 导入预览 */
-        .import-preview {
-            background: #f7fafc;
-            padding: 12px;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-            font-size: 13px;
+        .config-indicator.configured {
+            background: #48bb78;
         }
         
-        .import-preview .item {
-            padding: 4px 0;
-            border-bottom: 1px solid #e2e8f0;
+        .config-indicator.not-configured {
+            background: #fc8181;
         }
-        
-        .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-        
-        .badge-blue { background: #ebf4ff; color: #3182ce; }
-        .badge-green { background: #f0fff4; color: #38a169; }
     </style>
 </head>
 <body>
@@ -448,12 +534,36 @@
                     <small>跨设备同步 · 智能管理</small>
                 </h1>
                 <div class="header-actions">
+                    <button class="btn btn-outline" onclick="toggleConfig()" style="color:white;border-color:rgba(255,255,255,0.3);">
+                        ⚙️ 配置
+                    </button>
                     <button class="btn btn-success" onclick="syncFromGist()">📥 从Gist导入</button>
                     <button class="btn btn-warning" onclick="syncToGist()">📤 上传到Gist</button>
                     <button class="btn btn-outline" onclick="loadFromGitHub()" style="color:white;border-color:rgba(255,255,255,0.3);">
                         🔄 从GitHub加载
                     </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- 配置区域 -->
+        <div class="config-section" id="configSection">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong>🔑 GitHub配置</strong>
+                <span id="configStatus" style="font-size:13px;">
+                    <span class="config-indicator not-configured" id="configIndicator"></span>
+                    <span id="configStatusText">未配置</span>
+                </span>
+            </div>
+            <div class="config-row">
+                <input type="text" id="configOwner" placeholder="GitHub用户名" value="">
+                <input type="text" id="configRepo" placeholder="仓库名" value="">
+                <input type="password" id="configToken" placeholder="Personal Access Token" value="">
+                <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
+                <button class="btn btn-outline" onclick="testConfig()">🔍 测试连接</button>
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:#a0aec0;">
+                💡 Token需要 <strong>repo</strong> 和 <strong>gist</strong> 权限
             </div>
         </div>
         
@@ -546,9 +656,17 @@
             <input type="file" id="htmlFileInput" accept=".html,.htm" onchange="previewHTMLImport(event)">
             <textarea id="htmlContent" placeholder="或直接粘贴HTML内容..." rows="6"></textarea>
             <div class="import-preview" id="importPreview" style="display:none;"></div>
+            <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                <label style="font-weight:400;font-size:13px;display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" id="importMerge" checked> 合并到现有数据
+                </label>
+                <label style="font-weight:400;font-size:13px;display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" id="importClear"> 清空后再导入
+                </label>
+            </div>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeModal('importModal')">取消</button>
-                <button class="btn btn-success" onclick="confirmImportHTML()">确认导入</button>
+                <button class="btn btn-success" onclick="confirmImportHTML()">✅ 确认导入</button>
             </div>
         </div>
     </div>
@@ -561,18 +679,104 @@
             updatedAt: new Date().toISOString()
         };
         
-        let editTarget = null; // 编辑目标
-        
-        // ========== GitHub配置 ==========
-        const GITHUB_CONFIG = {
-            owner: 'YOUR_USERNAME',
-            repo: 'YOUR_REPO_NAME',
-            token: 'YOUR_GITHUB_TOKEN',
-            filePath: 'bookmarks.json'
+        let editTarget = null;
+        let importPreviewData = null;
+        let config = {
+            owner: '',
+            repo: '',
+            token: ''
         };
+        
+        // ========== 配置管理 ==========
+        function loadConfig() {
+            const saved = localStorage.getItem('githubConfig');
+            if (saved) {
+                try {
+                    config = JSON.parse(saved);
+                    document.getElementById('configOwner').value = config.owner || '';
+                    document.getElementById('configRepo').value = config.repo || '';
+                    document.getElementById('configToken').value = config.token || '';
+                } catch (e) {}
+            }
+            updateConfigStatus();
+        }
+        
+        function saveConfig() {
+            config.owner = document.getElementById('configOwner').value.trim();
+            config.repo = document.getElementById('configRepo').value.trim();
+            config.token = document.getElementById('configToken').value.trim();
+            
+            localStorage.setItem('githubConfig', JSON.stringify(config));
+            updateConfigStatus();
+            showToast('✅ 配置已保存', 'success');
+        }
+        
+        function updateConfigStatus() {
+            const hasConfig = config.owner && config.repo && config.token;
+            const indicator = document.getElementById('configIndicator');
+            const text = document.getElementById('configStatusText');
+            
+            if (hasConfig) {
+                indicator.className = 'config-indicator configured';
+                text.textContent = '已配置';
+            } else {
+                indicator.className = 'config-indicator not-configured';
+                text.textContent = '未配置';
+            }
+        }
+        
+        function toggleConfig() {
+            const section = document.getElementById('configSection');
+            section.classList.toggle('active');
+            if (section.classList.contains('active')) {
+                loadConfig();
+            }
+        }
+        
+        async function testConfig() {
+            const owner = document.getElementById('configOwner').value.trim();
+            const repo = document.getElementById('configRepo').value.trim();
+            const token = document.getElementById('configToken').value.trim();
+            
+            if (!owner || !repo || !token) {
+                showToast('请先填写完整配置', 'error');
+                return;
+            }
+            
+            try {
+                showToast('正在测试连接...', 'info');
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('✅ 连接成功！仓库可访问', 'success');
+                } else if (response.status === 401) {
+                    showToast('❌ Token无效或权限不足', 'error');
+                } else if (response.status === 404) {
+                    showToast('❌ 仓库不存在或无法访问', 'error');
+                } else {
+                    showToast(`❌ 连接失败: HTTP ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showToast('❌ 连接失败: ' + error.message, 'error');
+            }
+        }
+        
+        function getConfig() {
+            // 优先从输入框获取最新值
+            const owner = document.getElementById('configOwner').value.trim() || config.owner;
+            const repo = document.getElementById('configRepo').value.trim() || config.repo;
+            const token = document.getElementById('configToken').value.trim() || config.token;
+            return { owner, repo, token };
+        }
         
         // ========== 初始化 ==========
         document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
             loadFromLocal();
             renderAll();
             updateFolderSelects();
@@ -922,15 +1126,16 @@
             showToast('已删除分类', 'success');
         }
         
-        // ========== 导入HTML ==========
+        // ========== 导入HTML（改进版 - 保留分类结构） ==========
         function importHTML() {
             document.getElementById('htmlFileInput').value = '';
             document.getElementById('htmlContent').value = '';
             document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importMerge').checked = true;
+            document.getElementById('importClear').checked = false;
+            importPreviewData = null;
             openModal('importModal');
         }
-        
-        let importPreviewData = null;
         
         function previewHTMLImport(event) {
             const file = event.target.files[0];
@@ -949,6 +1154,7 @@
                 parseHTMLContent(this.value);
             } else {
                 document.getElementById('importPreview').style.display = 'none';
+                importPreviewData = null;
             }
         });
         
@@ -956,9 +1162,95 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
-            const bookmarks = [];
-            const links = doc.querySelectorAll('a');
+            // 检测书签类型
+            const isBookmarksHTML = doc.querySelector('DL, DT, DD, H3') !== null;
+            const isSimpleHTML = doc.querySelectorAll('a').length > 0;
             
+            let result = { folders: {}, uncategorized: [] };
+            
+            if (isBookmarksHTML) {
+                // 解析 Netscape 书签格式
+                result = parseNetscapeBookmarks(doc);
+            } else if (isSimpleHTML) {
+                // 解析普通HTML中的链接
+                result = parseSimpleHTML(doc);
+            } else {
+                // 尝试从文本中提取URL
+                result = parseTextLinks(html);
+            }
+            
+            importPreviewData = result;
+            showImportPreview(result);
+        }
+        
+        function parseNetscapeBookmarks(doc) {
+            const result = { folders: {}, uncategorized: [] };
+            let currentFolder = null;
+            
+            // 查找所有DT元素
+            const dts = doc.querySelectorAll('DT');
+            let currentBookmarks = [];
+            
+            dts.forEach(dt => {
+                // 检查是否是文件夹
+                const h3 = dt.querySelector('H3');
+                if (h3) {
+                    // 保存之前的文件夹
+                    if (currentFolder && currentBookmarks.length > 0) {
+                        if (!result.folders[currentFolder]) {
+                            result.folders[currentFolder] = [];
+                        }
+                        result.folders[currentFolder] = result.folders[currentFolder].concat(currentBookmarks);
+                    }
+                    currentFolder = h3.textContent.trim();
+                    currentBookmarks = [];
+                    return;
+                }
+                
+                // 检查是否是链接
+                const a = dt.querySelector('A');
+                if (a) {
+                    const href = a.getAttribute('HREF');
+                    if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+                        const bookmark = {
+                            title: a.textContent.trim() || href,
+                            url: href,
+                            tags: []
+                        };
+                        
+                        // 提取标签
+                        const tags = a.getAttribute('TAGS');
+                        if (tags) {
+                            bookmark.tags = tags.split(',').map(t => t.trim()).filter(t => t);
+                        }
+                        
+                        currentBookmarks.push(bookmark);
+                    }
+                }
+            });
+            
+            // 保存最后一个文件夹
+            if (currentFolder && currentBookmarks.length > 0) {
+                if (!result.folders[currentFolder]) {
+                    result.folders[currentFolder] = [];
+                }
+                result.folders[currentFolder] = result.folders[currentFolder].concat(currentBookmarks);
+            }
+            
+            // 如果没有找到文件夹结构，全部放入未分类
+            if (Object.keys(result.folders).length === 0 && currentBookmarks.length > 0) {
+                result.uncategorized = currentBookmarks;
+            }
+            
+            return result;
+        }
+        
+        function parseSimpleHTML(doc) {
+            const result = { folders: {}, uncategorized: [] };
+            const bookmarks = [];
+            
+            // 查找所有链接
+            const links = doc.querySelectorAll('a');
             links.forEach(link => {
                 const href = link.getAttribute('href');
                 if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
@@ -970,47 +1262,122 @@
                 }
             });
             
-            // 尝试解析文件夹结构
-            const folders = {};
-            const folderElements = doc.querySelectorAll('h1, h2, h3, h4, dt, [folder]');
-            
-            if (folderElements.length > 0) {
+            // 尝试根据标题分组
+            const headers = doc.querySelectorAll('h1, h2, h3, h4, h5, h6, strong, b');
+            if (headers.length > 0 && bookmarks.length > 0) {
                 let currentFolder = '导入的书签';
-                folderElements.forEach(el => {
-                    const text = el.textContent.trim();
-                    if (text && !text.match(/^[0-9]+$/)) {
-                        currentFolder = text;
-                        if (!folders[currentFolder]) {
-                            folders[currentFolder] = [];
+                let headerIndex = 0;
+                
+                // 简单分组：每个标题后面的链接归到该标题
+                headers.forEach((header, idx) => {
+                    const headerText = header.textContent.trim();
+                    if (headerText && headerText.length < 50) {
+                        const folderName = headerText;
+                        if (!result.folders[folderName]) {
+                            result.folders[folderName] = [];
+                        }
+                        
+                        // 找该标题到下一个标题之间的链接
+                        let nextHeader = headers[idx + 1];
+                        let current = header.nextElementSibling;
+                        while (current && current !== nextHeader) {
+                            const link = current.querySelector('a');
+                            if (link) {
+                                const href = link.getAttribute('href');
+                                if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+                                    result.folders[folderName].push({
+                                        title: link.textContent.trim() || href,
+                                        url: href,
+                                        tags: []
+                                    });
+                                }
+                            }
+                            current = current.nextElementSibling;
                         }
                     }
                 });
             }
             
-            // 如果有文件夹结构，按文件夹分配
-            if (Object.keys(folders).length > 0) {
-                // 简化处理：所有链接放在第一个文件夹
-                const firstFolder = Object.keys(folders)[0];
-                folders[firstFolder] = bookmarks;
-                importPreviewData = { folders, uncategorized: [] };
-            } else {
-                importPreviewData = { 
-                    folders: { '导入的书签': bookmarks },
-                    uncategorized: []
-                };
+            // 如果没有找到分组，全部放入未分类
+            if (Object.keys(result.folders).length === 0) {
+                result.uncategorized = bookmarks;
             }
             
-            // 显示预览
+            return result;
+        }
+        
+        function parseTextLinks(text) {
+            const result = { folders: {}, uncategorized: [] };
+            const urlRegex = /(https?:\/\/[^\s<>"']+)/g;
+            const urls = text.match(urlRegex) || [];
+            
+            urls.forEach(url => {
+                result.uncategorized.push({
+                    title: url,
+                    url: url,
+                    tags: []
+                });
+            });
+            
+            return result;
+        }
+        
+        function showImportPreview(data) {
             const preview = document.getElementById('importPreview');
             preview.style.display = 'block';
-            let previewHtml = `<strong>📊 预览 (共 ${bookmarks.length} 个书签)</strong><br>`;
-            bookmarks.slice(0, 20).forEach(b => {
-                previewHtml += `<div class="item">📌 ${b.title} - ${b.url}</div>`;
-            });
-            if (bookmarks.length > 20) {
-                previewHtml += `<div class="item">... 还有 ${bookmarks.length - 20} 个</div>`;
+            
+            let total = 0;
+            let html = '';
+            
+            if (data.folders) {
+                for (const [folder, bookmarks] of Object.entries(data.folders)) {
+                    if (bookmarks.length === 0) continue;
+                    total += bookmarks.length;
+                    html += `
+                        <div class="folder-group">
+                            <div class="folder-name">📁 ${folder} (${bookmarks.length})</div>
+                    `;
+                    bookmarks.slice(0, 10).forEach(b => {
+                        html += `
+                            <div class="item">
+                                📌 ${b.title || b.url}
+                                <span class="url">${b.url}</span>
+                            </div>
+                        `;
+                    });
+                    if (bookmarks.length > 10) {
+                        html += `<div class="item" style="color:#a0aec0;">... 还有 ${bookmarks.length - 10} 个</div>`;
+                    }
+                    html += `</div>`;
+                }
             }
-            preview.innerHTML = previewHtml;
+            
+            if (data.uncategorized && data.uncategorized.length > 0) {
+                total += data.uncategorized.length;
+                html += `
+                    <div class="folder-group">
+                        <div class="folder-name">📌 未分类 (${data.uncategorized.length})</div>
+                `;
+                data.uncategorized.slice(0, 10).forEach(b => {
+                    html += `
+                        <div class="item">
+                            📌 ${b.title || b.url}
+                            <span class="url">${b.url}</span>
+                        </div>
+                    `;
+                });
+                if (data.uncategorized.length > 10) {
+                    html += `<div class="item" style="color:#a0aec0;">... 还有 ${data.uncategorized.length - 10} 个</div>`;
+                }
+                html += `</div>`;
+            }
+            
+            preview.innerHTML = `
+                <div style="margin-bottom:8px;font-weight:600;color:#2d3748;">
+                    📊 共 ${total} 个书签，${Object.keys(data.folders || {}).length} 个分类
+                </div>
+                ${html}
+            `;
         }
         
         function confirmImportHTML() {
@@ -1019,25 +1386,46 @@
                 return;
             }
             
-            // 合并导入的数据
+            const merge = document.getElementById('importMerge').checked;
+            const clear = document.getElementById('importClear').checked;
+            
+            if (clear) {
+                if (!confirm('⚠️ 将清空所有现有数据，确定继续？')) return;
+                bookmarkData = { folders: {}, uncategorized: [], updatedAt: new Date().toISOString() };
+            }
+            
+            // 导入数据
             if (importPreviewData.folders) {
                 for (const [folder, bookmarks] of Object.entries(importPreviewData.folders)) {
-                    if (!bookmarkData.folders[folder]) {
-                        bookmarkData.folders[folder] = [];
+                    if (bookmarks.length === 0) continue;
+                    if (!merge && clear) {
+                        // 清空模式下直接覆盖
+                        bookmarkData.folders[folder] = bookmarks;
+                    } else if (merge) {
+                        // 合并模式
+                        if (!bookmarkData.folders[folder]) {
+                            bookmarkData.folders[folder] = [];
+                        }
+                        bookmarkData.folders[folder] = bookmarkData.folders[folder].concat(bookmarks);
                     }
-                    bookmarkData.folders[folder] = bookmarkData.folders[folder].concat(bookmarks);
                 }
             }
             
-            if (importPreviewData.uncategorized) {
-                bookmarkData.uncategorized = bookmarkData.uncategorized.concat(importPreviewData.uncategorized);
+            if (importPreviewData.uncategorized && importPreviewData.uncategorized.length > 0) {
+                if (merge) {
+                    bookmarkData.uncategorized = bookmarkData.uncategorized.concat(importPreviewData.uncategorized);
+                } else if (clear) {
+                    bookmarkData.uncategorized = importPreviewData.uncategorized;
+                }
             }
             
             bookmarkData.updatedAt = new Date().toISOString();
             closeModal('importModal');
             renderAll();
             updateFolderSelects();
-            showToast(`✅ 成功导入 ${countTotal(importPreviewData)} 个书签`, 'success');
+            
+            const total = countTotal(importPreviewData);
+            showToast(`✅ 成功导入 ${total} 个书签，${Object.keys(importPreviewData.folders || {}).length} 个分类`, 'success');
         }
         
         function countTotal(data) {
@@ -1139,6 +1527,13 @@
         
         // ========== Gist同步 ==========
         async function syncToGist() {
+            const cfg = getConfig();
+            if (!cfg.token) {
+                showToast('请先配置GitHub Token', 'error');
+                toggleConfig();
+                return;
+            }
+            
             const gistId = prompt('请输入Gist ID（留空创建新Gist）:');
             
             try {
@@ -1169,20 +1564,20 @@
                 const response = await fetch(url, {
                     method: method,
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Authorization': `token ${cfg.token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    const error = await response.json();
+                    throw new Error(error.message || `HTTP ${response.status}`);
                 }
                 
                 const result = await response.json();
                 showToast(`✅ 上传成功！Gist ID: ${result.id}`, 'success');
                 
-                // 复制ID到剪贴板
                 if (navigator.clipboard) {
                     await navigator.clipboard.writeText(result.id);
                     showToast('📋 Gist ID已复制到剪贴板', 'info');
@@ -1195,24 +1590,31 @@
         }
         
         async function syncFromGist() {
+            const cfg = getConfig();
+            if (!cfg.token) {
+                showToast('请先配置GitHub Token', 'error');
+                toggleConfig();
+                return;
+            }
+            
             const gistId = prompt('请输入Gist ID:');
             if (!gistId) return;
             
             try {
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Authorization': `token ${cfg.token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    const error = await response.json();
+                    throw new Error(error.message || `HTTP ${response.status}`);
                 }
                 
                 const gist = await response.json();
                 
-                // 找到第一个JSON文件
                 let data = null;
                 for (const [filename, file] of Object.entries(gist.files)) {
                     if (filename.endsWith('.json')) {
@@ -1225,7 +1627,6 @@
                     throw new Error('未找到JSON数据');
                 }
                 
-                // 确认导入
                 if (!confirm(`找到 ${countTotal(data)} 个书签，确定要导入吗？（将替换当前数据）`)) {
                     return;
                 }
@@ -1244,20 +1645,31 @@
         
         // ========== GitHub同步 ==========
         async function loadFromGitHub() {
+            const cfg = getConfig();
+            if (!cfg.token || !cfg.owner || !cfg.repo) {
+                showToast('请先配置GitHub信息', 'error');
+                toggleConfig();
+                return;
+            }
+            
             try {
                 showToast('正在从GitHub加载...', 'info');
                 
                 const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
+                    `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/bookmarks.json`,
                     {
                         headers: {
-                            'Authorization': `token ${GITHUB_CONFIG.token}`,
+                            'Authorization': `token ${cfg.token}`,
                             'Accept': 'application/vnd.github.v3+json'
                         }
                     }
                 );
                 
                 if (!response.ok) {
+                    if (response.status === 404) {
+                        showToast('仓库中未找到 bookmarks.json 文件', 'warning');
+                        return;
+                    }
                     throw new Error(`HTTP ${response.status}`);
                 }
                 
@@ -1274,57 +1686,6 @@
             } catch (error) {
                 console.error('加载失败:', error);
                 showToast('加载失败: ' + error.message, 'error');
-            }
-        }
-        
-        async function saveToGitHub() {
-            try {
-                // 获取SHA
-                let sha = null;
-                try {
-                    const response = await fetch(
-                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
-                        {
-                            headers: {
-                                'Authorization': `token ${GITHUB_CONFIG.token}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        }
-                    );
-                    if (response.ok) {
-                        const info = await response.json();
-                        sha = info.sha;
-                    }
-                } catch (e) {}
-                
-                bookmarkData.updatedAt = new Date().toISOString();
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(bookmarkData, null, 2))));
-                
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${GITHUB_CONFIG.token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `更新书签 - ${new Date().toLocaleString()}`,
-                            content: content,
-                            sha: sha
-                        })
-                    }
-                );
-                
-                if (!response.ok) {
-                    throw new Error('保存失败');
-                }
-                
-                showToast('✅ 保存到GitHub成功', 'success');
-                
-            } catch (error) {
-                console.error('保存失败:', error);
-                showToast('保存失败: ' + error.message, 'error');
             }
         }
         
@@ -1348,14 +1709,12 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const keyword = e.target.value.toLowerCase();
             const cards = document.querySelectorAll('.bookmark-card');
-            let visibleCount = 0;
             
             cards.forEach(card => {
                 const title = card.querySelector('.title a')?.textContent?.toLowerCase() || '';
                 const url = card.querySelector('.url a')?.textContent?.toLowerCase() || '';
                 const match = title.includes(keyword) || url.includes(keyword);
                 card.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
             });
             
             // 隐藏空文件夹
@@ -1375,7 +1734,6 @@
             document.getElementById(id).classList.remove('active');
         }
         
-        // 点击背景关闭模态框
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
@@ -1413,6 +1771,7 @@
         console.log('📚 书签管理器已加载');
         console.log('💡 快捷键: Ctrl+F 搜索 | ESC 关闭模态框');
         console.log('📖 数据:', bookmarkData);
+        console.log('🔑 点击右上角 "⚙️ 配置" 设置GitHub');
     </script>
 </body>
 </html>
