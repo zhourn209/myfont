@@ -614,6 +614,12 @@
             margin-top: 4px;
         }
         
+        .path-display {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-left: 4px;
+        }
+        
         @media (max-width: 768px) {
             .header h1 { font-size: 20px; }
             .header h1 small { display: block; margin-left: 0; margin-top: 4px; }
@@ -654,7 +660,7 @@
             <div class="header-top">
                 <h1>
                     🌳 树形书签
-                    <small>点击展开 · 批量管理</small>
+                    <small>支持嵌套分类</small>
                 </h1>
                 <div class="header-actions">
                     <button class="btn btn-outline" onclick="toggleConfig()" style="color:white;border-color:rgba(255,255,255,0.3);">
@@ -760,6 +766,10 @@
             <h2>📁 添加分类</h2>
             <label>分类名称</label>
             <input type="text" id="folderName" placeholder="输入分类名称">
+            <label>父分类（可选）</label>
+            <select id="parentFolder">
+                <option value="">根目录</option>
+            </select>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeModal('addFolderModal')">取消</button>
                 <button class="btn btn-primary" onclick="addFolder()">创建</button>
@@ -806,11 +816,13 @@
     </div>
 
     <script>
-        // ========== 数据 ==========
-        let bookmarkData = {
-            folders: {},
-            uncategorized: [],
-            updatedAt: new Date().toISOString()
+        // ========== 数据（树形结构） ==========
+        // 使用嵌套对象表示树形结构
+        // { name: "分类名", children: [子分类], bookmarks: [书签] }
+        let bookmarkTree = {
+            name: '根目录',
+            children: [],
+            bookmarks: []
         };
         
         let editTarget = null;
@@ -818,6 +830,9 @@
         let config = { token: '', gistId: '' };
         let selectedItems = new Set();
         const GIST_FILENAME = 'bookmarks.json';
+        
+        // 用于快速查找节点
+        let nodeMap = {};
         
         // ========== 配置 ==========
         function loadConfig() {
@@ -893,52 +908,220 @@
             loadFromLocal();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             console.log('🌳 树形书签管理器已加载');
-            console.log('📁 使用固定文件名: ' + GIST_FILENAME);
+            console.log('📁 支持嵌套分类');
         });
         
         // ========== 本地存储 ==========
         function saveToLocal() {
-            localStorage.setItem('bookmarkData', JSON.stringify(bookmarkData));
+            localStorage.setItem('bookmarkTree', JSON.stringify(bookmarkTree));
         }
         
         function loadFromLocal() {
-            const cached = localStorage.getItem('bookmarkData');
+            const cached = localStorage.getItem('bookmarkTree');
             if (cached) {
                 try {
-                    bookmarkData = JSON.parse(cached);
+                    bookmarkTree = JSON.parse(cached);
+                    // 确保根节点有必要的字段
+                    if (!bookmarkTree.name) bookmarkTree.name = '根目录';
+                    if (!bookmarkTree.children) bookmarkTree.children = [];
+                    if (!bookmarkTree.bookmarks) bookmarkTree.bookmarks = [];
                 } catch (e) {
                     initDefaultData();
                 }
             } else {
                 initDefaultData();
             }
+            buildNodeMap();
         }
         
         function initDefaultData() {
-            bookmarkData = {
-                folders: {
-                    '常用网站': [
-                        { title: 'GitHub', url: 'https://github.com', tags: ['开发'] },
-                        { title: 'Google', url: 'https://www.google.com', tags: ['搜索'] }
-                    ],
-                    '技术博客': [
-                        { title: 'MDN', url: 'https://developer.mozilla.org', tags: ['文档'] }
-                    ]
-                },
-                uncategorized: [],
-                updatedAt: new Date().toISOString()
+            bookmarkTree = {
+                name: '根目录',
+                children: [
+                    {
+                        name: '常用网站',
+                        children: [],
+                        bookmarks: [
+                            { title: 'GitHub', url: 'https://github.com', tags: ['开发'] },
+                            { title: 'Google', url: 'https://www.google.com', tags: ['搜索'] }
+                        ]
+                    },
+                    {
+                        name: '技术博客',
+                        children: [],
+                        bookmarks: [
+                            { title: 'MDN', url: 'https://developer.mozilla.org', tags: ['文档'] }
+                        ]
+                    }
+                ],
+                bookmarks: []
             };
             saveToLocal();
+            buildNodeMap();
         }
         
-        // ========== 渲染 ==========
+        // ========== 节点映射 ==========
+        function buildNodeMap() {
+            nodeMap = {};
+            traverseTree(bookmarkTree, '');
+        }
+        
+        function traverseTree(node, path) {
+            if (!node) return;
+            const currentPath = path ? path + '/' + node.name : node.name;
+            nodeMap[currentPath] = node;
+            if (node.children) {
+                node.children.forEach(child => {
+                    traverseTree(child, currentPath);
+                });
+            }
+        }
+        
+        function getNodeByPath(path) {
+            return nodeMap[path] || null;
+        }
+        
+        function getPathForNode(targetNode) {
+            for (const [path, node] of Object.entries(nodeMap)) {
+                if (node === targetNode) return path;
+            }
+            return null;
+        }
+        
+        // ========== 统计 ==========
+        function countTotalBookmarks(node) {
+            if (!node) return 0;
+            let count = node.bookmarks ? node.bookmarks.length : 0;
+            if (node.children) {
+                node.children.forEach(child => {
+                    count += countTotalBookmarks(child);
+                });
+            }
+            return count;
+        }
+        
+        function countFolders(node) {
+            if (!node) return 0;
+            let count = node.children ? node.children.length : 0;
+            if (node.children) {
+                node.children.forEach(child => {
+                    count += countFolders(child);
+                });
+            }
+            return count;
+        }
+        
+        function updateStats() {
+            const total = countTotalBookmarks(bookmarkTree);
+            const folders = countFolders(bookmarkTree);
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('folderCount').textContent = folders;
+            document.getElementById('lastUpdate').textContent = bookmarkTree.updatedAt ? 
+                new Date(bookmarkTree.updatedAt).toLocaleString() : '从未';
+        }
+        
+        // ========== 更新下拉菜单 ==========
+        function updateSelects() {
+            const selects = ['bookmarkFolder', 'editBookmarkFolder', 'parentFolder', 'batchMoveTarget'];
+            const paths = getAllFolderPaths(bookmarkTree);
+            
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                const currentVal = select.value;
+                select.innerHTML = '';
+                
+                if (id === 'batchMoveTarget' || id === 'parentFolder') {
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = id === 'batchMoveTarget' ? '移动到...' : '根目录';
+                    select.appendChild(defaultOpt);
+                }
+                
+                paths.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p;
+                    option.textContent = p;
+                    select.appendChild(option);
+                });
+                
+                if (currentVal && paths.indexOf(currentVal) !== -1) {
+                    select.value = currentVal;
+                }
+            });
+        }
+        
+        function getAllFolderPaths(node, parentPath) {
+            if (!node) return [];
+            let paths = [];
+            const currentPath = parentPath ? parentPath + '/' + node.name : node.name;
+            
+            if (node.children && node.children.length > 0) {
+                node.children.forEach(child => {
+                    const childPaths = getAllFolderPaths(child, currentPath);
+                    paths = paths.concat(childPaths);
+                });
+            }
+            
+            // 如果是子节点（不是根目录），添加自身路径
+            if (node !== bookmarkTree) {
+                paths.push(currentPath);
+            }
+            
+            return paths;
+        }
+        
+        function getFolderPathsForSelect(node, parentPath) {
+            if (!node) return [];
+            const currentPath = parentPath ? parentPath + '/' + node.name : node.name;
+            let paths = [];
+            
+            if (node !== bookmarkTree) {
+                paths.push(currentPath);
+            }
+            
+            if (node.children) {
+                node.children.forEach(child => {
+                    paths = paths.concat(getFolderPathsForSelect(child, currentPath));
+                });
+            }
+            
+            return paths;
+        }
+        
+        // ========== 查找节点 ==========
+        function findNodeByPath(node, pathSegments, currentIndex) {
+            if (currentIndex >= pathSegments.length) return node;
+            
+            const targetName = pathSegments[currentIndex];
+            if (!node.children) return null;
+            
+            for (const child of node.children) {
+                if (child.name === targetName) {
+                    return findNodeByPath(child, pathSegments, currentIndex + 1);
+                }
+            }
+            return null;
+        }
+        
+        function findParentNode(node, targetChild) {
+            if (!node.children) return null;
+            for (const child of node.children) {
+                if (child === targetChild) return node;
+                const result = findParentNode(child, targetChild);
+                if (result) return result;
+            }
+            return null;
+        }
+        
+        // ========== 渲染树 ==========
         function renderTree() {
             const container = document.getElementById('treeContainer');
             
-            if (!bookmarkData.folders || Object.keys(bookmarkData.folders).length === 0) {
+            if (!bookmarkTree.children || bookmarkTree.children.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">📖</div>
@@ -954,84 +1137,112 @@
             html += '<span class="toggle-icon expanded">▶</span>';
             html += '<span class="folder-icon">📂</span>';
             html += '<span class="folder-name">📚 书签栏</span>';
-            html += '<span class="folder-count">(' + Object.keys(bookmarkData.folders).length + ' 个分类)</span>';
+            html += '<span class="folder-count">(' + countFolders(bookmarkTree) + ' 个分类, ' + countTotalBookmarks(bookmarkTree) + ' 个书签)</span>';
             html += '</div>';
             html += '<div class="children expanded">';
             
-            var sortedFolders = Object.keys(bookmarkData.folders).sort();
+            bookmarkTree.children.forEach(child => {
+                html += renderTreeNode(child, 1);
+            });
             
-            for (var i = 0; i < sortedFolders.length; i++) {
-                var folderName = sortedFolders[i];
-                var bookmarks = bookmarkData.folders[folderName];
-                if (bookmarks.length === 0) continue;
-                html += renderFolderNode(folderName, bookmarks);
-            }
-            
-            if (bookmarkData.uncategorized && bookmarkData.uncategorized.length > 0) {
-                html += renderFolderNode('📌 未分类', bookmarkData.uncategorized, true);
+            // 根目录下的书签
+            if (bookmarkTree.bookmarks && bookmarkTree.bookmarks.length > 0) {
+                bookmarkTree.bookmarks.forEach((bookmark, index) => {
+                    html += renderBookmarkItem(bookmark, '根目录', index);
+                });
             }
             
             html += '</div></div>';
             container.innerHTML = html;
-            updateBatchTargets();
+            updateSelects();
             updateSelectionUI();
         }
         
-        function renderFolderNode(folderName, bookmarks, isUncategorized) {
-            isUncategorized = isUncategorized || false;
-            var folderId = 'folder|' + folderName;
-            var isSelected = selectedItems.has(folderId);
+        function renderTreeNode(node, level) {
+            const nodeId = 'folder|' + getPathForNode(node);
+            const isSelected = selectedItems.has(nodeId);
+            const bookmarkCount = node.bookmarks ? node.bookmarks.length : 0;
+            const childCount = node.children ? node.children.length : 0;
             
-            var html = '<div class="tree-node' + (isSelected ? ' selected' : '') + '" data-folder="' + folderName + '" data-id="' + folderId + '">';
+            let html = '<div class="tree-node' + (isSelected ? ' selected' : '') + '" data-id="' + nodeId + '">';
             html += '<div class="node-content" onclick="toggleNode(this)">';
             html += '<span class="toggle-icon">▶</span>';
-            if (!isUncategorized) {
-                html += '<input type="checkbox" class="folder-checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation();toggleFolderSelect(\'' + folderName + '\')">';
-            }
-            html += '<span class="folder-icon">' + (isUncategorized ? '📌' : '📁') + '</span>';
-            html += '<span class="folder-name">' + folderName + '</span>';
-            html += '<span class="folder-count">(' + bookmarks.length + ')</span>';
+            html += '<input type="checkbox" class="folder-checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation();toggleFolderSelect(\'' + nodeId + '\')">';
+            html += '<span class="folder-icon">📁</span>';
+            html += '<span class="folder-name">' + node.name + '</span>';
+            html += '<span class="folder-count">(' + bookmarkCount + ' 书签' + (childCount > 0 ? ', ' + childCount + ' 子分类' : '') + ')</span>';
             html += '<span class="folder-actions">';
-            if (!isUncategorized) {
-                html += '<button class="btn btn-xs btn-outline" onclick="event.stopPropagation();moveFolder(\'' + folderName + '\')">📂 移动</button>';
-                html += '<button class="btn btn-xs btn-outline" onclick="event.stopPropagation();renameFolder(\'' + folderName + '\')">✏️</button>';
-                html += '<button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteFolder(\'' + folderName + '\')">🗑️</button>';
-            }
+            html += '<button class="btn btn-xs btn-outline" onclick="event.stopPropagation();moveFolder(\'' + nodeId + '\')">📂 移动</button>';
+            html += '<button class="btn btn-xs btn-outline" onclick="event.stopPropagation();showAddSubFolder(\'' + nodeId + '\')">➕ 子分类</button>';
+            html += '<button class="btn btn-xs btn-outline" onclick="event.stopPropagation();renameFolder(\'' + nodeId + '\')">✏️</button>';
+            html += '<button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteFolder(\'' + nodeId + '\')">🗑️</button>';
             html += '</span>';
             html += '</div>';
             html += '<div class="children">';
             
-            for (var j = 0; j < bookmarks.length; j++) {
-                html += renderBookmarkItem(bookmarks[j], folderName, j);
+            if (node.children) {
+                node.children.forEach(child => {
+                    html += renderTreeNode(child, level + 1);
+                });
+            }
+            
+            if (node.bookmarks) {
+                node.bookmarks.forEach((bookmark, index) => {
+                    html += renderBookmarkItem(bookmark, nodeId, index);
+                });
             }
             
             html += '</div></div>';
             return html;
         }
         
-        function renderBookmarkItem(bookmark, folder, index) {
-            var favicon = 'https://www.google.com/s2/favicons?domain=' + bookmark.url;
-            var tags = bookmark.tags ? bookmark.tags.map(function(t) { return '<span class="tag">#' + t + '</span>'; }).join('') : '';
-            var id = 'bookmark|' + folder + '|' + index;
-            var checked = selectedItems.has(id) ? 'checked' : '';
+        function renderBookmarkItem(bookmark, folderId, index) {
+            const favicon = 'https://www.google.com/s2/favicons?domain=' + bookmark.url;
+            const tags = bookmark.tags ? bookmark.tags.map(function(t) { return '<span class="tag">#' + t + '</span>'; }).join('') : '';
+            const id = 'bookmark|' + folderId + '|' + index;
+            const checked = selectedItems.has(id) ? 'checked' : '';
             
-            return '<div class="bookmark-item' + (checked ? ' selected' : '') + '" data-id="' + id + '" data-folder="' + folder + '" data-index="' + index + '">' +
-                '<input type="checkbox" class="checkbox" ' + checked + ' onchange="toggleBookmarkSelect(this, \'' + folder + '\', ' + index + ')">' +
+            return '<div class="bookmark-item' + (checked ? ' selected' : '') + '" data-id="' + id + '" data-folder="' + folderId + '" data-index="' + index + '">' +
+                '<input type="checkbox" class="checkbox" ' + checked + ' onchange="toggleBookmarkSelect(this, \'' + folderId + '\', ' + index + ')">' +
                 '<img src="' + favicon + '" alt="favicon" class="favicon" onerror="this.style.display=\'none\'">' +
                 '<span class="bookmark-title"><a href="' + bookmark.url + '" target="_blank" title="' + (bookmark.title || bookmark.url) + '">' + (bookmark.title || bookmark.url) + '</a></span>' +
                 '<span class="bookmark-url"><a href="' + bookmark.url + '" target="_blank">' + bookmark.url + '</a></span>' +
                 (tags ? '<span class="bookmark-tags">' + tags + '</span>' : '') +
                 '<span class="item-actions">' +
-                '<button class="btn btn-xs btn-outline" onclick="moveSingle(\'' + folder + '\', ' + index + ')">📂 移动</button>' +
-                '<button class="btn btn-xs btn-outline" onclick="editBookmark(\'' + folder + '\', ' + index + ')">✏️</button>' +
-                '<button class="btn btn-xs btn-danger" onclick="deleteBookmark(\'' + folder + '\', ' + index + ')">🗑️</button>' +
+                '<button class="btn btn-xs btn-outline" onclick="moveSingle(\'' + folderId + '\', ' + index + ')">📂 移动</button>' +
+                '<button class="btn btn-xs btn-outline" onclick="editBookmark(\'' + folderId + '\', ' + index + ')">✏️</button>' +
+                '<button class="btn btn-xs btn-danger" onclick="deleteBookmark(\'' + folderId + '\', ' + index + ')">🗑️</button>' +
                 '</span>' +
                 '</div>';
         }
         
+        // ========== 树操作 ==========
+        function toggleNode(el) {
+            var children = el.parentElement.querySelector('.children');
+            var icon = el.querySelector('.toggle-icon');
+            if (children) {
+                children.classList.toggle('expanded');
+                icon.classList.toggle('expanded');
+            }
+        }
+        
+        function expandAll() {
+            document.querySelectorAll('.tree-node .children').forEach(function(c) { c.classList.add('expanded'); });
+            document.querySelectorAll('.tree-node .toggle-icon').forEach(function(c) { c.classList.add('expanded'); });
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.tree-node .children').forEach(function(c) { c.classList.remove('expanded'); });
+            document.querySelectorAll('.tree-node .toggle-icon').forEach(function(c) { c.classList.remove('expanded'); });
+            var rootChildren = document.querySelector('.root-node .children');
+            if (rootChildren) rootChildren.classList.add('expanded');
+            var rootIcon = document.querySelector('.root-node .toggle-icon');
+            if (rootIcon) rootIcon.classList.add('expanded');
+        }
+        
         // ========== 选择管理 ==========
-        function toggleBookmarkSelect(checkbox, folder, index) {
-            var id = 'bookmark|' + folder + '|' + index;
+        function toggleBookmarkSelect(checkbox, folderId, index) {
+            var id = 'bookmark|' + folderId + '|' + index;
             if (checkbox.checked) {
                 selectedItems.add(id);
             } else {
@@ -1040,12 +1251,11 @@
             updateSelectionUI();
         }
         
-        function toggleFolderSelect(folderName) {
-            var id = 'folder|' + folderName;
-            if (selectedItems.has(id)) {
-                selectedItems.delete(id);
+        function toggleFolderSelect(nodeId) {
+            if (selectedItems.has(nodeId)) {
+                selectedItems.delete(nodeId);
             } else {
-                selectedItems.add(id);
+                selectedItems.add(nodeId);
             }
             updateSelectionUI();
         }
@@ -1100,40 +1310,10 @@
             }
         }
         
-        function updateBatchTargets() {
-            var selects = ['batchMoveTarget', 'editBookmarkFolder', 'bookmarkFolder'];
-            var folders = Object.keys(bookmarkData.folders || {});
-            
-            selects.forEach(function(id) {
-                var select = document.getElementById(id);
-                if (!select) return;
-                var currentVal = select.value;
-                select.innerHTML = '';
-                
-                if (id === 'batchMoveTarget') {
-                    var defaultOpt = document.createElement('option');
-                    defaultOpt.value = '';
-                    defaultOpt.textContent = '移动到...';
-                    select.appendChild(defaultOpt);
-                }
-                
-                folders.forEach(function(f) {
-                    var option = document.createElement('option');
-                    option.value = f;
-                    option.textContent = f;
-                    select.appendChild(option);
-                });
-                
-                if (currentVal && folders.indexOf(currentVal) !== -1) {
-                    select.value = currentVal;
-                }
-            });
-        }
-        
         // ========== 批量操作 ==========
         function batchMove() {
-            var target = document.getElementById('batchMoveTarget').value;
-            if (!target) {
+            var targetPath = document.getElementById('batchMoveTarget').value;
+            if (!targetPath) {
                 showToast('请选择目标分类', 'warning');
                 return;
             }
@@ -1143,7 +1323,13 @@
                 return;
             }
             
-            if (!confirm('确定将 ' + selectedItems.size + ' 项移动到 "' + target + '" 吗？')) return;
+            var targetNode = getNodeByPath(targetPath);
+            if (!targetNode) {
+                showToast('目标分类不存在', 'error');
+                return;
+            }
+            
+            if (!confirm('确定将 ' + selectedItems.size + ' 项移动到 "' + targetPath + '" 吗？')) return;
             
             var items = Array.from(selectedItems);
             var movedBookmarks = 0;
@@ -1151,60 +1337,59 @@
             
             items.forEach(function(id) {
                 if (id.startsWith('bookmark|')) {
+                    // 移动书签
                     var parts = id.split('|');
-                    var folder = parts[1];
+                    var folderPath = parts[1];
                     var idx = parseInt(parts[2]);
-                    var bookmark = null;
+                    var sourceNode = getNodeByPath(folderPath);
                     
-                    if (folder === '📌 未分类') {
-                        bookmark = bookmarkData.uncategorized[idx];
-                        if (bookmark) {
-                            bookmarkData.uncategorized.splice(idx, 1);
-                        }
-                    } else if (bookmarkData.folders[folder]) {
-                        bookmark = bookmarkData.folders[folder][idx];
-                        if (bookmark) {
-                            bookmarkData.folders[folder].splice(idx, 1);
-                        }
-                    }
-                    
-                    if (bookmark) {
-                        if (!bookmarkData.folders[target]) {
-                            bookmarkData.folders[target] = [];
-                        }
-                        bookmarkData.folders[target].push(bookmark);
+                    if (sourceNode && sourceNode.bookmarks && sourceNode.bookmarks[idx]) {
+                        var bookmark = sourceNode.bookmarks[idx];
+                        sourceNode.bookmarks.splice(idx, 1);
+                        if (!targetNode.bookmarks) targetNode.bookmarks = [];
+                        targetNode.bookmarks.push(bookmark);
                         movedBookmarks++;
                     }
                 } else if (id.startsWith('folder|')) {
-                    var folderName = id.replace('folder|', '');
-                    if (folderName === target) {
-                        showToast('不能将分类移动到自身', 'warning');
-                        return;
-                    }
-                    if (bookmarkData.folders[folderName]) {
-                        var bookmarks = bookmarkData.folders[folderName];
-                        if (!bookmarkData.folders[target]) {
-                            bookmarkData.folders[target] = [];
+                    // 移动整个分类
+                    var folderPath = id.replace('folder|', '');
+                    var sourceNode = getNodeByPath(folderPath);
+                    
+                    if (sourceNode && sourceNode !== bookmarkTree) {
+                        // 检查是否要移动到自身或子节点
+                        if (folderPath === targetPath || targetPath.startsWith(folderPath + '/')) {
+                            showToast('不能将分类移动到自身或子分类中', 'warning');
+                            return;
                         }
-                        bookmarkData.folders[target] = bookmarkData.folders[target].concat(bookmarks);
-                        delete bookmarkData.folders[folderName];
-                        movedFolders++;
+                        
+                        // 从父节点移除
+                        var parent = findParentNode(bookmarkTree, sourceNode);
+                        if (parent) {
+                            var index = parent.children.indexOf(sourceNode);
+                            if (index !== -1) {
+                                parent.children.splice(index, 1);
+                                // 添加到目标节点
+                                if (!targetNode.children) targetNode.children = [];
+                                targetNode.children.push(sourceNode);
+                                movedFolders++;
+                            }
+                        }
                     }
                 }
             });
             
             selectedItems.clear();
-            bookmarkData.updatedAt = new Date().toISOString();
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
             
             var msg = '✅ 成功移动';
             if (movedBookmarks > 0) msg += ' ' + movedBookmarks + ' 个书签';
             if (movedFolders > 0) msg += ' ' + movedFolders + ' 个分类';
-            msg += ' 到 "' + target + '"';
+            msg += ' 到 "' + targetPath + '"';
             showToast(msg, 'success');
         }
         
@@ -1224,7 +1409,7 @@
             var msg = '⚠️ 确定要删除 ';
             if (bookmarkCount > 0) msg += bookmarkCount + ' 个书签';
             if (bookmarkCount > 0 && folderCount > 0) msg += ' 和 ';
-            if (folderCount > 0) msg += folderCount + ' 个分类';
+            if (folderCount > 0) msg += folderCount + ' 个分类（包括其子分类和书签）';
             msg += ' 吗？此操作不可撤销！';
             
             if (!confirm(msg)) return;
@@ -1233,50 +1418,40 @@
             var deletedBookmarks = 0;
             var deletedFolders = 0;
             
-            var bookmarkItems = items.filter(function(id) { return id.startsWith('bookmark|'); });
-            var folderItems = items.filter(function(id) { return id.startsWith('folder|'); });
-            
-            var bookmarkGroups = {};
-            bookmarkItems.forEach(function(id) {
-                var parts = id.split('|');
-                var folder = parts[1];
-                var idx = parseInt(parts[2]);
-                if (!bookmarkGroups[folder]) bookmarkGroups[folder] = [];
-                bookmarkGroups[folder].push(idx);
-            });
-            
-            for (var folder in bookmarkGroups) {
-                var indices = bookmarkGroups[folder];
-                indices.sort(function(a, b) { return b - a; });
-                indices.forEach(function(idx) {
-                    if (folder === '📌 未分类') {
-                        if (bookmarkData.uncategorized[idx]) {
-                            bookmarkData.uncategorized.splice(idx, 1);
-                            deletedBookmarks++;
-                        }
-                    } else if (bookmarkData.folders[folder]) {
-                        if (bookmarkData.folders[folder][idx]) {
-                            bookmarkData.folders[folder].splice(idx, 1);
-                            deletedBookmarks++;
+            items.forEach(function(id) {
+                if (id.startsWith('bookmark|')) {
+                    var parts = id.split('|');
+                    var folderPath = parts[1];
+                    var idx = parseInt(parts[2]);
+                    var node = getNodeByPath(folderPath);
+                    if (node && node.bookmarks && node.bookmarks[idx]) {
+                        node.bookmarks.splice(idx, 1);
+                        deletedBookmarks++;
+                    }
+                } else if (id.startsWith('folder|')) {
+                    var folderPath = id.replace('folder|', '');
+                    var node = getNodeByPath(folderPath);
+                    if (node && node !== bookmarkTree) {
+                        var parent = findParentNode(bookmarkTree, node);
+                        if (parent) {
+                            var index = parent.children.indexOf(node);
+                            if (index !== -1) {
+                                // 统计要删除的书签数
+                                deletedBookmarks += countTotalBookmarks(node);
+                                parent.children.splice(index, 1);
+                                deletedFolders++;
+                            }
                         }
                     }
-                });
-            }
-            
-            folderItems.forEach(function(id) {
-                var folderName = id.replace('folder|', '');
-                if (bookmarkData.folders[folderName]) {
-                    deletedFolders += bookmarkData.folders[folderName].length;
-                    delete bookmarkData.folders[folderName];
                 }
             });
             
             selectedItems.clear();
-            bookmarkData.updatedAt = new Date().toISOString();
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
             
             var resultMsg = '✅ 成功删除';
@@ -1286,252 +1461,233 @@
         }
         
         // ========== 单个移动 ==========
-        function moveSingle(folder, index) {
+        function moveSingle(folderPath, index) {
             selectedItems.clear();
-            selectedItems.add('bookmark|' + folder + '|' + index);
+            selectedItems.add('bookmark|' + folderPath + '|' + index);
             updateSelectionUI();
             document.getElementById('batchMoveTarget').focus();
             showToast('📂 请选择目标分类后点击"移动"', 'info');
             document.getElementById('batchMoveTarget').scrollIntoView({ behavior: 'smooth' });
         }
         
-        function moveFolder(folderName) {
+        function moveFolder(nodeId) {
             selectedItems.clear();
-            selectedItems.add('folder|' + folderName);
+            selectedItems.add(nodeId);
             updateSelectionUI();
             document.getElementById('batchMoveTarget').focus();
-            showToast('📂 分类 "' + folderName + '" 已选中，请选择目标分类后点击"移动"', 'info');
+            showToast('📂 分类已选中，请选择目标分类后点击"移动"', 'info');
             document.getElementById('batchMoveTarget').scrollIntoView({ behavior: 'smooth' });
         }
         
-        // ========== 树操作 ==========
-        function toggleNode(el) {
-            var children = el.parentElement.querySelector('.children');
-            var icon = el.querySelector('.toggle-icon');
-            if (children) {
-                children.classList.toggle('expanded');
-                icon.classList.toggle('expanded');
-            }
+        // ========== 添加分类 ==========
+        function showAddFolder() {
+            document.getElementById('folderName').value = '';
+            updateSelects();
+            openModal('addFolderModal');
         }
         
-        function expandAll() {
-            document.querySelectorAll('.tree-node .children').forEach(function(c) { c.classList.add('expanded'); });
-            document.querySelectorAll('.tree-node .toggle-icon').forEach(function(c) { c.classList.add('expanded'); });
+        function showAddSubFolder(parentId) {
+            var path = parentId.replace('folder|', '');
+            document.getElementById('folderName').value = '';
+            updateSelects();
+            document.getElementById('parentFolder').value = path;
+            openModal('addFolderModal');
         }
         
-        function collapseAll() {
-            document.querySelectorAll('.tree-node .children').forEach(function(c) { c.classList.remove('expanded'); });
-            document.querySelectorAll('.tree-node .toggle-icon').forEach(function(c) { c.classList.remove('expanded'); });
-            var rootChildren = document.querySelector('.root-node .children');
-            if (rootChildren) rootChildren.classList.add('expanded');
-            var rootIcon = document.querySelector('.root-node .toggle-icon');
-            if (rootIcon) rootIcon.classList.add('expanded');
-        }
-        
-        // ========== 统计 ==========
-        function updateStats() {
-            var total = 0;
-            var folders = Object.keys(bookmarkData.folders || {}).length;
+        function addFolder() {
+            var name = document.getElementById('folderName').value.trim();
+            var parentPath = document.getElementById('parentFolder').value;
             
-            if (bookmarkData.folders) {
-                for (var key in bookmarkData.folders) {
-                    total += bookmarkData.folders[key].length;
+            if (!name) { showToast('请输入分类名称', 'error'); return; }
+            
+            var parentNode = parentPath ? getNodeByPath(parentPath) : bookmarkTree;
+            if (!parentNode) { showToast('父分类不存在', 'error'); return; }
+            
+            // 检查同名
+            if (parentNode.children) {
+                for (var child of parentNode.children) {
+                    if (child.name === name) {
+                        showToast('该分类下已存在同名分类', 'error');
+                        return;
+                    }
                 }
             }
-            if (bookmarkData.uncategorized) {
-                total += bookmarkData.uncategorized.length;
+            
+            var newFolder = {
+                name: name,
+                children: [],
+                bookmarks: []
+            };
+            
+            if (!parentNode.children) parentNode.children = [];
+            parentNode.children.push(newFolder);
+            
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
+            renderTree();
+            updateStats();
+            updateSelects();
+            saveToLocal();
+            closeModal('addFolderModal');
+            showToast('✅ 分类创建成功', 'success');
+        }
+        
+        // ========== 重命名分类 ==========
+        function renameFolder(nodeId) {
+            var path = nodeId.replace('folder|', '');
+            var node = getNodeByPath(path);
+            if (!node || node === bookmarkTree) return;
+            
+            var newName = prompt('将 "' + node.name + '" 重命名为:', node.name);
+            if (!newName || newName === node.name) return;
+            
+            node.name = newName;
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
+            renderTree();
+            updateStats();
+            updateSelects();
+            saveToLocal();
+            showToast('✅ 重命名成功', 'success');
+        }
+        
+        // ========== 删除分类 ==========
+        function deleteFolder(nodeId) {
+            var path = nodeId.replace('folder|', '');
+            var node = getNodeByPath(path);
+            if (!node || node === bookmarkTree) return;
+            
+            var count = countTotalBookmarks(node);
+            var childCount = countFolders(node);
+            var msg = '确定要删除分类 "' + node.name + '" 吗？';
+            if (count > 0) msg += '\n包含 ' + count + ' 个书签';
+            if (childCount > 0) msg += '\n包含 ' + childCount + ' 个子分类';
+            msg += '\n此操作不可撤销！';
+            
+            if (!confirm(msg)) return;
+            
+            var parent = findParentNode(bookmarkTree, node);
+            if (parent) {
+                var index = parent.children.indexOf(node);
+                if (index !== -1) {
+                    parent.children.splice(index, 1);
+                }
             }
             
-            document.getElementById('totalCount').textContent = total;
-            document.getElementById('folderCount').textContent = folders;
-            document.getElementById('lastUpdate').textContent = bookmarkData.updatedAt ? 
-                new Date(bookmarkData.updatedAt).toLocaleString() : '从未';
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
+            renderTree();
+            updateStats();
+            updateSelects();
+            saveToLocal();
+            showToast('已删除分类', 'success');
         }
         
-        function updateFolderSelects() {
-            var selects = ['bookmarkFolder', 'editBookmarkFolder'];
-            var folders = Object.keys(bookmarkData.folders || {});
-            
-            selects.forEach(function(id) {
-                var select = document.getElementById(id);
-                if (!select) return;
-                var currentVal = select.value;
-                select.innerHTML = '';
-                folders.forEach(function(f) {
-                    var option = document.createElement('option');
-                    option.value = f;
-                    option.textContent = f;
-                    select.appendChild(option);
-                });
-                if (currentVal && folders.indexOf(currentVal) !== -1) {
-                    select.value = currentVal;
-                }
-            });
-        }
-        
-        // ========== 书签CRUD ==========
+        // ========== 添加书签 ==========
         function showAddBookmark() {
             document.getElementById('bookmarkTitle').value = '';
             document.getElementById('bookmarkUrl').value = '';
             document.getElementById('bookmarkTags').value = '';
-            updateFolderSelects();
+            updateSelects();
             openModal('addBookmarkModal');
         }
         
         function addBookmark() {
             var title = document.getElementById('bookmarkTitle').value.trim();
             var url = document.getElementById('bookmarkUrl').value.trim();
-            var folder = document.getElementById('bookmarkFolder').value;
+            var folderPath = document.getElementById('bookmarkFolder').value;
             var tags = document.getElementById('bookmarkTags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
             
             if (!title || !url) { showToast('请填写标题和URL', 'error'); return; }
             if (!url.match(/^https?:\/\/.+/)) { showToast('请输入有效的URL', 'error'); return; }
             
-            var bookmark = { title: title, url: url, tags: tags };
+            var targetNode = folderPath ? getNodeByPath(folderPath) : bookmarkTree;
+            if (!targetNode) { showToast('目标分类不存在', 'error'); return; }
             
-            if (folder && bookmarkData.folders[folder]) {
-                bookmarkData.folders[folder].push(bookmark);
-            } else {
-                bookmarkData.uncategorized.push(bookmark);
-            }
+            if (!targetNode.bookmarks) targetNode.bookmarks = [];
+            targetNode.bookmarks.push({ title: title, url: url, tags: tags });
             
-            bookmarkData.updatedAt = new Date().toISOString();
-            closeModal('addBookmarkModal');
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
+            closeModal('addBookmarkModal');
             showToast('✅ 书签添加成功', 'success');
         }
         
-        function editBookmark(folder, index) {
-            var bookmark;
-            if (folder === '📌 未分类') {
-                bookmark = bookmarkData.uncategorized[index];
-            } else if (bookmarkData.folders[folder]) {
-                bookmark = bookmarkData.folders[folder][index];
-            }
-            if (!bookmark) return;
+        // ========== 编辑书签 ==========
+        function editBookmark(folderPath, index) {
+            var node = getNodeByPath(folderPath);
+            if (!node || !node.bookmarks || !node.bookmarks[index]) return;
             
-            editTarget = { folder: folder, index: index };
+            var bookmark = node.bookmarks[index];
+            editTarget = { folderPath: folderPath, index: index };
             document.getElementById('editBookmarkTitle').value = bookmark.title || '';
             document.getElementById('editBookmarkUrl').value = bookmark.url || '';
             document.getElementById('editBookmarkTags').value = (bookmark.tags || []).join(', ');
-            updateFolderSelects();
-            document.getElementById('editBookmarkFolder').value = folder === '📌 未分类' ? '' : folder;
+            updateSelects();
+            document.getElementById('editBookmarkFolder').value = folderPath;
             openModal('editBookmarkModal');
         }
         
         function saveEditBookmark() {
             var title = document.getElementById('editBookmarkTitle').value.trim();
             var url = document.getElementById('editBookmarkUrl').value.trim();
-            var folder = document.getElementById('editBookmarkFolder').value;
+            var folderPath = document.getElementById('editBookmarkFolder').value;
             var tags = document.getElementById('editBookmarkTags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
             
             if (!title || !url) { showToast('请填写完整信息', 'error'); return; }
             
-            var oldFolder = editTarget.folder;
-            var index = editTarget.index;
-            var bookmark;
+            var oldNode = getNodeByPath(editTarget.folderPath);
+            if (!oldNode || !oldNode.bookmarks || !oldNode.bookmarks[editTarget.index]) return;
             
-            if (oldFolder === '📌 未分类') {
-                bookmark = bookmarkData.uncategorized[index];
-                bookmarkData.uncategorized.splice(index, 1);
-            } else if (bookmarkData.folders[oldFolder]) {
-                bookmark = bookmarkData.folders[oldFolder][index];
-                bookmarkData.folders[oldFolder].splice(index, 1);
-            }
-            if (!bookmark) return;
+            var bookmark = oldNode.bookmarks[editTarget.index];
             
-            bookmark.title = title;
-            bookmark.url = url;
-            bookmark.tags = tags;
-            
-            if (folder && bookmarkData.folders[folder]) {
-                bookmarkData.folders[folder].push(bookmark);
+            // 如果分类改变了
+            if (folderPath !== editTarget.folderPath) {
+                var newNode = getNodeByPath(folderPath);
+                if (!newNode) { showToast('目标分类不存在', 'error'); return; }
+                
+                oldNode.bookmarks.splice(editTarget.index, 1);
+                bookmark.title = title;
+                bookmark.url = url;
+                bookmark.tags = tags;
+                if (!newNode.bookmarks) newNode.bookmarks = [];
+                newNode.bookmarks.push(bookmark);
             } else {
-                bookmarkData.uncategorized.push(bookmark);
+                bookmark.title = title;
+                bookmark.url = url;
+                bookmark.tags = tags;
             }
             
-            bookmarkData.updatedAt = new Date().toISOString();
-            closeModal('editBookmarkModal');
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
+            closeModal('editBookmarkModal');
             showToast('✅ 更新成功', 'success');
         }
         
-        function deleteBookmark(folder, index) {
+        // ========== 删除书签 ==========
+        function deleteBookmark(folderPath, index) {
             if (!confirm('确定要删除这个书签吗？')) return;
             
-            if (folder === '📌 未分类') {
-                bookmarkData.uncategorized.splice(index, 1);
-            } else if (bookmarkData.folders[folder]) {
-                bookmarkData.folders[folder].splice(index, 1);
+            var node = getNodeByPath(folderPath);
+            if (node && node.bookmarks && node.bookmarks[index]) {
+                node.bookmarks.splice(index, 1);
             }
             
-            bookmarkData.updatedAt = new Date().toISOString();
-            selectedItems.delete('bookmark|' + folder + '|' + index);
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
             showToast('已删除', 'success');
-        }
-        
-        // ========== 分类管理 ==========
-        function showAddFolder() {
-            document.getElementById('folderName').value = '';
-            openModal('addFolderModal');
-        }
-        
-        function addFolder() {
-            var name = document.getElementById('folderName').value.trim();
-            if (!name) { showToast('请输入分类名称', 'error'); return; }
-            if (bookmarkData.folders[name]) { showToast('分类已存在', 'error'); return; }
-            
-            bookmarkData.folders[name] = [];
-            bookmarkData.updatedAt = new Date().toISOString();
-            closeModal('addFolderModal');
-            renderTree();
-            updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
-            saveToLocal();
-            showToast('✅ 分类创建成功', 'success');
-        }
-        
-        function renameFolder(oldName) {
-            var newName = prompt('将 "' + oldName + '" 重命名为:', oldName);
-            if (!newName || newName === oldName) return;
-            if (bookmarkData.folders[newName]) { showToast('分类名称已存在', 'error'); return; }
-            
-            bookmarkData.folders[newName] = bookmarkData.folders[oldName];
-            delete bookmarkData.folders[oldName];
-            bookmarkData.updatedAt = new Date().toISOString();
-            renderTree();
-            updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
-            saveToLocal();
-            showToast('✅ 重命名成功', 'success');
-        }
-        
-        function deleteFolder(folderName) {
-            if (!confirm('确定要删除分类 "' + folderName + '" 及其所有书签吗？')) return;
-            delete bookmarkData.folders[folderName];
-            bookmarkData.updatedAt = new Date().toISOString();
-            selectedItems.delete('folder|' + folderName);
-            renderTree();
-            updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
-            saveToLocal();
-            showToast('已删除分类', 'success');
         }
         
         // ========== 导入HTML ==========
@@ -1567,46 +1723,46 @@
         function parseHTMLContent(html) {
             var parser = new DOMParser();
             var doc = parser.parseFromString(html, 'text/html');
-            var result = { folders: {}, uncategorized: [] };
-            var currentFolder = null;
-            var currentBookmarks = [];
+            var result = { tree: { name: '导入', children: [], bookmarks: [] }, currentPath: [] };
+            var currentFolder = result.tree;
+            var stack = [result.tree];
             
             var dts = doc.querySelectorAll('DT');
             dts.forEach(function(dt) {
                 var h3 = dt.querySelector('H3');
                 if (h3) {
-                    if (currentFolder && currentBookmarks.length > 0) {
-                        if (!result.folders[currentFolder]) result.folders[currentFolder] = [];
-                        result.folders[currentFolder] = result.folders[currentFolder].concat(currentBookmarks);
-                    }
-                    currentFolder = h3.textContent.trim();
-                    currentBookmarks = [];
+                    var folderName = h3.textContent.trim();
+                    var newFolder = { name: folderName, children: [], bookmarks: [] };
+                    currentFolder.children.push(newFolder);
+                    stack.push(newFolder);
+                    currentFolder = newFolder;
                     return;
                 }
                 var a = dt.querySelector('A');
                 if (a) {
                     var href = a.getAttribute('HREF');
                     if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
-                        currentBookmarks.push({
+                        currentFolder.bookmarks.push({
                             title: a.textContent.trim() || href,
                             url: href,
                             tags: []
                         });
                     }
                 }
+                // 检查是否回到上一层（通过DL的结束）
+                var nextDt = dt.nextElementSibling;
+                if (nextDt && nextDt.tagName === 'DL') {
+                    // 进入子层
+                }
             });
             
-            if (currentFolder && currentBookmarks.length > 0) {
-                if (!result.folders[currentFolder]) result.folders[currentFolder] = [];
-                result.folders[currentFolder] = result.folders[currentFolder].concat(currentBookmarks);
-            }
-            
-            if (Object.keys(result.folders).length === 0) {
+            // 如果没有解析到文件夹，尝试从普通HTML提取
+            if (result.tree.children.length === 0) {
                 var links = doc.querySelectorAll('a');
                 links.forEach(function(link) {
                     var href = link.getAttribute('href');
                     if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
-                        result.uncategorized.push({
+                        result.tree.bookmarks.push({
                             title: link.textContent.trim() || href,
                             url: href,
                             tags: []
@@ -1615,45 +1771,48 @@
                 });
             }
             
-            importPreviewData = result;
-            showImportPreview(result);
+            importPreviewData = result.tree;
+            showImportPreview(result.tree);
         }
         
-        function showImportPreview(data) {
+        function showImportPreview(node, level) {
+            level = level || 0;
             var preview = document.getElementById('importPreview');
             preview.style.display = 'block';
-            var total = 0;
-            var html = '';
             
-            if (data.folders) {
-                for (var folder in data.folders) {
-                    var bookmarks = data.folders[folder];
-                    if (bookmarks.length === 0) continue;
-                    total += bookmarks.length;
-                    html += '<div class="folder-group"><div class="folder-name">📁 ' + folder + ' (' + bookmarks.length + ')</div>';
-                    bookmarks.slice(0, 10).forEach(function(b) {
-                        html += '<div class="item">📌 ' + (b.title || b.url) + ' <span class="url">' + b.url + '</span></div>';
+            var total = countTotalBookmarks(node);
+            var folders = countFolders(node);
+            var indent = '  '.repeat(level);
+            
+            var html = '<div style="margin-bottom:6px;font-weight:600;color:#2d3748;">📊 共 ' + total + ' 个书签，' + folders + ' 个分类</div>';
+            
+            function renderNode(n, lvl) {
+                var ind = '  '.repeat(lvl);
+                var html2 = '';
+                if (n !== importPreviewData) {
+                    html2 += '<div class="folder-group"><div class="folder-name">' + ind + '📁 ' + n.name + ' (' + (n.bookmarks ? n.bookmarks.length : 0) + ' 书签)</div>';
+                }
+                if (n.bookmarks) {
+                    n.bookmarks.slice(0, 10).forEach(function(b) {
+                        html2 += '<div class="item">' + ind + '  📌 ' + (b.title || b.url) + ' <span class="url">' + b.url + '</span></div>';
                     });
-                    if (bookmarks.length > 10) {
-                        html += '<div class="item" style="color:#a0aec0;">... 还有 ' + (bookmarks.length - 10) + ' 个</div>';
+                    if (n.bookmarks.length > 10) {
+                        html2 += '<div class="item" style="color:#a0aec0;">' + ind + '  ... 还有 ' + (n.bookmarks.length - 10) + ' 个</div>';
                     }
-                    html += '</div>';
                 }
+                if (n.children) {
+                    n.children.forEach(function(c) {
+                        html2 += renderNode(c, lvl + 1);
+                    });
+                }
+                if (n !== importPreviewData) {
+                    html2 += '</div>';
+                }
+                return html2;
             }
             
-            if (data.uncategorized && data.uncategorized.length > 0) {
-                total += data.uncategorized.length;
-                html += '<div class="folder-group"><div class="folder-name">📌 未分类 (' + data.uncategorized.length + ')</div>';
-                data.uncategorized.slice(0, 10).forEach(function(b) {
-                    html += '<div class="item">📌 ' + (b.title || b.url) + ' <span class="url">' + b.url + '</span></div>';
-                });
-                if (data.uncategorized.length > 10) {
-                    html += '<div class="item" style="color:#a0aec0;">... 还有 ' + (data.uncategorized.length - 10) + ' 个</div>';
-                }
-                html += '</div>';
-            }
-            
-            preview.innerHTML = '<div style="margin-bottom:6px;font-weight:600;color:#2d3748;">📊 共 ' + total + ' 个书签，' + Object.keys(data.folders || {}).length + ' 个分类</div>' + html;
+            html += renderNode(node, 0);
+            preview.innerHTML = html;
         }
         
         function confirmImportHTML() {
@@ -1661,47 +1820,48 @@
             
             var merge = document.getElementById('importMerge').checked;
             if (!merge) {
-                bookmarkData = { folders: {}, uncategorized: [], updatedAt: new Date().toISOString() };
+                bookmarkTree = { name: '根目录', children: [], bookmarks: [] };
             }
             
-            if (importPreviewData.folders) {
-                for (var folder in importPreviewData.folders) {
-                    var bookmarks = importPreviewData.folders[folder];
-                    if (bookmarks.length === 0) continue;
-                    if (!bookmarkData.folders[folder]) bookmarkData.folders[folder] = [];
-                    bookmarkData.folders[folder] = bookmarkData.folders[folder].concat(bookmarks);
+            function mergeNode(target, source) {
+                if (!target.children) target.children = [];
+                if (!target.bookmarks) target.bookmarks = [];
+                
+                // 合并书签
+                if (source.bookmarks) {
+                    target.bookmarks = target.bookmarks.concat(source.bookmarks);
+                }
+                
+                // 合并子分类
+                if (source.children) {
+                    source.children.forEach(function(child) {
+                        // 检查是否已存在同名分类
+                        var existing = target.children.find(function(c) { return c.name === child.name; });
+                        if (existing) {
+                            mergeNode(existing, child);
+                        } else {
+                            target.children.push(child);
+                        }
+                    });
                 }
             }
             
-            if (importPreviewData.uncategorized && importPreviewData.uncategorized.length > 0) {
-                bookmarkData.uncategorized = bookmarkData.uncategorized.concat(importPreviewData.uncategorized);
-            }
+            mergeNode(bookmarkTree, importPreviewData);
             
-            bookmarkData.updatedAt = new Date().toISOString();
-            closeModal('importModal');
+            bookmarkTree.updatedAt = new Date().toISOString();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
-            var total = countTotal(importPreviewData);
+            closeModal('importModal');
+            var total = countTotalBookmarks(importPreviewData);
             showToast('✅ 成功导入 ' + total + ' 个书签', 'success');
-        }
-        
-        function countTotal(data) {
-            var count = 0;
-            if (data.folders) {
-                for (var folder in data.folders) {
-                    count += data.folders[folder].length;
-                }
-            }
-            if (data.uncategorized) count += data.uncategorized.length;
-            return count;
         }
         
         // ========== 导出 ==========
         function exportJSON() {
-            var data = JSON.stringify(bookmarkData, null, 2);
+            var data = JSON.stringify(bookmarkTree, null, 2);
             var blob = new Blob([data], { type: 'application/json' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
@@ -1716,34 +1876,37 @@
             var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>我的书签</title>';
             html += '<style>body{font-family:system-ui;max-width:900px;margin:40px auto;padding:20px;background:#f7fafc;}';
             html += 'h1{color:#2d3748;border-bottom:3px solid #667eea;padding-bottom:12px;}';
-            html += '.folder{margin:30px 0;}.folder-title{font-size:20px;font-weight:600;color:#2d3748;margin-bottom:12px;}';
-            html += '.bookmark{padding:10px 14px;margin:6px 0;background:white;border-radius:8px;}';
+            html += '.folder{margin:20px 0;padding-left:20px;}.folder-title{font-size:18px;font-weight:600;color:#2d3748;margin-bottom:10px;}';
+            html += '.bookmark{padding:8px 12px;margin:4px 0;background:white;border-radius:6px;}';
             html += '.bookmark a{color:#667eea;text-decoration:none;font-weight:500;}';
-            html += '.bookmark .url{color:#a0aec0;font-size:13px;margin-left:12px;}';
+            html += '.bookmark .url{color:#a0aec0;font-size:12px;margin-left:10px;}';
             html += '.footer{margin-top:40px;color:#a0aec0;text-align:center;font-size:13px;}</style>';
             html += '</head><body><h1>📚 我的书签</h1><p style="color:#718096;">导出时间: ' + new Date().toLocaleString() + '</p><hr>';
             
-            if (bookmarkData.folders) {
-                for (var folder in bookmarkData.folders) {
-                    var bookmarks = bookmarkData.folders[folder];
-                    if (bookmarks.length === 0) continue;
-                    html += '<div class="folder"><div class="folder-title">📁 ' + folder + '</div>';
-                    bookmarks.forEach(function(b) {
-                        html += '<div class="bookmark"><a href="' + b.url + '" target="_blank">' + (b.title || b.url) + '</a><span class="url">' + b.url + '</span></div>';
-                    });
-                    html += '</div>';
+            function renderExportNode(node, level) {
+                var ind = '  '.repeat(level);
+                var h = '';
+                if (node !== bookmarkTree) {
+                    h += '<div class="folder"><div class="folder-title">' + ind + '📁 ' + node.name + '</div>';
                 }
+                if (node.bookmarks) {
+                    node.bookmarks.forEach(function(b) {
+                        h += '<div class="bookmark">' + ind + '  <a href="' + b.url + '" target="_blank">' + (b.title || b.url) + '</a><span class="url">' + b.url + '</span></div>';
+                    });
+                }
+                if (node.children) {
+                    node.children.forEach(function(c) {
+                        h += renderExportNode(c, level + 1);
+                    });
+                }
+                if (node !== bookmarkTree) {
+                    h += '</div>';
+                }
+                return h;
             }
             
-            if (bookmarkData.uncategorized && bookmarkData.uncategorized.length > 0) {
-                html += '<div class="folder"><div class="folder-title">📌 未分类</div>';
-                bookmarkData.uncategorized.forEach(function(b) {
-                    html += '<div class="bookmark"><a href="' + b.url + '" target="_blank">' + (b.title || b.url) + '</a><span class="url">' + b.url + '</span></div>';
-                });
-                html += '</div>';
-            }
-            
-            html += '<div class="footer">共 ' + document.getElementById('totalCount').textContent + ' 个书签</div></body></html>';
+            html += renderExportNode(bookmarkTree, 0);
+            html += '<div class="footer">共 ' + countTotalBookmarks(bookmarkTree) + ' 个书签</div></body></html>';
             
             var blob = new Blob([html], { type: 'text/html; charset=utf-8' });
             var url = URL.createObjectURL(blob);
@@ -1765,7 +1928,7 @@
             }
             
             try {
-                var data = JSON.stringify(bookmarkData, null, 2);
+                var data = JSON.stringify(bookmarkTree, null, 2);
                 
                 var url = 'https://api.github.com/gists';
                 var method = 'POST';
@@ -1873,29 +2036,33 @@
                 }
                 
                 if (!data) {
-                    throw new Error('未找到JSON数据文件，请确保Gist中包含 bookmarks.json');
+                    throw new Error('未找到JSON数据文件');
                 }
                 
-                var total = 0;
-                if (data.folders) {
-                    for (var f in data.folders) {
-                        total += data.folders[f].length;
-                    }
+                // 验证数据格式
+                if (!data.name) {
+                    data.name = '根目录';
                 }
-                if (data.uncategorized) {
-                    total += data.uncategorized.length;
+                if (!data.children) {
+                    data.children = [];
                 }
-                
-                if (total === 0) {
-                    throw new Error('数据为空或格式无效');
+                if (!data.bookmarks) {
+                    data.bookmarks = [];
                 }
                 
-                if (!confirm('📊 找到 ' + total + ' 个书签，' + Object.keys(data.folders || {}).length + ' 个分类\n\n确定导入吗？将替换当前所有数据！')) {
+                var total = countTotalBookmarks(data);
+                var folders = countFolders(data);
+                
+                if (total === 0 && folders === 0) {
+                    throw new Error('数据为空');
+                }
+                
+                if (!confirm('📊 找到 ' + total + ' 个书签，' + folders + ' 个分类\n\n确定导入吗？将替换当前所有数据！')) {
                     return;
                 }
                 
-                bookmarkData = data;
-                bookmarkData.updatedAt = new Date().toISOString();
+                bookmarkTree = data;
+                bookmarkTree.updatedAt = new Date().toISOString();
                 
                 if (!cfg.gistId) {
                     config.gistId = gistId;
@@ -1905,13 +2072,13 @@
                 }
                 
                 selectedItems.clear();
+                buildNodeMap();
                 renderTree();
                 updateStats();
-                updateFolderSelects();
-                updateBatchTargets();
+                updateSelects();
                 saveToLocal();
                 
-                showToast('✅ 导入成功！共 ' + total + ' 个书签，来自文件: ' + (foundFile || 'bookmarks.json'), 'success');
+                showToast('✅ 导入成功！共 ' + total + ' 个书签，' + folders + ' 个分类', 'success');
                 
             } catch (error) {
                 console.error('导入失败:', error);
@@ -1922,12 +2089,12 @@
         // ========== 清空 ==========
         function clearAll() {
             if (!confirm('⚠️ 确定要清空所有书签吗？')) return;
-            bookmarkData = { folders: {}, uncategorized: [], updatedAt: new Date().toISOString() };
+            bookmarkTree = { name: '根目录', children: [], bookmarks: [], updatedAt: new Date().toISOString() };
             selectedItems.clear();
+            buildNodeMap();
             renderTree();
             updateStats();
-            updateFolderSelects();
-            updateBatchTargets();
+            updateSelects();
             saveToLocal();
             showToast('已清空所有书签', 'warning');
         }
