@@ -887,12 +887,10 @@
         // ========== 排序函数 ==========
         function sortChildren(node) {
             if (!node) return;
-            // 对子分类按名称排序（中文按拼音）
             if (node.children && node.children.length > 0) {
                 node.children.sort(function(a, b) {
                     return a.name.localeCompare(b.name, 'zh-CN');
                 });
-                // 递归排序子节点
                 node.children.forEach(function(child) {
                     sortChildren(child);
                 });
@@ -986,7 +984,6 @@
                 }
             }
             
-            // 排序
             sortAll();
             
             renderTree();
@@ -1170,13 +1167,12 @@
                 new Date(bookmarkTree.updatedAt).toLocaleString() : '从未';
         }
         
-        // ========== 获取所有分类路径（排序后） ==========
+        // ========== 获取所有分类路径 ==========
         function getAllFolderPaths(node, parentPath) {
             if (!node) return [];
             let paths = [];
             const currentPath = parentPath ? parentPath + '/' + node.name : node.name;
             
-            // 先对子分类排序
             if (node.children && node.children.length > 0) {
                 var sortedChildren = [...node.children].sort(function(a, b) {
                     return a.name.localeCompare(b.name, 'zh-CN');
@@ -1252,7 +1248,6 @@
                 return;
             }
             
-            // 排序后再渲染
             sortAll();
             
             let html = '<div class="tree-node root-node">';
@@ -1264,7 +1259,6 @@
             html += '</div>';
             html += '<div class="children expanded">';
             
-            // 对根目录的子分类排序
             var sortedChildren = [...bookmarkTree.children].sort(function(a, b) {
                 return a.name.localeCompare(b.name, 'zh-CN');
             });
@@ -1286,7 +1280,6 @@
         }
         
         function renderTreeNode(node, level) {
-            // 对节点的子分类排序
             if (node.children && node.children.length > 1) {
                 node.children.sort(function(a, b) {
                     return a.name.localeCompare(b.name, 'zh-CN');
@@ -1754,9 +1747,14 @@
         }
         
         // ========== 编辑书签 ==========
-        function editBookmark(folderPath, index) {
+        function editBookmark(folderId, index) {
+            // 从folderId中提取路径
+            var folderPath = folderId.replace('folder|', '');
             var node = getNodeByPath(folderPath);
-            if (!node || !node.bookmarks || !node.bookmarks[index]) return;
+            if (!node || !node.bookmarks || !node.bookmarks[index]) {
+                showToast('书签不存在', 'error');
+                return;
+            }
             
             var bookmark = node.bookmarks[index];
             editTarget = { folderPath: folderPath, index: index };
@@ -1777,7 +1775,10 @@
             if (!title || !url) { showToast('请填写完整信息', 'error'); return; }
             
             var oldNode = getNodeByPath(editTarget.folderPath);
-            if (!oldNode || !oldNode.bookmarks || !oldNode.bookmarks[editTarget.index]) return;
+            if (!oldNode || !oldNode.bookmarks || !oldNode.bookmarks[editTarget.index]) {
+                showToast('书签不存在', 'error');
+                return;
+            }
             
             var bookmark = oldNode.bookmarks[editTarget.index];
             
@@ -1809,15 +1810,20 @@
         }
         
         // ========== 删除书签 ==========
-        function deleteBookmark(folderPath, index) {
+        function deleteBookmark(folderId, index) {
             if (!confirm('确定要删除这个书签吗？')) return;
             
+            var folderPath = folderId.replace('folder|', '');
             var node = getNodeByPath(folderPath);
             if (node && node.bookmarks && node.bookmarks[index]) {
                 node.bookmarks.splice(index, 1);
+            } else {
+                showToast('书签不存在', 'error');
+                return;
             }
             
             bookmarkTree.updatedAt = new Date().toISOString();
+            selectedItems.delete('bookmark|' + folderId + '|' + index);
             sortAll();
             buildNodeMap();
             renderTree();
