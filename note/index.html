@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZenNote | 极简便签</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>ZenNote | 极简便签 (快速跳转版)</title>
     <style>
+        /* ========== 基础样式 ========== */
         * {
             margin: 0;
             padding: 0;
@@ -26,7 +27,7 @@
             --border: rgba(148, 163, 184, 0.15);
             --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             
-            /* 便签颜色系统 - 18种颜色 */
+            /* 便签颜色系统 */
             --note-blue: #1e3a5f;
             --note-blue-border: #3b82f6;
             --note-green: #14532d;
@@ -72,8 +73,8 @@
             color: var(--text-primary);
             overflow-x: hidden;
             font-weight: 500;
-            /* 优化：减少合成层 */
-            contain: layout style paint;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
         .bg-animation {
@@ -85,8 +86,6 @@
             pointer-events: none;
             overflow: hidden;
             z-index: 0;
-            /* 优化：使用 transform 代替 top/left 动画 */
-            will-change: transform;
         }
 
         .bg-animation::before {
@@ -98,7 +97,6 @@
             height: 200%;
             background: radial-gradient(circle, rgba(56, 189, 248, 0.03) 0%, transparent 70%);
             animation: pulse 15s ease-in-out infinite;
-            will-change: transform, opacity;
         }
 
         @keyframes pulse {
@@ -112,16 +110,16 @@
             padding: 20px;
             position: relative;
             z-index: 1;
-            /* 优化：创建独立的渲染层 */
-            contain: layout style paint;
+            transform: translateZ(0);
         }
 
+        /* ========== Header ========== */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            margin-bottom: 20px;
+            padding: 16px 0;
         }
 
         .logo {
@@ -153,7 +151,9 @@
 
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .btn-icon {
@@ -171,8 +171,6 @@
             font-size: 20px;
             font-weight: 600;
             border: 2px solid var(--border);
-            /* 优化：提示浏览器此元素会变化 */
-            will-change: transform;
         }
 
         .btn-icon:hover {
@@ -182,19 +180,146 @@
             border-color: var(--accent);
         }
 
+        /* ========== 快速跳转菜单 ========== */
+        .jump-menu-container {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .jump-menu-toggle {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .jump-menu-toggle:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .jump-menu-toggle .arrow {
+            transition: transform 0.3s ease;
+            font-size: 14px;
+        }
+
+        .jump-menu-toggle .arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .jump-menu-toggle .badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .jump-menu-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            padding: 8px;
+        }
+
+        .jump-menu-dropdown.open {
+            display: block;
+        }
+
+        .jump-menu-dropdown::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .jump-menu-dropdown::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .jump-menu-dropdown::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .jump-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .jump-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .jump-item .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .jump-item .jump-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .jump-item .jump-empty {
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .jump-empty-state {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* ========== 搜索 ========== */
         .search-box {
             position: relative;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .search-box input {
             width: 100%;
-            padding: 18px 20px 18px 52px;
+            padding: 16px 20px 16px 48px;
             background: var(--bg-card);
             border: 2px solid var(--border);
-            border-radius: 16px;
+            border-radius: 14px;
             color: var(--text-primary);
-            font-size: 17px;
+            font-size: 16px;
             outline: none;
             transition: all 0.3s ease;
             font-weight: 600;
@@ -213,62 +338,54 @@
         .search-box::before {
             content: '🔍';
             position: absolute;
-            left: 18px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 18px;
+            font-size: 17px;
             opacity: 0.7;
         }
 
+        /* ========== 同步栏 ========== */
         .sync-bar {
             background: var(--bg-card);
             border: 2px solid var(--border);
             border-radius: 16px;
-            padding: 18px 22px;
-            margin-bottom: 24px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .sync-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             flex: 1;
-            min-width: 200px;
+            min-width: 150px;
         }
 
         .sync-status {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 15px;
+            gap: 8px;
+            font-size: 14px;
             color: var(--text-secondary);
             font-weight: 700;
         }
 
-        .sync-status.syncing {
-            color: var(--accent);
-        }
-
-        .sync-status.synced {
-            color: var(--success);
-        }
-
-        .sync-status.error {
-            color: var(--danger);
-        }
+        .sync-status.syncing { color: var(--accent); }
+        .sync-status.synced { color: var(--success); }
+        .sync-status.error { color: var(--danger); }
 
         .sync-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: currentColor;
             animation: blink 2s infinite;
-            box-shadow: 0 0 8px currentColor;
         }
 
         .sync-status.synced .sync-dot {
@@ -283,54 +400,50 @@
 
         .sync-inputs {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex: 2;
-            min-width: 300px;
+            min-width: 200px;
         }
 
         .sync-inputs input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: var(--bg-dark);
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
             font-family: 'Courier New', monospace;
             font-weight: 600;
+            min-width: 80px;
         }
 
         .sync-inputs input:focus {
             border-color: var(--accent);
         }
 
-        .sync-inputs input::placeholder {
-            color: var(--text-tertiary);
-            font-weight: 500;
-        }
-
         .sync-actions {
             display: flex;
-            gap: 10px;
+            gap: 6px;
+            flex-wrap: wrap;
         }
 
         .btn-small {
-            padding: 12px 18px;
+            padding: 10px 14px;
             border: none;
             background: var(--bg-hover);
             color: var(--text-primary);
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             transition: all 0.3s ease;
             white-space: nowrap;
             border: 2px solid transparent;
-            will-change: transform;
         }
 
         .btn-small:hover {
@@ -346,66 +459,78 @@
             box-shadow: none;
         }
 
+        /* ========== 便签列表 ========== */
         .notes-list {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            /* 优化：减少重绘区域 */
-            contain: layout style;
+            gap: 12px;
         }
 
         .note-item {
             background: var(--bg-card);
             border: 2px solid var(--border);
-            border-radius: 18px;
-            padding: 22px 22px 22px 46px;
-            cursor: move;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            border-radius: 16px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
             user-select: none;
-            /* 优化：使用 GPU 加速 */
             transform: translateZ(0);
             will-change: transform;
-            contain: layout style paint;
+        }
+
+        .note-item[draggable="true"] {
+            cursor: move;
         }
 
         .note-item.dragging {
-            opacity: 0.6;
-            transform: scale(1.02) translateZ(0);
+            opacity: 0.5;
+            transform: scale(1.02);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             z-index: 1000;
-            /* 优化：拖拽时使用合成层 */
-            will-change: transform, opacity;
+            cursor: move;
         }
 
         .note-item.drag-over {
             border-color: var(--accent);
             border-style: dashed;
-            transform: translateY(5px) translateZ(0);
+            transform: translateY(5px);
+        }
+
+        /* 高亮跳转目标 */
+        .note-item.jump-highlight {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.4), var(--shadow);
+            animation: highlightPulse 1s ease 2;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.4), var(--shadow); }
+            50% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0.1), var(--shadow); }
         }
 
         .drag-handle {
             position: absolute;
-            left: 12px;
+            left: 6px;
             top: 50%;
             transform: translateY(-50%);
-            width: 20px;
-            height: 40px;
+            width: 18px;
+            height: 36px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             gap: 3px;
-            opacity: 0.3;
+            opacity: 0.2;
             transition: opacity 0.2s;
             cursor: move;
-            /* 优化：防止拖动时触发重绘 */
-            pointer-events: none;
+            z-index: 10;
+            pointer-events: auto;
         }
 
         .note-item:hover .drag-handle {
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .drag-handle::before,
@@ -418,25 +543,25 @@
             box-shadow: 0 6px 0 var(--text-secondary), 0 12px 0 var(--text-secondary);
         }
 
-        /* 颜色样式 - 优化：使用更简单的渐变 */
-        .note-item.note-blue { background: var(--note-blue); border-color: var(--note-blue-border); }
-        .note-item.note-green { background: var(--note-green); border-color: var(--note-green-border); }
-        .note-item.note-yellow { background: var(--note-yellow); border-color: var(--note-yellow-border); }
-        .note-item.note-red { background: var(--note-red); border-color: var(--note-red-border); }
-        .note-item.note-purple { background: var(--note-purple); border-color: var(--note-purple-border); }
-        .note-item.note-pink { background: var(--note-pink); border-color: var(--note-pink-border); }
-        .note-item.note-gray { background: var(--note-gray); border-color: var(--note-gray-border); }
-        .note-item.note-orange { background: var(--note-orange); border-color: var(--note-orange-border); }
-        .note-item.note-cyan { background: var(--note-cyan); border-color: var(--note-cyan-border); }
-        .note-item.note-lime { background: var(--note-lime); border-color: var(--note-lime-border); }
-        .note-item.note-indigo { background: var(--note-indigo); border-color: var(--note-indigo-border); }
-        .note-item.note-rose { background: var(--note-rose); border-color: var(--note-rose-border); }
-        .note-item.note-teal { background: var(--note-teal); border-color: var(--note-teal-border); }
-        .note-item.note-amber { background: var(--note-amber); border-color: var(--note-amber-border); }
-        .note-item.note-sky { background: var(--note-sky); border-color: var(--note-sky-border); }
-        .note-item.note-violet { background: var(--note-violet); border-color: var(--note-violet-border); }
-        .note-item.note-fuchsia { background: var(--note-fuchsia); border-color: var(--note-fuchsia-border); }
-        .note-item.note-emerald { background: var(--note-emerald); border-color: var(--note-emerald-border); }
+        /* 颜色主题 */
+        .note-item.note-blue { background: linear-gradient(135deg, var(--note-blue) 0%, rgba(30, 58, 95, 0.8) 100%); border-color: var(--note-blue-border); }
+        .note-item.note-green { background: linear-gradient(135deg, var(--note-green) 0%, rgba(20, 83, 45, 0.8) 100%); border-color: var(--note-green-border); }
+        .note-item.note-yellow { background: linear-gradient(135deg, var(--note-yellow) 0%, rgba(113, 63, 18, 0.8) 100%); border-color: var(--note-yellow-border); }
+        .note-item.note-red { background: linear-gradient(135deg, var(--note-red) 0%, rgba(127, 29, 29, 0.8) 100%); border-color: var(--note-red-border); }
+        .note-item.note-purple { background: linear-gradient(135deg, var(--note-purple) 0%, rgba(88, 28, 135, 0.8) 100%); border-color: var(--note-purple-border); }
+        .note-item.note-pink { background: linear-gradient(135deg, var(--note-pink) 0%, rgba(131, 24, 67, 0.8) 100%); border-color: var(--note-pink-border); }
+        .note-item.note-gray { background: linear-gradient(135deg, var(--note-gray) 0%, rgba(55, 65, 81, 0.8) 100%); border-color: var(--note-gray-border); }
+        .note-item.note-orange { background: linear-gradient(135deg, var(--note-orange) 0%, rgba(124, 45, 18, 0.8) 100%); border-color: var(--note-orange-border); }
+        .note-item.note-cyan { background: linear-gradient(135deg, var(--note-cyan) 0%, rgba(22, 78, 99, 0.8) 100%); border-color: var(--note-cyan-border); }
+        .note-item.note-lime { background: linear-gradient(135deg, var(--note-lime) 0%, rgba(54, 83, 20, 0.8) 100%); border-color: var(--note-lime-border); }
+        .note-item.note-indigo { background: linear-gradient(135deg, var(--note-indigo) 0%, rgba(49, 46, 129, 0.8) 100%); border-color: var(--note-indigo-border); }
+        .note-item.note-rose { background: linear-gradient(135deg, var(--note-rose) 0%, rgba(136, 19, 55, 0.8) 100%); border-color: var(--note-rose-border); }
+        .note-item.note-teal { background: linear-gradient(135deg, var(--note-teal) 0%, rgba(19, 78, 74, 0.8) 100%); border-color: var(--note-teal-border); }
+        .note-item.note-amber { background: linear-gradient(135deg, var(--note-amber) 0%, rgba(120, 53, 15, 0.8) 100%); border-color: var(--note-amber-border); }
+        .note-item.note-sky { background: linear-gradient(135deg, var(--note-sky) 0%, rgba(12, 74, 110, 0.8) 100%); border-color: var(--note-sky-border); }
+        .note-item.note-violet { background: linear-gradient(135deg, var(--note-violet) 0%, rgba(76, 29, 149, 0.8) 100%); border-color: var(--note-violet-border); }
+        .note-item.note-fuchsia { background: linear-gradient(135deg, var(--note-fuchsia) 0%, rgba(112, 26, 117, 0.8) 100%); border-color: var(--note-fuchsia-border); }
+        .note-item.note-emerald { background: linear-gradient(135deg, var(--note-emerald) 0%, rgba(6, 78, 59, 0.8) 100%); border-color: var(--note-emerald-border); }
 
         .note-item::before {
             content: '';
@@ -444,14 +569,14 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 5px;
+            width: 4px;
             background: linear-gradient(to bottom, currentColor, transparent);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
 
         .note-item:hover {
-            transform: translateX(6px) translateZ(0);
+            transform: translateX(4px) scale(1.01);
             box-shadow: var(--shadow);
         }
 
@@ -472,11 +597,12 @@
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            padding-left: 20px;
         }
 
         .note-title {
-            font-size: 19px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--text-primary);
             overflow: hidden;
@@ -487,16 +613,16 @@
         }
 
         .note-date {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             white-space: nowrap;
-            margin-left: 12px;
+            margin-left: 10px;
             font-weight: 700;
-            opacity: 0.9;
+            opacity: 0.8;
         }
 
         .note-preview {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -505,25 +631,27 @@
             -webkit-box-orient: vertical;
             line-height: 1.6;
             font-weight: 600;
+            padding-left: 20px;
         }
 
         .empty-state {
             text-align: center;
-            padding: 70px 20px;
+            padding: 60px 20px;
             color: var(--text-secondary);
         }
 
         .empty-state-icon {
-            font-size: 56px;
-            margin-bottom: 20px;
+            font-size: 48px;
+            margin-bottom: 16px;
             opacity: 0.6;
         }
 
         .empty-state div {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 700;
         }
 
+        /* ========== 模态框 ========== */
         .modal {
             display: none;
             position: fixed;
@@ -536,8 +664,7 @@
             z-index: 1000;
             padding: 20px;
             overflow-y: auto;
-            /* 优化：使用合成层 */
-            contain: layout style paint;
+            transform: translateZ(0);
         }
 
         .modal.active {
@@ -549,37 +676,36 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
             border-bottom: 2px solid var(--border);
         }
 
         .modal-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             letter-spacing: -0.5px;
         }
 
         .modal-actions {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .btn-primary {
-            padding: 14px 28px;
+            padding: 12px 24px;
             background: linear-gradient(135deg, var(--accent), #818cf8);
             color: white;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 800;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
-            will-change: transform;
         }
 
         .btn-primary:hover {
@@ -588,19 +714,18 @@
         }
 
         .btn-secondary {
-            padding: 14px 28px;
+            padding: 12px 24px;
             background: var(--bg-card);
             color: var(--text-primary);
             border: 2px solid var(--border);
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.3s ease;
-            will-change: transform;
         }
 
         .btn-secondary:hover {
@@ -609,19 +734,18 @@
         }
 
         .btn-danger {
-            padding: 14px 28px;
+            padding: 12px 24px;
             background: rgba(239, 68, 68, 0.15);
             color: var(--danger);
             border: 2px solid rgba(239, 68, 68, 0.4);
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.3s ease;
-            will-change: transform;
         }
 
         .btn-danger:hover {
@@ -633,7 +757,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 16px;
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
@@ -641,12 +765,12 @@
 
         .editor-title {
             width: 100%;
-            padding: 22px;
+            padding: 18px 20px;
             background: var(--bg-card);
             border: 2px solid var(--border);
-            border-radius: 18px;
+            border-radius: 16px;
             color: var(--text-primary);
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
             outline: none;
             transition: all 0.3s ease;
@@ -665,22 +789,22 @@
 
         .editor-content {
             flex: 1;
-            min-height: 400px;
+            min-height: 350px;
             width: 100%;
-            padding: 22px;
+            padding: 18px 20px;
             background: var(--bg-card);
             border: 2px solid var(--border);
-            border-radius: 18px;
+            border-radius: 16px;
             color: var(--text-primary);
-            font-size: 17px;
+            font-size: 16px;
             line-height: 1.8;
             outline: none;
             resize: none;
             font-family: inherit;
             transition: all 0.3s ease;
             font-weight: 600;
-            /* 优化：防止编辑时的重绘 */
-            contain: layout style paint;
+            transform: translateZ(0);
+            will-change: contents;
         }
 
         .editor-content:focus {
@@ -696,9 +820,9 @@
         .color-picker {
             display: flex;
             gap: 8px;
-            padding: 14px;
+            padding: 12px;
             background: var(--bg-card);
-            border-radius: 14px;
+            border-radius: 12px;
             border: 2px solid var(--border);
             align-items: center;
             flex-wrap: wrap;
@@ -706,26 +830,24 @@
         }
 
         .color-label {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
             font-weight: 700;
-            margin-right: 8px;
+            margin-right: 4px;
             width: 100%;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .color-option {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             cursor: pointer;
             border: 3px solid transparent;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             position: relative;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            /* 优化：使用 transform 代替 scale */
-            will-change: transform;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         .color-option:hover {
@@ -735,7 +857,7 @@
         .color-option.selected {
             border-color: white;
             transform: scale(1.2);
-            box-shadow: 0 0 0 2px var(--accent), 0 4px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(0,0,0,0.4);
         }
 
         .color-option.selected::after {
@@ -747,52 +869,50 @@
             color: white;
             font-size: 14px;
             font-weight: 900;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
 
-        /* 颜色定义 */
-        .color-blue { background: #3b82f6; }
-        .color-sky { background: #0ea5e9; }
-        .color-cyan { background: #06b6d4; }
-        .color-teal { background: #14b8a6; }
-        .color-emerald { background: #10b981; }
-        .color-green { background: #22c55e; }
-        .color-lime { background: #84cc16; }
-        .color-yellow { background: #eab308; }
-        .color-amber { background: #f59e0b; }
-        .color-orange { background: #f97316; }
-        .color-red { background: #ef4444; }
-        .color-rose { background: #f43f5e; }
-        .color-pink { background: #ec4899; }
-        .color-fuchsia { background: #d946ef; }
-        .color-purple { background: #a855f7; }
-        .color-violet { background: #8b5cf6; }
-        .color-indigo { background: #6366f1; }
-        .color-gray { background: #6b7280; }
+        .color-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .color-sky { background: linear-gradient(135deg, #0ea5e9, #0369a1); }
+        .color-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .color-teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+        .color-emerald { background: linear-gradient(135deg, #10b981, #047857); }
+        .color-green { background: linear-gradient(135deg, #22c55e, #15803d); }
+        .color-lime { background: linear-gradient(135deg, #84cc16, #4d7c0f); }
+        .color-yellow { background: linear-gradient(135deg, #eab308, #a16207); }
+        .color-amber { background: linear-gradient(135deg, #f59e0b, #b45309); }
+        .color-orange { background: linear-gradient(135deg, #f97316, #c2410c); }
+        .color-red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .color-rose { background: linear-gradient(135deg, #f43f5e, #be123c); }
+        .color-pink { background: linear-gradient(135deg, #ec4899, #be185d); }
+        .color-fuchsia { background: linear-gradient(135deg, #d946ef, #a21caf); }
+        .color-purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+        .color-violet { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .color-indigo { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .color-gray { background: linear-gradient(135deg, #6b7280, #374151); }
 
+        /* ========== Toast ========== */
         .toast {
             position: fixed;
-            bottom: 30px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
             background: var(--bg-card);
             color: var(--text-primary);
-            padding: 18px 28px;
-            border-radius: 16px;
+            padding: 14px 24px;
+            border-radius: 14px;
             border: 2px solid var(--border);
             box-shadow: var(--shadow);
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             z-index: 2000;
             opacity: 0;
             transition: all 0.3s ease;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
             max-width: 90%;
             word-break: break-word;
-            /* 优化：使用合成层 */
-            will-change: transform, opacity;
         }
 
         .toast.show {
@@ -800,22 +920,16 @@
             opacity: 1;
         }
 
-        .toast.success {
-            border-color: var(--success);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-        }
+        .toast.success { border-color: var(--success); box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+        .toast.error { border-color: var(--danger); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
 
-        .toast.error {
-            border-color: var(--danger);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
-        }
-
+        /* ========== 设置面板 ========== */
         .settings-panel {
             background: var(--bg-card);
             border: 2px solid var(--border);
-            border-radius: 18px;
-            padding: 28px;
-            margin-bottom: 24px;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
             display: none;
         }
 
@@ -824,9 +938,9 @@
         }
 
         .settings-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -834,14 +948,14 @@
         }
 
         .setting-item {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .setting-label {
             display: block;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 700;
         }
 
@@ -853,12 +967,12 @@
 
         .token-input-wrapper input {
             flex: 1;
-            padding: 14px 50px 14px 18px;
+            padding: 12px 44px 12px 16px;
             background: var(--bg-dark);
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             font-family: 'Courier New', monospace;
             font-weight: 600;
@@ -871,11 +985,11 @@
 
         .token-toggle {
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border: none;
             background: var(--bg-hover);
             color: var(--text-secondary);
@@ -884,7 +998,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.2s ease;
         }
 
@@ -895,12 +1009,12 @@
 
         .setting-input {
             width: 100%;
-            padding: 14px 18px;
+            padding: 12px 16px;
             background: var(--bg-dark);
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             font-family: 'Courier New', monospace;
             font-weight: 600;
@@ -912,15 +1026,15 @@
         }
 
         .setting-hint {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-tertiary);
-            margin-top: 8px;
+            margin-top: 6px;
             line-height: 1.6;
             font-weight: 600;
         }
 
         .btn-test {
-            padding: 10px 18px;
+            padding: 8px 16px;
             background: rgba(34, 197, 94, 0.15);
             color: var(--success);
             border: 2px solid rgba(34, 197, 94, 0.4);
@@ -929,7 +1043,7 @@
             font-size: 13px;
             font-weight: 700;
             transition: all 0.3s ease;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .btn-test:hover {
@@ -937,48 +1051,12 @@
             transform: translateY(-1px);
         }
 
-        /* 导入导出按钮组 */
-        .import-export-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-
-        .btn-import-export {
-            flex: 1;
-            min-width: 120px;
-            padding: 12px 20px;
-            background: var(--bg-hover);
-            color: var(--text-primary);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-import-export:hover {
-            background: var(--accent);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        #fileInput {
-            display: none;
-        }
-
         .error-panel {
             background: rgba(239, 68, 68, 0.1);
             border: 2px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 16px;
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 14px;
             display: none;
         }
 
@@ -989,14 +1067,15 @@
         .error-title {
             font-weight: 800;
             color: var(--danger);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 14px;
         }
 
         .error-content {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             line-height: 1.6;
             font-family: 'Courier New', monospace;
@@ -1004,29 +1083,47 @@
         }
 
         .error-hint {
-            margin-top: 12px;
-            padding-top: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
             border-top: 1px solid rgba(239, 68, 68, 0.2);
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
 
         .error-hint li {
-            margin: 6px 0;
-            margin-left: 18px;
+            margin: 4px 0;
+            margin-left: 16px;
         }
 
         .debug-info {
             background: var(--bg-dark);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-            font-size: 12px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
             font-family: 'Courier New', monospace;
             color: var(--text-tertiary);
         }
 
+        .hidden-file-input {
+            display: none;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 3px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========== 响应式 ========== */
         @media (max-width: 640px) {
             .sync-bar {
                 flex-direction: column;
@@ -1040,7 +1137,7 @@
 
             .modal-header {
                 flex-direction: column;
-                gap: 16px;
+                gap: 14px;
                 align-items: stretch;
             }
 
@@ -1058,26 +1155,9 @@
             }
 
             .color-option {
-                width: 24px;
-                height: 24px;
+                width: 26px;
+                height: 26px;
             }
-
-            .import-export-group {
-                flex-direction: column;
-            }
-        }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 3px solid transparent;
-            border-top-color: currentColor;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -1091,11 +1171,27 @@
                 <span>ZenNote</span>
             </div>
             <div class="header-actions">
+                <button class="btn-icon" onclick="exportNotes()" title="导出便签">📤</button>
+                <button class="btn-icon" onclick="document.getElementById('importFile').click()" title="导入便签">📥</button>
                 <button class="btn-icon" onclick="toggleSettings()" title="设置">⚙️</button>
                 <button class="btn-icon" onclick="createNewNote()" title="新建便签">+</button>
             </div>
         </header>
 
+        <input type="file" id="importFile" class="hidden-file-input" accept=".json,application/json" onchange="importNotes(event)">
+
+        <!-- ===== 快速跳转菜单 ===== -->
+        <div class="jump-menu-container">
+            <button class="jump-menu-toggle" onclick="toggleJumpMenu()" id="jumpToggle">
+                <span>📋 快速跳转到便签 <span class="badge" id="jumpCount">0</span></span>
+                <span class="arrow" id="jumpArrow">▼</span>
+            </button>
+            <div class="jump-menu-dropdown" id="jumpDropdown">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+
+        <!-- ===== 设置面板 ===== -->
         <div class="settings-panel" id="settingsPanel">
             <div class="settings-title">⚙️ GitHub 同步设置</div>
             
@@ -1116,24 +1212,9 @@
 
             <button class="btn-test" onclick="testConnection()">🧪 测试连接</button>
 
-            <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center; margin-top: 16px;">
+            <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center; margin-top: 14px;">
                 💾 保存设置
             </button>
-
-            <!-- 导入导出功能 -->
-            <div class="setting-item" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid var(--border);">
-                <div class="settings-title">📦 数据备份</div>
-                <div class="setting-hint" style="margin-bottom: 12px;">导出便签到 JSON 文件，或从文件导入。可用于本地备份或迁移数据。</div>
-                <div class="import-export-group">
-                    <button class="btn-import-export" onclick="exportNotes()">
-                        📤 导出备份
-                    </button>
-                    <button class="btn-import-export" onclick="document.getElementById('fileInput').click()">
-                        📥 导入备份
-                    </button>
-                    <input type="file" id="fileInput" accept=".json" onchange="importNotes(this)">
-                </div>
-            </div>
             
             <div class="error-panel" id="errorPanel">
                 <div class="error-title">❌ 同步失败</div>
@@ -1141,16 +1222,16 @@
                 <div class="error-hint">
                     <strong>解决方法：</strong>
                     <ul>
-                        <li>点击 👁️ 核对 Token 是否正确（注意是否有空格）</li>
-                        <li>确认 Token 有 'gist' 权限（classic token）</li>
+                        <li>点击 👁️ 核对 Token 是否正确</li>
+                        <li>确认 Token 有 'gist' 权限</li>
                         <li>检查网络连接</li>
-                        <li>如果之前用过 DeepSeek 版本，确认 Gist ID 正确</li>
                     </ul>
                 </div>
                 <div class="debug-info" id="debugInfo"></div>
             </div>
         </div>
 
+        <!-- ===== 同步栏 ===== -->
         <div class="sync-bar">
             <div class="sync-info">
                 <div class="sync-status" id="syncStatus">
@@ -1163,19 +1244,17 @@
                 <input type="text" id="quickGistId" placeholder="Gist ID">
             </div>
             <div class="sync-actions">
-                <button class="btn-small" onclick="syncToGithub()" id="btnPush" disabled>
-                    ⬆️ 推送
-                </button>
-                <button class="btn-small" onclick="syncFromGithub()" id="btnPull" disabled>
-                    ⬇️ 拉取
-                </button>
+                <button class="btn-small" onclick="syncToGithub()" id="btnPush" disabled>⬆️ 推送</button>
+                <button class="btn-small" onclick="syncFromGithub()" id="btnPull" disabled>⬇️ 拉取</button>
             </div>
         </div>
 
+        <!-- ===== 搜索框 ===== -->
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="搜索便签..." oninput="searchNotes()">
+            <input type="text" id="searchInput" placeholder="搜索便签..." oninput="debouncedSearch()">
         </div>
 
+        <!-- ===== 便签列表 ===== -->
         <div class="notes-list" id="notesList">
             <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
@@ -1184,43 +1263,42 @@
         </div>
     </div>
 
+    <!-- ===== 编辑器模态框 ===== -->
     <div class="modal" id="editorModal">
         <div class="modal-header">
             <div class="modal-title">编辑便签</div>
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeEditor()">取消</button>
                 <button class="btn-danger" onclick="deleteCurrentNote()">删除</button>
-                <button class="btn-primary" onclick="saveNote()">
-                    <span id="saveBtnText">保存</span>
-                </button>
+                <button class="btn-primary" onclick="saveNote()">💾 保存</button>
             </div>
         </div>
         <div class="editor-container">
-            <input type="text" class="editor-title" id="noteTitle" placeholder="便签标题">
+            <input type="text" class="editor-title" id="noteTitle" placeholder="便签标题" oninput="markUnsaved()">
             
             <div class="color-picker">
                 <span class="color-label">选择便签颜色</span>
-                <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')" title="蓝色"></div>
-                <div class="color-option color-sky" data-color="sky" onclick="selectColor('sky')" title="天蓝"></div>
-                <div class="color-option color-cyan" data-color="cyan" onclick="selectColor('cyan')" title="青色"></div>
-                <div class="color-option color-teal" data-color="teal" onclick="selectColor('teal')" title="teal"></div>
-                <div class="color-option color-emerald" data-color="emerald" onclick="selectColor('emerald')" title="翠绿"></div>
-                <div class="color-option color-green" data-color="green" onclick="selectColor('green')" title="绿色"></div>
-                <div class="color-option color-lime" data-color="lime" onclick="selectColor('lime')" title="lime"></div>
-                <div class="color-option color-yellow" data-color="yellow" onclick="selectColor('yellow')" title="黄色"></div>
-                <div class="color-option color-amber" data-color="amber" onclick="selectColor('amber')" title="琥珀"></div>
-                <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')" title="橙色"></div>
-                <div class="color-option color-red" data-color="red" onclick="selectColor('red')" title="红色"></div>
-                <div class="color-option color-rose" data-color="rose" onclick="selectColor('rose')" title="玫瑰"></div>
-                <div class="color-option color-pink" data-color="pink" onclick="selectColor('pink')" title="粉色"></div>
-                <div class="color-option color-fuchsia" data-color="fuchsia" onclick="selectColor('fuchsia')" title="紫红"></div>
-                <div class="color-option color-purple" data-color="purple" onclick="selectColor('purple')" title="紫色"></div>
-                <div class="color-option color-violet" data-color="violet" onclick="selectColor('violet')" title="紫罗兰"></div>
-                <div class="color-option color-indigo" data-color="indigo" onclick="selectColor('indigo')" title="靛蓝"></div>
-                <div class="color-option color-gray selected" data-color="gray" onclick="selectColor('gray')" title="灰色"></div>
+                <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')"></div>
+                <div class="color-option color-sky" data-color="sky" onclick="selectColor('sky')"></div>
+                <div class="color-option color-cyan" data-color="cyan" onclick="selectColor('cyan')"></div>
+                <div class="color-option color-teal" data-color="teal" onclick="selectColor('teal')"></div>
+                <div class="color-option color-emerald" data-color="emerald" onclick="selectColor('emerald')"></div>
+                <div class="color-option color-green" data-color="green" onclick="selectColor('green')"></div>
+                <div class="color-option color-lime" data-color="lime" onclick="selectColor('lime')"></div>
+                <div class="color-option color-yellow" data-color="yellow" onclick="selectColor('yellow')"></div>
+                <div class="color-option color-amber" data-color="amber" onclick="selectColor('amber')"></div>
+                <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')"></div>
+                <div class="color-option color-red" data-color="red" onclick="selectColor('red')"></div>
+                <div class="color-option color-rose" data-color="rose" onclick="selectColor('rose')"></div>
+                <div class="color-option color-pink" data-color="pink" onclick="selectColor('pink')"></div>
+                <div class="color-option color-fuchsia" data-color="fuchsia" onclick="selectColor('fuchsia')"></div>
+                <div class="color-option color-purple" data-color="purple" onclick="selectColor('purple')"></div>
+                <div class="color-option color-violet" data-color="violet" onclick="selectColor('violet')"></div>
+                <div class="color-option color-indigo" data-color="indigo" onclick="selectColor('indigo')"></div>
+                <div class="color-option color-gray selected" data-color="gray" onclick="selectColor('gray')"></div>
             </div>
 
-            <textarea class="editor-content" id="noteContent" placeholder="写点什么..."></textarea>
+            <textarea class="editor-content" id="noteContent" placeholder="写点什么..." oninput="markUnsaved()"></textarea>
         </div>
     </div>
 
@@ -1230,397 +1308,407 @@
     </div>
 
     <script>
-        // 数据存储
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        const isEdge = /Edg\//.test(navigator.userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // ============================================================
+        // 数据
+        // ============================================================
         let notes = [];
         let currentNoteId = null;
         let currentColor = 'gray';
         let githubToken = localStorage.getItem('zen_note_token') || '';
         let gistId = localStorage.getItem('zen_note_gist_id') || '';
 
-        // 拖拽状态
         let draggedItem = null;
-        let draggedId = null;
-        let dragCounter = 0; // 优化：防止重复触发
+        let dragStarted = false;
+        let pendingRender = false;
+        let saveTimeout = null;
+        let unsavedChanges = false;
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            loadNotes();
-            updateSyncUI();
+        // ============================================================
+        // DOM 引用
+        // ============================================================
+        const notesList = document.getElementById('notesList');
+        const searchInput = document.getElementById('searchInput');
+        const jumpToggle = document.getElementById('jumpToggle');
+        const jumpDropdown = document.getElementById('jumpDropdown');
+        const jumpCount = document.getElementById('jumpCount');
+
+        // ============================================================
+        // 快速跳转菜单
+        // ============================================================
+        function toggleJumpMenu() {
+            const dropdown = document.getElementById('jumpDropdown');
+            const arrow = document.getElementById('jumpArrow');
+            const isOpen = dropdown.classList.contains('open');
             
-            if (githubToken) {
-                document.getElementById('githubToken').value = githubToken;
-                document.getElementById('quickToken').value = githubToken;
-            }
-            if (gistId) {
-                document.getElementById('gistId').value = gistId;
-                document.getElementById('quickGistId').value = gistId;
-            }
-
-            if (githubToken && gistId) {
-                setTimeout(() => syncFromGithub(true), 1000);
-            }
-        });
-
-        // Token 显示/隐藏切换
-        function toggleTokenVisibility() {
-            const input = document.getElementById('githubToken');
-            const btn = document.querySelector('.token-toggle');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-                btn.title = '隐藏';
+            if (isOpen) {
+                dropdown.classList.remove('open');
+                arrow.classList.remove('open');
             } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-                btn.title = '显示';
+                renderJumpMenu();
+                dropdown.classList.add('open');
+                arrow.classList.add('open');
             }
         }
 
-        // 导出便签
+        function renderJumpMenu() {
+            if (notes.length === 0) {
+                jumpDropdown.innerHTML = `
+                    <div class="jump-empty-state">📭 还没有便签</div>
+                `;
+                jumpCount.textContent = '0';
+                return;
+            }
+
+            jumpCount.textContent = notes.length;
+
+            let html = '';
+            notes.forEach(note => {
+                const title = note.title?.trim() || '无标题';
+                const color = note.color || 'gray';
+                const colorMap = {
+                    'blue': '#3b82f6',
+                    'sky': '#0ea5e9',
+                    'cyan': '#06b6d4',
+                    'teal': '#14b8a6',
+                    'emerald': '#10b981',
+                    'green': '#22c55e',
+                    'lime': '#84cc16',
+                    'yellow': '#eab308',
+                    'amber': '#f59e0b',
+                    'orange': '#f97316',
+                    'red': '#ef4444',
+                    'rose': '#f43f5e',
+                    'pink': '#ec4899',
+                    'fuchsia': '#d946ef',
+                    'purple': '#a855f7',
+                    'violet': '#8b5cf6',
+                    'indigo': '#6366f1',
+                    'gray': '#6b7280'
+                };
+                const dotColor = colorMap[color] || '#6b7280';
+                
+                html += `
+                    <div class="jump-item" onclick="jumpToNote('${note.id}')">
+                        <span class="color-dot" style="background:${dotColor}"></span>
+                        <span class="jump-title">${escapeHtml(title)}</span>
+                        <span style="font-size:11px;color:var(--text-tertiary);flex-shrink:0;">${formatDate(note.updated)}</span>
+                    </div>
+                `;
+            });
+            jumpDropdown.innerHTML = html;
+        }
+
+        function jumpToNote(noteId) {
+            // 关闭菜单
+            jumpDropdown.classList.remove('open');
+            document.getElementById('jumpArrow').classList.remove('open');
+            
+            // 找到便签在列表中的位置
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            // 清除搜索，确保便签可见
+            searchInput.value = '';
+            
+            // 重新渲染列表
+            renderNotes();
+            
+            // 高亮目标便签
+            setTimeout(() => {
+                const items = document.querySelectorAll('.note-item');
+                items.forEach(item => {
+                    if (item.dataset.id === noteId) {
+                        item.classList.add('jump-highlight');
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            item.classList.remove('jump-highlight');
+                        }, 2500);
+                    }
+                });
+            }, 100);
+            
+            // 同时打开编辑
+            setTimeout(() => {
+                openNote(noteId);
+            }, 300);
+        }
+
+        // 点击菜单外部关闭
+        document.addEventListener('click', (e) => {
+            const container = document.querySelector('.jump-menu-container');
+            if (container && !container.contains(e.target)) {
+                jumpDropdown.classList.remove('open');
+                document.getElementById('jumpArrow').classList.remove('open');
+            }
+        });
+
+        // ============================================================
+        // 导入/导出
+        // ============================================================
         function exportNotes() {
             if (notes.length === 0) {
                 showToast('没有便签可导出', 'error');
                 return;
             }
-
-            const data = {
-                version: '1.0',
-                exportTime: new Date().toISOString(),
-                notes: notes
-            };
-
+            const data = { version: '1.0', exportTime: new Date().toISOString(), notes };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `zennote_backup_${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
+            a.download = `zennote-backup-${new Date().toISOString().slice(0,10)}.json`;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
-            showToast(`已导出 ${notes.length} 个便签`);
+            showToast(`导出 ${notes.length} 个便签`);
         }
 
-        // 导入便签
-        function importNotes(input) {
-            const file = input.files[0];
+        function importNotes(event) {
+            const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
+                    let imported = Array.isArray(data) ? data : (data.notes || []);
+                    if (imported.length === 0) { showToast('文件中没有便签', 'error'); return; }
                     
-                    // 验证数据格式
-                    if (!data.notes || !Array.isArray(data.notes)) {
-                        throw new Error('无效的备份文件格式');
+                    if (notes.length === 0) {
+                        notes = imported;
+                    } else if (confirm('确定替换所有便签？取消则合并')) {
+                        notes = imported;
+                    } else {
+                        const ids = new Set(notes.map(n => n.id));
+                        notes = [...notes, ...imported.filter(n => !ids.has(n.id))];
                     }
-
-                    // 合并或替换
-                    const importCount = data.notes.length;
-                    const existingIds = new Set(notes.map(n => n.id));
-                    let added = 0;
-                    let updated = 0;
-
-                    data.notes.forEach(note => {
-                        if (!note.id || !note.title === undefined) {
-                            return; // 跳过无效数据
-                        }
-
-                        if (existingIds.has(note.id)) {
-                            // 更新现有便签（如果导入的较新）
-                            const existing = notes.find(n => n.id === note.id);
-                            if (note.updated > existing.updated) {
-                                Object.assign(existing, note);
-                                updated++;
-                            }
-                        } else {
-                            // 添加新便签
-                            notes.push(note);
-                            added++;
-                        }
-                    });
-
-                    // 重新排序
-                    notes.sort((a, b) => (a.order || 0) - (b.order || 0));
-                    
                     saveToLocal();
-                    showToast(`导入完成：新增 ${added} 个，更新 ${updated} 个`);
-                    
-                    // 自动同步到 GitHub
-                    if (githubToken && gistId && (added > 0 || updated > 0)) {
-                        setTimeout(() => syncToGithub(), 1000);
-                    }
-                } catch (error) {
-                    showToast('导入失败：' + error.message, 'error');
+                    renderNotes();
+                    showToast(`现有 ${notes.length} 个便签`);
+                } catch (err) {
+                    showToast('导入失败：格式错误', 'error');
                 }
-                
-                // 清空 input
-                input.value = '';
+                event.target.value = '';
             };
-            
-            reader.onerror = () => {
-                showToast('读取文件失败', 'error');
-                input.value = '';
-            };
-            
             reader.readAsText(file);
         }
 
-        // 发送请求（直接访问）
-        async function githubRequest(url, options = {}) {
-            console.log('GitHub Request:', { url, method: options.method || 'GET' });
+        // ============================================================
+        // Token 显示切换
+        // ============================================================
+        function toggleTokenVisibility() {
+            const input = document.getElementById('githubToken');
+            const btn = document.querySelector('.token-toggle');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
 
-            const defaultOptions = {
-                method: 'GET',
+        // ============================================================
+        // GitHub 请求
+        // ============================================================
+        async function githubRequest(url, options = {}) {
+            const resp = await fetch(url, {
+                ...options,
                 headers: {
                     'Authorization': `token ${githubToken}`,
                     'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
                 }
-            };
-
-            try {
-                const response = await fetch(url, { ...defaultOptions, ...options });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    let errorData;
-                    try {
-                        errorData = JSON.parse(errorText);
-                    } catch (e) {
-                        errorData = { message: errorText };
-                    }
-                    
-                    throw {
-                        status: response.status,
-                        statusText: response.statusText,
-                        message: errorData.message || `HTTP ${response.status}`
-                    };
-                }
-                
-                return response;
-            } catch (error) {
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    throw {
-                        type: 'NETWORK_ERROR',
-                        message: '无法连接到 GitHub，请检查网络或 Token 是否正确',
-                        originalError: error.message
-                    };
-                }
-                throw error;
+            });
+            if (!resp.ok) {
+                const err = await resp.text();
+                throw { status: resp.status, message: err };
             }
+            return resp;
         }
 
-        // 测试连接
         async function testConnection() {
             const token = document.getElementById('githubToken').value.trim();
-            if (!token) {
-                showToast('请先输入 GitHub Token', 'error');
-                return;
-            }
-
-            const originalToken = githubToken;
+            if (!token) { showToast('请输入 Token', 'error'); return; }
+            const old = githubToken;
             githubToken = token;
-
-            showToast('正在测试连接...', 'success');
-            
             try {
-                const response = await githubRequest('https://api.github.com/user');
-                const user = await response.json();
-                
-                let msg = `✅ 连接成功！用户：${user.login}`;
-                
-                const testGistId = document.getElementById('gistId').value.trim();
-                if (testGistId) {
-                    try {
-                        const gistRes = await githubRequest(`https://api.github.com/gists/${testGistId}`);
-                        const gist = await gistRes.json();
-                        msg += ` | Gist：${gist.description || '无描述'}`;
-                    } catch (e) {
-                        msg += ` | Gist：❌ ${e.message}`;
-                    }
-                }
-                
-                showToast(msg, 'success');
-                hideError();
-            } catch (error) {
-                showError('测试连接失败', error);
-            } finally {
-                githubToken = originalToken;
+                const resp = await githubRequest('https://api.github.com/user');
+                const user = await resp.json();
+                showToast(`✅ 用户：${user.login}`, 'success');
+            } catch (e) {
+                showToast('连接失败', 'error');
             }
+            githubToken = old;
         }
 
-        // 加载本地便签
+        // ============================================================
+        // 本地存储
+        // ============================================================
         function loadNotes() {
-            const saved = localStorage.getItem('zen_notes');
-            if (saved) {
-                notes = JSON.parse(saved);
-            }
+            try { notes = JSON.parse(localStorage.getItem('zen_notes')) || []; } catch { notes = []; }
             renderNotes();
         }
 
         function saveToLocal() {
-            localStorage.setItem('zen_notes', JSON.stringify(notes));
-            renderNotes();
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                localStorage.setItem('zen_notes', JSON.stringify(notes));
+                if (unsavedChanges && githubToken && gistId) {
+                    unsavedChanges = false;
+                    setTimeout(syncToGithub, 2000);
+                }
+            }, isEdge ? 500 : 300);
         }
 
-        // 渲染便签列表（优化版）
+        function markUnsaved() { unsavedChanges = true; }
+
+        // ============================================================
+        // 渲染
+        // ============================================================
         function renderNotes(filter = '') {
-            const list = document.getElementById('notesList');
-            const filtered = notes.filter(n => 
-                n.title.toLowerCase().includes(filter.toLowerCase()) || 
-                n.content.toLowerCase().includes(filter.toLowerCase())
-            );
+            if (pendingRender) return;
+            pendingRender = true;
+            requestAnimationFrame(() => {
+                const list = notesList;
+                const f = filter.toLowerCase();
+                const filtered = notes.filter(n => 
+                    (n.title || '').toLowerCase().includes(f) || 
+                    (n.content || '').toLowerCase().includes(f)
+                );
 
-            if (filtered.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <div>${filter ? '没有找到匹配的便签' : '还没有便签，点击右上角 + 创建'}</div>
-                    </div>
-                `;
-                return;
-            }
+                if (filtered.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div>${filter ? '没有找到匹配的便签' : '还没有便签，点击右上角 + 创建'}</div>
+                        </div>
+                    `;
+                } else {
+                    list.innerHTML = filtered.map((note, idx) => `
+                        <div class="note-item note-${note.color || 'gray'} ${currentNoteId === note.id ? 'active' : ''}" 
+                             data-id="${note.id}" data-index="${idx}" draggable="true">
+                            <div class="drag-handle" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()"></div>
+                            <div class="note-header" onclick="openNote('${note.id}')">
+                                <div class="note-title">${escapeHtml(note.title) || '无标题'}</div>
+                                <div class="note-date">${formatDate(note.updated)}</div>
+                            </div>
+                            <div class="note-preview" onclick="openNote('${note.id}')">${escapeHtml(note.content)}</div>
+                        </div>
+                    `).join('');
+                    bindDragEvents();
+                    // 更新跳转菜单计数
+                    jumpCount.textContent = notes.length;
+                }
+                pendingRender = false;
+            });
+        }
 
-            // 优化：使用 DocumentFragment 减少重绘
-            const fragment = document.createDocumentFragment();
-            
-            filtered.forEach((note, index) => {
-                const div = document.createElement('div');
-                div.className = `note-item note-${note.color || 'gray'} ${currentNoteId === note.id ? 'active' : ''}`;
-                div.dataset.id = note.id;
-                div.dataset.index = index;
-                div.draggable = true;
-                div.innerHTML = `
-                    <div class="drag-handle"></div>
-                    <div class="note-header">
-                        <div class="note-title">${escapeHtml(note.title) || '无标题'}</div>
-                        <div class="note-date">${formatDate(note.updated)}</div>
-                    </div>
-                    <div class="note-preview">${escapeHtml(note.content)}</div>
-                `;
-                
-                // 绑定事件（使用事件委托优化）
-                div.addEventListener('click', (e) => {
-                    if (!e.target.closest('.drag-handle')) {
-                        openNote(note.id);
+        const debouncedSearch = debounce(() => renderNotes(searchInput.value), 300);
+
+        // ============================================================
+        // 拖拽
+        // ============================================================
+        function bindDragEvents() {
+            document.querySelectorAll('.note-item').forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    dragStarted = true;
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', item.dataset.id);
+                });
+                item.addEventListener('dragend', (e) => {
+                    dragStarted = false;
+                    item.classList.remove('dragging');
+                    document.querySelectorAll('.note-item').forEach(el => el.classList.remove('drag-over'));
+                });
+                item.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+                item.addEventListener('dragenter', (e) => { if (item !== draggedItem) item.classList.add('drag-over'); });
+                item.addEventListener('dragleave', (e) => { item.classList.remove('drag-over'); });
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (draggedItem !== item) {
+                        const fromId = draggedItem.dataset.id;
+                        const toId = item.dataset.id;
+                        const from = notes.findIndex(n => n.id === fromId);
+                        const to = notes.findIndex(n => n.id === toId);
+                        if (from > -1 && to > -1) {
+                            const [removed] = notes.splice(from, 1);
+                            notes.splice(to, 0, removed);
+                            saveToLocal();
+                            renderNotes();
+                            showToast('顺序已更新');
+                        }
                     }
                 });
-                
-                fragment.appendChild(div);
-            });
-
-            list.innerHTML = '';
-            list.appendChild(fragment);
-
-            // 绑定拖拽事件
-            requestAnimationFrame(() => bindDragEvents());
-        }
-
-        // 绑定拖拽事件（优化版）
-        function bindDragEvents() {
-            const items = document.querySelectorAll('.note-item');
-            
-            items.forEach(item => {
-                // 使用 passive 监听器优化滚动性能
-                item.addEventListener('dragstart', handleDragStart, { passive: false });
-                item.addEventListener('dragend', handleDragEnd, { passive: false });
-                item.addEventListener('dragover', handleDragOver, { passive: false });
-                item.addEventListener('drop', handleDrop, { passive: false });
-                item.addEventListener('dragenter', handleDragEnter, { passive: true });
-                item.addEventListener('dragleave', handleDragLeave, { passive: true });
-            });
-        }
-
-        function handleDragStart(e) {
-            draggedItem = this;
-            draggedId = this.dataset.id;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', draggedId);
-            // 优化：降低拖拽时的渲染开销
-            this.style.opacity = '0.6';
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            this.style.opacity = '';
-            document.querySelectorAll('.note-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-            draggedItem = null;
-            draggedId = null;
-            dragCounter = 0;
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDragEnter(e) {
-            dragCounter++;
-            if (this !== draggedItem) {
-                this.classList.add('drag-over');
-            }
-        }
-
-        function handleDragLeave(e) {
-            dragCounter--;
-            if (dragCounter === 0) {
-                this.classList.remove('drag-over');
-            }
-        }
-
-        function handleDrop(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            dragCounter = 0;
-            
-            if (draggedItem !== this) {
-                const targetId = this.dataset.id;
-                
-                // 重新排序
-                const draggedNote = notes.find(n => n.id === draggedId);
-                const targetNote = notes.find(n => n.id === targetId);
-                
-                if (draggedNote && targetNote) {
-                    const draggedIdx = notes.indexOf(draggedNote);
-                    const targetIdx = notes.indexOf(targetNote);
-                    
-                    notes.splice(draggedIdx, 1);
-                    notes.splice(targetIdx, 0, draggedNote);
-                    
-                    // 更新顺序
-                    notes.forEach((note, idx) => note.order = idx);
-                    
-                    saveToLocal();
-                    showToast('顺序已更新');
-                    
-                    if (githubToken && gistId) {
-                        setTimeout(() => syncToGithub(), 1000);
-                    }
+                // 移动端触摸支持
+                if (isMobile) {
+                    let touchItem = null;
+                    item.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 1) {
+                            touchItem = item;
+                            item.classList.add('dragging');
+                            dragStarted = true;
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                    item.addEventListener('touchmove', (e) => {
+                        if (!touchItem) return;
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        const target = el?.closest('.note-item');
+                        document.querySelectorAll('.note-item').forEach(el => el.classList.remove('drag-over'));
+                        if (target && target !== touchItem) target.classList.add('drag-over');
+                    }, { passive: false });
+                    item.addEventListener('touchend', (e) => {
+                        if (!touchItem) return;
+                        const touch = e.changedTouches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        const target = el?.closest('.note-item');
+                        if (target && target !== touchItem) {
+                            const fromId = touchItem.dataset.id;
+                            const toId = target.dataset.id;
+                            const from = notes.findIndex(n => n.id === fromId);
+                            const to = notes.findIndex(n => n.id === toId);
+                            if (from > -1 && to > -1) {
+                                const [removed] = notes.splice(from, 1);
+                                notes.splice(to, 0, removed);
+                                saveToLocal();
+                                renderNotes();
+                                showToast('顺序已更新');
+                            }
+                        }
+                        touchItem.classList.remove('dragging');
+                        document.querySelectorAll('.note-item').forEach(el => el.classList.remove('drag-over'));
+                        touchItem = null;
+                        dragStarted = false;
+                    });
                 }
-            }
-            
-            document.querySelectorAll('.note-item').forEach(item => {
-                item.classList.remove('drag-over');
             });
-            
-            return false;
         }
 
+        // ============================================================
+        // 便签操作
+        // ============================================================
         function selectColor(color) {
             currentColor = color;
-            document.querySelectorAll('.color-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            document.querySelector(`.color-option[data-color="${color}"]`).classList.add('selected');
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.color-option[data-color="${color}"]`)?.classList.add('selected');
         }
 
         function createNewNote() {
@@ -1634,13 +1722,13 @@
         }
 
         function openNote(id) {
+            if (dragStarted) return;
             const note = notes.find(n => n.id === id);
             if (!note) return;
-            
             currentNoteId = id;
             currentColor = note.color || 'gray';
-            document.getElementById('noteTitle').value = note.title;
-            document.getElementById('noteContent').value = note.content;
+            document.getElementById('noteTitle').value = note.title || '';
+            document.getElementById('noteContent').value = note.content || '';
             selectColor(currentColor);
             document.getElementById('editorModal').classList.add('active');
         }
@@ -1648,315 +1736,211 @@
         function saveNote() {
             const title = document.getElementById('noteTitle').value.trim();
             const content = document.getElementById('noteContent').value.trim();
-            
-            if (!title && !content) {
-                showToast('请填写内容', 'error');
-                return;
-            }
-
+            if (!title && !content) { showToast('请填写内容', 'error'); return; }
             const now = Date.now();
-            
             if (currentNoteId) {
                 const note = notes.find(n => n.id === currentNoteId);
-                note.title = title;
-                note.content = content;
-                note.color = currentColor;
-                note.updated = now;
+                if (note) { note.title = title; note.content = content; note.color = currentColor; note.updated = now; }
             } else {
                 notes.push({
-                    id: 'note_' + now,
-                    title: title,
-                    content: content,
-                    color: currentColor,
-                    created: now,
-                    updated: now,
-                    order: notes.length
+                    id: 'note_' + now + '_' + Math.random().toString(36).substr(2, 6),
+                    title, content, color: currentColor,
+                    created: now, updated: now, order: notes.length
                 });
             }
-
+            markUnsaved();
             saveToLocal();
             closeEditor();
+            renderNotes();
             showToast('保存成功');
-            
-            if (githubToken && gistId) {
-                setTimeout(() => syncToGithub(), 1000);
-            }
         }
 
         function deleteCurrentNote() {
-            if (!currentNoteId) {
-                closeEditor();
-                return;
-            }
-            
-            if (confirm('确定要删除这个便签吗？')) {
+            if (!currentNoteId) { closeEditor(); return; }
+            if (confirm('确定删除？')) {
                 notes = notes.filter(n => n.id !== currentNoteId);
+                markUnsaved();
                 saveToLocal();
                 closeEditor();
-                showToast('删除成功');
-                
-                if (githubToken && gistId) {
-                    setTimeout(() => syncToGithub(), 1000);
-                }
+                renderNotes();
+                showToast('已删除');
             }
         }
 
         function closeEditor() {
             document.getElementById('editorModal').classList.remove('active');
             currentNoteId = null;
-            currentColor = 'gray';
         }
 
-        function searchNotes() {
-            const filter = document.getElementById('searchInput').value;
-            renderNotes(filter);
-        }
-
+        // ============================================================
+        // 设置
+        // ============================================================
         function toggleSettings() {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('active');
-            hideError();
+            document.getElementById('settingsPanel').classList.toggle('active');
+            document.getElementById('errorPanel').classList.remove('show');
         }
 
         function saveSettings() {
             githubToken = document.getElementById('githubToken').value.trim();
             gistId = document.getElementById('gistId').value.trim();
-            
-            if (!githubToken) {
-                showToast('请输入 GitHub Token', 'error');
-                return;
-            }
-
+            if (!githubToken) { showToast('请输入 Token', 'error'); return; }
             localStorage.setItem('zen_note_token', githubToken);
             localStorage.setItem('zen_note_gist_id', gistId);
-            
             document.getElementById('quickToken').value = githubToken;
             document.getElementById('quickGistId').value = gistId;
-            
             updateSyncUI();
             showToast('设置已保存');
-            
-            if (!gistId) {
-                createGist();
-            } else {
-                syncFromGithub();
-            }
+            if (!gistId) createGist();
+            else syncFromGithub();
         }
 
         function updateSyncUI() {
-            const hasConfig = githubToken && gistId;
-            document.getElementById('btnPush').disabled = !hasConfig;
-            document.getElementById('btnPull').disabled = !hasConfig;
-            
-            const statusEl = document.getElementById('syncStatus');
-            const textEl = document.getElementById('syncText');
-            
-            if (!githubToken) {
-                statusEl.className = 'sync-status';
-                textEl.textContent = '未配置同步';
-            } else if (!gistId) {
-                statusEl.className = 'sync-status error';
-                textEl.textContent = '缺少 Gist ID';
-            } else {
-                statusEl.className = 'sync-status synced';
-                textEl.textContent = '已配置同步';
-            }
+            const ok = githubToken && gistId;
+            document.getElementById('btnPush').disabled = !ok;
+            document.getElementById('btnPull').disabled = !ok;
+            const status = document.getElementById('syncStatus');
+            const text = document.getElementById('syncText');
+            if (!githubToken) { status.className = 'sync-status'; text.textContent = '未配置同步'; }
+            else if (!gistId) { status.className = 'sync-status error'; text.textContent = '缺少 Gist ID'; }
+            else { status.className = 'sync-status synced'; text.textContent = '已配置同步'; }
         }
 
+        // ============================================================
+        // GitHub 同步
+        // ============================================================
         async function createGist() {
             setSyncing(true);
-            hideError();
-            
             try {
-                const response = await githubRequest('https://api.github.com/gists', {
+                const resp = await githubRequest('https://api.github.com/gists', {
                     method: 'POST',
                     body: JSON.stringify({
                         description: 'ZenNote 便签同步',
                         public: false,
-                        files: {
-                            'zen_notes.json': {
-                                content: JSON.stringify(notes, null, 2)
-                            }
-                        }
+                        files: { 'zen_notes.json': { content: JSON.stringify(notes, null, 2) } }
                     })
                 });
-
-                const data = await response.json();
+                const data = await resp.json();
                 gistId = data.id;
                 localStorage.setItem('zen_note_gist_id', gistId);
                 document.getElementById('gistId').value = gistId;
                 document.getElementById('quickGistId').value = gistId;
-                
                 updateSyncUI();
                 showToast('Gist 创建成功');
-            } catch (error) {
-                showError('创建 Gist 失败', error);
-            }
+            } catch (e) { showToast('创建 Gist 失败', 'error'); }
             setSyncing(false);
         }
 
         async function syncToGithub() {
-            if (!githubToken || !gistId) {
-                showToast('请先配置同步设置', 'error');
-                return;
-            }
-
+            if (!githubToken || !gistId) { showToast('请先配置同步', 'error'); return; }
             setSyncing(true);
-            hideError();
-            
             try {
-                const response = await githubRequest(`https://api.github.com/gists/${gistId}`, {
+                await githubRequest(`https://api.github.com/gists/${gistId}`, {
                     method: 'PATCH',
                     body: JSON.stringify({
-                        files: {
-                            'zen_notes.json': {
-                                content: JSON.stringify(notes, null, 2)
-                            }
-                        }
+                        files: { 'zen_notes.json': { content: JSON.stringify(notes, null, 2) } }
                     })
                 });
-
-                showToast('已推送到 GitHub');
-            } catch (error) {
-                showError('推送失败', error);
-            }
+                unsavedChanges = false;
+                showToast('已推送');
+            } catch (e) { showToast('推送失败', 'error'); }
             setSyncing(false);
         }
 
-        async function syncFromGithub(silent = false) {
-            if (!githubToken || !gistId) {
-                if (!silent) showToast('请先配置同步设置', 'error');
-                return;
-            }
-
+        async function syncFromGithub() {
+            if (!githubToken || !gistId) { showToast('请先配置同步', 'error'); return; }
             setSyncing(true);
-            hideError();
-            
             try {
-                const response = await githubRequest(`https://api.github.com/gists/${gistId}`);
-                const data = await response.json();
+                const resp = await githubRequest(`https://api.github.com/gists/${gistId}`);
+                const data = await resp.json();
                 const content = data.files['zen_notes.json']?.content;
-                
                 if (content) {
-                    const remoteNotes = JSON.parse(content);
-                    const merged = mergeNotes(notes, remoteNotes);
-                    notes = merged;
+                    const remote = JSON.parse(content);
+                    const map = new Map();
+                    notes.forEach(n => map.set(n.id, { ...n }));
+                    remote.forEach(n => {
+                        const exist = map.get(n.id);
+                        if (exist) { if (n.updated > exist.updated) map.set(n.id, { ...n, order: exist.order }); }
+                        else map.set(n.id, { ...n });
+                    });
+                    notes = Array.from(map.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
                     saveToLocal();
-                    if (!silent) showToast('已从 GitHub 拉取');
+                    renderNotes();
+                    showToast('已拉取');
                 }
-            } catch (error) {
-                if (!silent) showError('拉取失败', error);
-            }
+            } catch (e) { showToast('拉取失败', 'error'); }
             setSyncing(false);
         }
 
-        function mergeNotes(local, remote) {
-            const map = new Map();
-            local.forEach(n => map.set(n.id, { ...n, source: 'local' }));
-            
-            remote.forEach(n => {
-                const existing = map.get(n.id);
-                if (existing) {
-                    if (n.updated > existing.updated) {
-                        map.set(n.id, { ...n, order: existing.order, source: 'merged' });
-                    }
-                } else {
-                    map.set(n.id, { ...n, source: 'remote' });
-                }
-            });
-            
-            return Array.from(map.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
-        }
-
-        function setSyncing(syncing) {
-            const statusEl = document.getElementById('syncStatus');
-            const textEl = document.getElementById('syncText');
-            
-            if (syncing) {
-                statusEl.className = 'sync-status syncing';
-                textEl.innerHTML = '<span class="spinner" style="display: inline-block; margin-right: 8px;"></span>同步中...';
+        function setSyncing(s) {
+            const status = document.getElementById('syncStatus');
+            const text = document.getElementById('syncText');
+            if (s) {
+                status.className = 'sync-status syncing';
+                text.innerHTML = '<span class="spinner"></span> 同步中...';
             } else {
                 updateSyncUI();
             }
         }
 
-        function showError(title, error) {
-            console.error('Error:', error);
-            
-            const panel = document.getElementById('errorPanel');
-            const content = document.getElementById('errorContent');
-            const debug = document.getElementById('debugInfo');
-            
-            let errorMsg = '';
-            let debugMsg = '';
-            
-            if (typeof error === 'object') {
-                errorMsg = error.message || '未知错误';
-                if (error.status) errorMsg += ` (HTTP ${error.status})`;
-                if (error.type === 'NETWORK_ERROR') {
-                    errorMsg += '<br><br>💡 网络错误，请检查 Token 和网络连接';
-                }
-            } else {
-                errorMsg = String(error);
-            }
-            
-            content.innerHTML = `<strong>${title}</strong><br>${errorMsg}`;
-            debug.textContent = debugMsg ? `调试信息：\n${debugMsg}` : '';
-            panel.classList.add('show');
-            
-            showToast(title, 'error');
-        }
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-        function hideError() {
-            document.getElementById('errorPanel').classList.remove('show');
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function formatDate(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diff = now - date;
-            
+        function formatDate(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const now = Date.now();
+            const diff = now - ts;
             if (diff < 60000) return '刚刚';
-            if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-            if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
-            
-            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+            if (diff < 3600000) return Math.floor(diff/60000)+'分钟前';
+            if (diff < 86400000) return Math.floor(diff/3600000)+'小时前';
+            return d.toLocaleDateString('zh-CN', { month:'short', day:'numeric' });
         }
 
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msg = document.getElementById('toastMessage');
-            
-            toast.className = 'toast ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✗';
-            msg.textContent = message;
-            
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 5000);
+        let toastTimer = null;
+        function showToast(msg, type = 'success') {
+            const el = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = type === 'success' ? '✓' : '✗';
+            document.getElementById('toastMessage').textContent = msg;
+            el.className = 'toast ' + type;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
         }
 
-        // 优化：使用 requestAnimationFrame 处理键盘事件
+        // ============================================================
+        // 键盘快捷键
+        // ============================================================
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (document.getElementById('editorModal').classList.contains('active')) {
-                    requestAnimationFrame(() => closeEditor());
-                }
-            }
-            
+            if (e.key === 'Escape' && document.getElementById('editorModal').classList.contains('active')) closeEditor();
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                if (document.getElementById('editorModal').classList.contains('active')) {
-                    requestAnimationFrame(() => saveNote());
-                }
+                if (document.getElementById('editorModal').classList.contains('active')) saveNote();
             }
         });
+
+        // 关闭前提醒
+        window.addEventListener('beforeunload', (e) => {
+            if (unsavedChanges) { e.preventDefault(); e.returnValue = '有未保存的更改'; }
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotes();
+            document.getElementById('githubToken').value = githubToken;
+            document.getElementById('quickToken').value = githubToken;
+            document.getElementById('gistId').value = gistId;
+            document.getElementById('quickGistId').value = gistId;
+            updateSyncUI();
+            if (githubToken && gistId) setTimeout(() => syncFromGithub(), 1500);
+        });
+
+        // 被动事件优化
+        document.addEventListener('touchstart', () => {}, { passive: true });
+        document.addEventListener('wheel', () => {}, { passive: true });
     </script>
 </body>
 </html>
